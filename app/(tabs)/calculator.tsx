@@ -1,9 +1,10 @@
-// app/(tabs)/calculator.tsx - updated with types
+// app/(tabs)/calculator.tsx
 import React, { useState } from "react";
 import { Text, View, SafeAreaView, ScrollView, Pressable, TextInput } from "react-native";
 import { useRouter } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import Button from "../components/ui/Button";
+import { useTheme } from "../context/ThemeContext";
 
 // Define types
 type Gender = "male" | "female";
@@ -129,6 +130,7 @@ const calculateMacros = (tdee: number, goal: Goal): MacroResult => {
 
 export default function Calculator() {
   const router = useRouter();
+  const { colors } = useTheme();
   const [currentStep, setCurrentStep] = useState<number>(0);
   const [formData, setFormData] = useState<FormData>({
     gender: "male",
@@ -197,12 +199,12 @@ export default function Calculator() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-white">
-      <View className="flex-row items-center py-2 px-4 border-b border-gray-200">
+    <SafeAreaView className="flex-1 bg-background">
+      <View className="flex-row items-center py-2 px-4 border-b border-border">
         <Pressable onPress={handlePrevStep} className="p-2">
-          <Feather name="arrow-left" size={24} color="#333" />
+          <Feather name="arrow-left" size={24} color={colors.foreground} />
         </Pressable>
-        <Text className="text-lg font-medium flex-1 text-center mr-8">{STEPS[currentStep].title}</Text>
+        <Text className="text-lg font-medium flex-1 text-center text-foreground mr-8">{STEPS[currentStep].title}</Text>
       </View>
 
       <ScrollView className="flex-1 px-4">
@@ -212,7 +214,7 @@ export default function Calculator() {
             {STEPS.map((step, index) => (
               <View
                 key={step.id}
-                className={`h-1 flex-1 mx-1 rounded-full ${index <= currentStep ? "bg-primary" : "bg-gray-200"}`}
+                className={`h-1 flex-1 mx-1 rounded-full ${index <= currentStep ? "bg-primary" : "bg-muted"}`}
               />
             ))}
           </View>
@@ -233,16 +235,18 @@ interface StepProps {
 function WelcomeStep({ onNext }: StepProps) {
   return (
     <View className="py-6">
-      <Text className="text-3xl font-bold text-center mb-2">Calculadora de Macros</Text>
-      <Text className="text-gray-500 text-center mb-6">Vamos descobrir suas necessidades nutricionais ideais</Text>
+      <Text className="text-3xl font-bold text-center text-foreground mb-2">Calculadora de Macros</Text>
+      <Text className="text-muted-foreground text-center mb-6">
+        Vamos descobrir suas necessidades nutricionais ideais
+      </Text>
 
-      <View className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
-        <Text className="text-lg font-semibold mb-4">Como funciona?</Text>
-        <Text className="text-gray-500 mb-4">
+      <View className="bg-card rounded-xl border border-border p-6 mb-6">
+        <Text className="text-lg font-semibold text-foreground mb-4">Como funciona?</Text>
+        <Text className="text-muted-foreground mb-4">
           Em apenas alguns passos, você receberá recomendações personalizadas de macronutrientes baseadas em seu perfil
           físico e objetivos.
         </Text>
-        <Text className="text-gray-500 mb-4">
+        <Text className="text-muted-foreground mb-4">
           Vamos precisar de algumas informações como idade, peso, altura e nível de atividade física.
         </Text>
         <Button className="w-full my-2" onPress={onNext}>
@@ -250,9 +254,9 @@ function WelcomeStep({ onNext }: StepProps) {
         </Button>
       </View>
 
-      <View className="bg-green-50 rounded-xl p-6">
-        <Text className="text-lg font-semibold text-green-900 mb-2">Por que calculamos macros?</Text>
-        <Text className="text-green-800">
+      <View className="bg-accent rounded-xl p-6">
+        <Text className="text-lg font-semibold text-accent-foreground mb-2">Por que calculamos macros?</Text>
+        <Text className="text-accent-foreground">
           Cada macronutriente tem um papel fundamental na sua saúde e performance. Proteínas ajudam na recuperação
           muscular, carboidratos fornecem energia e gorduras são essenciais para hormônios.
         </Text>
@@ -268,35 +272,39 @@ interface FormStepProps extends StepProps {
 }
 
 function PersonalInfoStep({ formData, updateFormData, onNext, onBack }: FormStepProps) {
+  const { colors } = useTheme();
+
   return (
     <View className="py-6">
-      <Text className="text-2xl font-bold text-center mb-2">Informações Pessoais</Text>
+      <Text className="text-2xl font-bold text-center text-foreground mb-2">Informações Pessoais</Text>
 
-      <Text className="text-gray-500 mb-6 text-center">
+      <Text className="text-muted-foreground mb-6 text-center">
         Vamos iniciar com alguns dados básicos para calcular suas necessidades calóricas.
       </Text>
 
-      <View className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
+      <View className="bg-card rounded-xl border border-border p-6 mb-6">
         {/* Gender Selection */}
         <View className="mb-4">
-          <Text className="font-medium mb-2">Sexo</Text>
+          <Text className="font-medium text-foreground mb-2">Sexo</Text>
           <View className="flex-row">
             <Pressable
               className={`flex-1 py-3 border mr-2 rounded-md items-center ${
-                formData.gender === "male" ? "bg-primary border-primary" : "border-gray-300"
+                formData.gender === "male" ? "bg-primary border-primary" : "border-border bg-card"
               }`}
               onPress={() => updateFormData("gender", "male")}
             >
-              <Text className={formData.gender === "male" ? "text-white font-medium" : "text-gray-800"}>Masculino</Text>
+              <Text className={formData.gender === "male" ? "text-white font-medium" : "text-foreground"}>
+                Masculino
+              </Text>
             </Pressable>
 
             <Pressable
               className={`flex-1 py-3 border ml-2 rounded-md items-center ${
-                formData.gender === "female" ? "bg-primary border-primary" : "border-gray-300"
+                formData.gender === "female" ? "bg-primary border-primary" : "border-border bg-card"
               }`}
               onPress={() => updateFormData("gender", "female")}
             >
-              <Text className={formData.gender === "female" ? "text-white font-medium" : "text-gray-800"}>
+              <Text className={formData.gender === "female" ? "text-white font-medium" : "text-foreground"}>
                 Feminino
               </Text>
             </Pressable>
@@ -305,37 +313,40 @@ function PersonalInfoStep({ formData, updateFormData, onNext, onBack }: FormStep
 
         {/* Age Input */}
         <View className="mb-4">
-          <Text className="font-medium mb-2">Idade (anos)</Text>
+          <Text className="font-medium text-foreground mb-2">Idade (anos)</Text>
           <TextInput
-            className="border border-gray-300 rounded-md px-3 py-2"
+            className="border border-border bg-card text-foreground rounded-md px-3 py-2"
             keyboardType="numeric"
             value={formData.age}
             onChangeText={(text) => updateFormData("age", text)}
             placeholder="Ex: 30"
+            placeholderTextColor={colors.mutedForeground}
           />
         </View>
 
         {/* Weight Input */}
         <View className="mb-4">
-          <Text className="font-medium mb-2">Peso (kg)</Text>
+          <Text className="font-medium text-foreground mb-2">Peso (kg)</Text>
           <TextInput
-            className="border border-gray-300 rounded-md px-3 py-2"
+            className="border border-border bg-card text-foreground rounded-md px-3 py-2"
             keyboardType="numeric"
             value={formData.weight}
             onChangeText={(text) => updateFormData("weight", text)}
             placeholder="Ex: 70"
+            placeholderTextColor={colors.mutedForeground}
           />
         </View>
 
         {/* Height Input */}
         <View className="mb-2">
-          <Text className="font-medium mb-2">Altura (cm)</Text>
+          <Text className="font-medium text-foreground mb-2">Altura (cm)</Text>
           <TextInput
-            className="border border-gray-300 rounded-md px-3 py-2"
+            className="border border-border bg-card text-foreground rounded-md px-3 py-2"
             keyboardType="numeric"
             value={formData.height}
             onChangeText={(text) => updateFormData("height", text)}
             placeholder="Ex: 170"
+            placeholderTextColor={colors.mutedForeground}
           />
         </View>
       </View>
@@ -367,9 +378,9 @@ function ActivityLevelStep({ formData, updateFormData, onNext, onBack }: FormSte
 
   return (
     <View className="py-6">
-      <Text className="text-2xl font-bold text-center mb-2">Nível de Atividade</Text>
+      <Text className="text-2xl font-bold text-center text-foreground mb-2">Nível de Atividade</Text>
 
-      <Text className="text-gray-500 mb-6 text-center">
+      <Text className="text-muted-foreground mb-6 text-center">
         Selecione o nível de atividade física que melhor descreve sua rotina.
       </Text>
 
@@ -378,14 +389,14 @@ function ActivityLevelStep({ formData, updateFormData, onNext, onBack }: FormSte
           <Pressable
             key={level.id}
             className={`mb-3 p-4 border rounded-xl ${
-              formData.activityLevel === level.id ? "bg-green-50 border-primary" : "border-gray-200"
+              formData.activityLevel === level.id ? "bg-primary/10 border-primary" : "border-border bg-card"
             }`}
             onPress={() => updateFormData("activityLevel", level.id)}
           >
-            <Text className={`font-medium ${formData.activityLevel === level.id ? "text-primary" : "text-gray-800"}`}>
+            <Text className={`font-medium ${formData.activityLevel === level.id ? "text-primary" : "text-foreground"}`}>
               {level.title}
             </Text>
-            <Text className="text-gray-500 mt-1">{level.description}</Text>
+            <Text className="text-muted-foreground mt-1">{level.description}</Text>
           </Pressable>
         ))}
       </View>
@@ -411,23 +422,23 @@ function GoalStep({ formData, updateFormData, onNext, onBack }: FormStepProps) {
 
   return (
     <View className="py-6">
-      <Text className="text-2xl font-bold text-center mb-2">Seu Objetivo</Text>
+      <Text className="text-2xl font-bold text-center text-foreground mb-2">Seu Objetivo</Text>
 
-      <Text className="text-gray-500 mb-6 text-center">Qual é o seu principal objetivo de fitness?</Text>
+      <Text className="text-muted-foreground mb-6 text-center">Qual é o seu principal objetivo de fitness?</Text>
 
       <View className="mb-6">
         {goals.map((goal) => (
           <Pressable
             key={goal.id}
             className={`mb-3 p-4 border rounded-xl ${
-              formData.goal === goal.id ? "bg-green-50 border-primary" : "border-gray-200"
+              formData.goal === goal.id ? "bg-primary/10 border-primary" : "border-border bg-card"
             }`}
             onPress={() => updateFormData("goal", goal.id)}
           >
-            <Text className={`font-medium ${formData.goal === goal.id ? "text-primary" : "text-gray-800"}`}>
+            <Text className={`font-medium ${formData.goal === goal.id ? "text-primary" : "text-foreground"}`}>
               {goal.title}
             </Text>
-            <Text className="text-gray-500 mt-1">{goal.description}</Text>
+            <Text className="text-muted-foreground mt-1">{goal.description}</Text>
           </Pressable>
         ))}
       </View>
@@ -480,29 +491,31 @@ function ResultsStep({ formData, onBack }: ResultsStepProps) {
 
   return (
     <View className="py-6">
-      <Text className="text-2xl font-bold text-center mb-2">Seus Resultados</Text>
+      <Text className="text-2xl font-bold text-center text-foreground mb-2">Seus Resultados</Text>
 
-      <Text className="text-gray-500 mb-6 text-center">Aqui estão suas recomendações diárias de macronutrientes.</Text>
+      <Text className="text-muted-foreground mb-6 text-center">
+        Aqui estão suas recomendações diárias de macronutrientes.
+      </Text>
 
       <View className="mb-6">
         {macroItems.map((item, index) => (
-          <View key={index} className="bg-white rounded-xl border border-gray-200 p-4 mb-3">
+          <View key={index} className="bg-card rounded-xl border border-border p-4 mb-3">
             <View className="flex-row justify-between items-center mb-1">
-              <Text className="font-medium">{item.name}</Text>
-              <Text className="font-bold text-lg">
+              <Text className="font-medium text-foreground">{item.name}</Text>
+              <Text className="font-bold text-lg text-foreground">
                 {item.value} {item.unit}
               </Text>
             </View>
-            <View className="h-2 bg-gray-100 rounded-full w-full overflow-hidden">
+            <View className="h-2 bg-muted rounded-full w-full overflow-hidden">
               <View className={`h-full ${item.color} rounded-full w-full`} style={{ width: "100%" }} />
             </View>
           </View>
         ))}
       </View>
 
-      <View className="bg-green-50 rounded-xl p-6 mb-6">
-        <Text className="text-lg font-semibold text-green-900 mb-2">Dica Nutricional</Text>
-        <Text className="text-green-800">
+      <View className="bg-accent rounded-xl p-6 mb-6">
+        <Text className="text-lg font-semibold text-accent-foreground mb-2">Dica Nutricional</Text>
+        <Text className="text-accent-foreground">
           Procure distribuir seus macronutrientes ao longo do dia para manter seus níveis de energia e facilitar a
           recuperação muscular.
         </Text>
