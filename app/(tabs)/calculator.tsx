@@ -1,12 +1,31 @@
-// app/(tabs)/calculator.tsx
+// app/(tabs)/calculator.tsx - updated with types
 import React, { useState } from "react";
 import { Text, View, SafeAreaView, ScrollView, Pressable, TextInput } from "react-native";
 import { useRouter } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import Button from "../components/ui/Button";
 
+// Define types
+type Gender = "male" | "female";
+type ActivityLevel = "sedentary" | "light" | "moderate" | "active" | "extreme";
+type Goal = "lose" | "maintain" | "gain";
+
+interface FormData {
+  gender: Gender;
+  age: string;
+  weight: string;
+  height: string;
+  activityLevel: ActivityLevel;
+  goal: Goal;
+}
+
+interface Step {
+  id: string;
+  title: string;
+}
+
 // Define our steps
-const STEPS = [
+const STEPS: Step[] = [
   { id: "welcome", title: "Bem-vindo" },
   { id: "personal", title: "Dados Pessoais" },
   { id: "activity", title: "Nível de Atividade" },
@@ -15,7 +34,7 @@ const STEPS = [
 ];
 
 // Helper function to calculate BMR using Mifflin-St Jeor formula
-const calculateBMR = (gender, weight, height, age) => {
+const calculateBMR = (gender: Gender, weight: string, height: string, age: string): number => {
   const numWeight = parseFloat(weight);
   const numHeight = parseFloat(height);
   const numAge = parseFloat(age);
@@ -32,8 +51,8 @@ const calculateBMR = (gender, weight, height, age) => {
 };
 
 // Get activity multiplier
-const getActivityMultiplier = (activityLevel) => {
-  const multipliers = {
+const getActivityMultiplier = (activityLevel: ActivityLevel): number => {
+  const multipliers: Record<ActivityLevel, number> = {
     sedentary: 1.2,
     light: 1.375,
     moderate: 1.55,
@@ -45,8 +64,8 @@ const getActivityMultiplier = (activityLevel) => {
 };
 
 // Get goal adjustment
-const getGoalAdjustment = (goal) => {
-  const adjustments = {
+const getGoalAdjustment = (goal: Goal): number => {
+  const adjustments: Record<Goal, number> = {
     lose: 0.8, // 20% caloric deficit
     maintain: 1,
     gain: 1.15, // 15% caloric surplus
@@ -55,9 +74,16 @@ const getGoalAdjustment = (goal) => {
   return adjustments[goal] || 1;
 };
 
+interface MacroResult {
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+}
+
 // Calculate macros based on TDEE
-const calculateMacros = (tdee, goal) => {
-  let proteinPercentage, carbPercentage, fatPercentage;
+const calculateMacros = (tdee: number, goal: Goal): MacroResult => {
+  let proteinPercentage: number, carbPercentage: number, fatPercentage: number;
 
   switch (goal) {
     case "lose":
@@ -103,8 +129,8 @@ const calculateMacros = (tdee, goal) => {
 
 export default function Calculator() {
   const router = useRouter();
-  const [currentStep, setCurrentStep] = useState(0);
-  const [formData, setFormData] = useState({
+  const [currentStep, setCurrentStep] = useState<number>(0);
+  const [formData, setFormData] = useState<FormData>({
     gender: "male",
     age: "",
     weight: "",
@@ -113,13 +139,13 @@ export default function Calculator() {
     goal: "maintain",
   });
 
-  const handleNextStep = () => {
+  const handleNextStep = (): void => {
     if (currentStep < STEPS.length - 1) {
       setCurrentStep(currentStep + 1);
     }
   };
 
-  const handlePrevStep = () => {
+  const handlePrevStep = (): void => {
     if (currentStep > 0) {
       setCurrentStep(currentStep - 1);
     } else {
@@ -127,7 +153,7 @@ export default function Calculator() {
     }
   };
 
-  const updateFormData = (key, value) => {
+  const updateFormData = (key: keyof FormData, value: string | Gender | ActivityLevel | Goal): void => {
     setFormData((prev) => ({ ...prev, [key]: value }));
   };
 
@@ -200,7 +226,11 @@ export default function Calculator() {
 }
 
 // Step Components
-function WelcomeStep({ onNext }) {
+interface StepProps {
+  onNext: () => void;
+}
+
+function WelcomeStep({ onNext }: StepProps) {
   return (
     <View className="py-6">
       <Text className="text-3xl font-bold text-center mb-2">Calculadora de Macros</Text>
@@ -231,7 +261,13 @@ function WelcomeStep({ onNext }) {
   );
 }
 
-function PersonalInfoStep({ formData, updateFormData, onNext, onBack }) {
+interface FormStepProps extends StepProps {
+  formData: FormData;
+  updateFormData: (key: keyof FormData, value: string | Gender | ActivityLevel | Goal) => void;
+  onBack: () => void;
+}
+
+function PersonalInfoStep({ formData, updateFormData, onNext, onBack }: FormStepProps) {
   return (
     <View className="py-6">
       <Text className="text-2xl font-bold text-center mb-2">Informações Pessoais</Text>
@@ -316,8 +352,8 @@ function PersonalInfoStep({ formData, updateFormData, onNext, onBack }) {
   );
 }
 
-function ActivityLevelStep({ formData, updateFormData, onNext, onBack }) {
-  const activityLevels = [
+function ActivityLevelStep({ formData, updateFormData, onNext, onBack }: FormStepProps) {
+  const activityLevels: Array<{ id: ActivityLevel; title: string; description: string }> = [
     { id: "sedentary", title: "Sedentário", description: "Pouco ou nenhum exercício" },
     { id: "light", title: "Levemente Ativo", description: "Exercício leve 1-3 dias por semana" },
     { id: "moderate", title: "Moderadamente Ativo", description: "Exercício moderado 3-5 dias por semana" },
@@ -366,8 +402,8 @@ function ActivityLevelStep({ formData, updateFormData, onNext, onBack }) {
   );
 }
 
-function GoalStep({ formData, updateFormData, onNext, onBack }) {
-  const goals = [
+function GoalStep({ formData, updateFormData, onNext, onBack }: FormStepProps) {
+  const goals: Array<{ id: Goal; title: string; description: string }> = [
     { id: "lose", title: "Perder Peso", description: "Déficit calórico para perda de gordura" },
     { id: "maintain", title: "Manter Peso", description: "Manutenção do peso atual" },
     { id: "gain", title: "Ganhar Massa", description: "Superávit calórico para ganho muscular" },
@@ -408,7 +444,19 @@ function GoalStep({ formData, updateFormData, onNext, onBack }) {
   );
 }
 
-function ResultsStep({ formData, onBack }) {
+interface ResultsStepProps {
+  formData: FormData;
+  onBack: () => void;
+}
+
+interface MacroItem {
+  name: string;
+  value: number;
+  unit: string;
+  color: string;
+}
+
+function ResultsStep({ formData, onBack }: ResultsStepProps) {
   // Calculate BMR
   const bmr = calculateBMR(formData.gender, formData.weight, formData.height, formData.age);
 
@@ -423,7 +471,7 @@ function ResultsStep({ formData, onBack }) {
   // Calculate macros
   const macros = calculateMacros(adjustedTdee, formData.goal);
 
-  const macroItems = [
+  const macroItems: MacroItem[] = [
     { name: "Calorias", value: macros.calories, unit: "kcal", color: "bg-primary" },
     { name: "Proteínas", value: macros.protein, unit: "g", color: "bg-blue-500" },
     { name: "Carboidratos", value: macros.carbs, unit: "g", color: "bg-yellow-500" },

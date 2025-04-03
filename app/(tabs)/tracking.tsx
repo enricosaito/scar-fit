@@ -5,10 +5,10 @@ import { Feather } from "@expo/vector-icons";
 import Button from "../components/ui/Button";
 
 export default function Tracking() {
-  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
 
   // Format date as "Segunda, 15 de Abril" in Portuguese
-  const formatDate = (date) => {
+  const formatDate = (date: Date): string => {
     const days = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
     const months = [
       "Janeiro",
@@ -33,14 +33,14 @@ export default function Tracking() {
   };
 
   // Navigate to previous day
-  const previousDay = () => {
+  const previousDay = (): void => {
     const newDate = new Date(selectedDate);
     newDate.setDate(selectedDate.getDate() - 1);
     setSelectedDate(newDate);
   };
 
   // Navigate to next day
-  const nextDay = () => {
+  const nextDay = (): void => {
     const newDate = new Date(selectedDate);
     newDate.setDate(selectedDate.getDate() + 1);
     setSelectedDate(newDate);
