@@ -1,34 +1,33 @@
 // app/theme/colors.ts
 export const colors = {
   light: {
-    background: "#f7fbf9", // hsl(140 50% 98%)
-    foreground: "#151915", // hsl(140 10% 10%)
+    background: "#f8f9fa",
+    foreground: "#151a20",
     card: "#ffffff",
-    primary: "#1eb866", // hsl(142 70% 45%)
+    primary: "#2563eb", // Changed to blue
     primaryForeground: "#ffffff",
-    secondary: "#edf4ee", // hsl(140 15% 94%)
-    secondaryForeground: "#233823",
-    muted: "#f1f5f2", // hsl(140 10% 96%)
-    mutedForeground: "#6a706b",
-    accent: "#e6f4ea", // hsl(142 35% 94%)
-    accentForeground: "#1f4928",
-    border: "#dfe5df",
+    secondary: "#edf2ff", // Adjusted for blue theme
+    secondaryForeground: "#1e293b",
+    muted: "#f1f5f9",
+    mutedForeground: "#64748b",
+    accent: "#dbeafe", // Light blue accent
+    accentForeground: "#1e40af",
+    border: "#e2e8f0",
   },
   dark: {
-    background: "#131913", // hsl(140 15% 10%)
-    foreground: "#f8faf8", // hsl(0 0% 98%)
-    card: "#181d18", // hsl(140 15% 12%)
-    primary: "#2ac46e", // hsl(142 60% 50%)
+    background: "#0f172a", // Dark blue background
+    foreground: "#f8fafc",
+    card: "#1e293b",
+    primary: "#3b82f6", // Blue primary color
     primaryForeground: "#ffffff",
-    secondary: "#1e231e", // hsl(140 10% 20%)
-    secondaryForeground: "#f8faf8",
-    muted: "#1c211c", // hsl(140 15% 18%)
-    mutedForeground: "#9ca29d",
-    accent: "#1c291e", // hsl(142 15% 25%)
-    accentForeground: "#f8faf8",
-    border: "#1c291e",
+    secondary: "#334155",
+    secondaryForeground: "#f8fafc",
+    muted: "#1e293b",
+    mutedForeground: "#94a3b8",
+    accent: "#1e40af",
+    accentForeground: "#f8fafc",
+    border: "#334155",
   },
 };
 
-// Add a default export
 export default colors;
