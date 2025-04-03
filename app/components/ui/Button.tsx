@@ -25,9 +25,9 @@ export default function Button({
       case "default":
         return "bg-primary";
       case "outline":
-        return "bg-transparent border border-gray-300";
+        return "bg-transparent border border-border";
       case "secondary":
-        return "bg-gray-100";
+        return "bg-secondary";
       case "ghost":
         return "bg-transparent";
       default:
@@ -39,15 +39,15 @@ export default function Button({
   const getTextStyle = () => {
     switch (variant) {
       case "default":
-        return "text-white";
+        return "text-primary-foreground";
       case "outline":
-        return "text-gray-900";
+        return "text-foreground";
       case "secondary":
-        return "text-gray-900";
+        return "text-secondary-foreground";
       case "ghost":
-        return "text-gray-900";
+        return "text-foreground";
       default:
-        return "text-white";
+        return "text-primary-foreground";
     }
   };
 
