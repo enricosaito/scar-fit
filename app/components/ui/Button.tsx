@@ -1,7 +1,6 @@
 // app/components/ui/Button.tsx
 import React from "react";
-import { Text, Pressable, PressableProps, View } from "react-native";
-import { cn } from "@/app/lib/utils";
+import { Text, Pressable, PressableProps } from "react-native";
 
 interface ButtonProps extends PressableProps {
   variant?: "default" | "outline" | "secondary" | "ghost";
@@ -20,35 +19,62 @@ export default function Button({
   disabled,
   ...props
 }: ButtonProps) {
-  const baseStyles = "flex flex-row items-center justify-center rounded-md";
-
-  const variantStyles = {
-    default: "bg-primary",
-    outline: "border border-border bg-transparent",
-    secondary: "bg-secondary",
-    ghost: "bg-transparent",
+  // Get variant styles
+  const getButtonStyle = () => {
+    switch (variant) {
+      case "default":
+        return "bg-primary";
+      case "outline":
+        return "bg-transparent border border-gray-300";
+      case "secondary":
+        return "bg-gray-100";
+      case "ghost":
+        return "bg-transparent";
+      default:
+        return "bg-primary";
+    }
   };
 
-  const sizeStyles = {
-    default: "px-4 py-2",
-    sm: "px-2 py-1 text-sm",
-    lg: "px-6 py-3 text-lg",
+  // Get text styles
+  const getTextStyle = () => {
+    switch (variant) {
+      case "default":
+        return "text-white";
+      case "outline":
+        return "text-gray-900";
+      case "secondary":
+        return "text-gray-900";
+      case "ghost":
+        return "text-gray-900";
+      default:
+        return "text-white";
+    }
   };
 
-  const textStyles = {
-    default: "text-primary-foreground font-medium",
-    outline: "text-foreground font-medium",
-    secondary: "text-secondary-foreground font-medium",
-    ghost: "text-foreground font-medium",
+  // Get size styles
+  const getSizeStyle = () => {
+    switch (size) {
+      case "default":
+        return "py-2 px-4";
+      case "sm":
+        return "py-1 px-2";
+      case "lg":
+        return "py-3 px-6";
+      default:
+        return "py-2 px-4";
+    }
   };
 
   return (
     <Pressable
       disabled={disabled}
-      className={cn(baseStyles, variantStyles[variant], sizeStyles[size], disabled && "opacity-50", className)}
+      className={`flex flex-row items-center justify-center rounded-md 
+        ${getButtonStyle()} ${getSizeStyle()} 
+        ${disabled ? "opacity-50" : "opacity-100"} 
+        ${className || ""}`}
       {...props}
     >
-      <Text className={cn(textStyles[variant], textClassName)}>{children}</Text>
+      <Text className={`font-medium ${getTextStyle()} ${textClassName || ""}`}>{children}</Text>
     </Pressable>
   );
 }

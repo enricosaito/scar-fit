@@ -14,8 +14,16 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: "Calculadora",
+          title: "Início",
           tabBarIcon: ({ color }) => <Feather name="home" size={24} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="calculator"
+        options={{
+          title: "Calculadora",
+          tabBarIcon: ({ color }) => <Feather name="sliders" size={24} color={color} />,
+          headerShown: false, // Hide header for calculator
         }}
       />
       <Tabs.Screen
@@ -23,6 +31,13 @@ export default function TabLayout() {
         options={{
           title: "Receitas",
           tabBarIcon: ({ color }) => <Feather name="book" size={24} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="tracking"
+        options={{
+          title: "Acompanhamento",
+          tabBarIcon: ({ color }) => <Feather name="bar-chart-2" size={24} color={color} />,
         }}
       />
     </Tabs>
