@@ -44,10 +44,11 @@ const calculateBMR = (gender: Gender, weight: string, height: string, age: strin
     return 0;
   }
 
+  // Mifflin-St Jeor formula
   if (gender === "male") {
-    return 10 * numWeight + 6.25 * numHeight - 5 * numAge + 5;
+    return (10 * numWeight) + (6.25 * numHeight) - (5 * numAge) + 5;
   } else {
-    return 10 * numWeight + 6.25 * numHeight - 5 * numAge - 161;
+    return (10 * numWeight) + (6.25 * numHeight) - (5 * numAge) - 161;
   }
 };
 
@@ -82,44 +83,46 @@ interface MacroResult {
   fat: number;
 }
 
-// Calculate macros based on TDEE
-const calculateMacros = (tdee: number, goal: Goal): MacroResult => {
-  let proteinPercentage: number, carbPercentage: number, fatPercentage: number;
-
+// Calculate macros based on TDEE and weight
+const calculateMacros = (tdee: number, weight: string, goal: Goal): MacroResult => {
+  const numWeight = parseFloat(weight);
+  
+  if (isNaN(numWeight)) {
+    return { calories: 0, protein: 0, carbs: 0, fat: 0 };
+  }
+  
+  // Calculate protein (2.2g per kg)
+  const proteinGrams = Math.round(numWeight * 2.2);
+  
+  // Calculate protein calories (4 calories per gram)
+  const proteinCalories = proteinGrams * 4;
+  
+  let fatPercentage: number, remainingCalories: number;
+  
   switch (goal) {
     case "lose":
-      proteinPercentage = 0.4; // 40% protein
-      fatPercentage = 0.35; // 35% fat
-      carbPercentage = 0.25; // 25% carbs
+      fatPercentage = 0.3; // 30% fat for weight loss (helps with satiety)
       break;
     case "maintain":
-      proteinPercentage = 0.3; // 30% protein
-      fatPercentage = 0.3; // 30% fat
-      carbPercentage = 0.4; // 40% carbs
+      fatPercentage = 0.25; // 25% fat
       break;
     case "gain":
-      proteinPercentage = 0.3; // 30% protein
-      fatPercentage = 0.25; // 25% fat
-      carbPercentage = 0.45; // 45% carbs
+      fatPercentage = 0.2; // 20% fat (more carbs for energy)
       break;
     default:
-      proteinPercentage = 0.3;
-      fatPercentage = 0.3;
-      carbPercentage = 0.4;
+      fatPercentage = 0.25;
   }
-
-  // Calculate grams
-  // Protein: 4 calories per gram
-  // Carbs: 4 calories per gram
-  // Fat: 9 calories per gram
-  const proteinCalories = tdee * proteinPercentage;
-  const carbCalories = tdee * carbPercentage;
+  
+  // Calculate fat calories and grams
   const fatCalories = tdee * fatPercentage;
-
-  const proteinGrams = Math.round(proteinCalories / 4);
-  const carbGrams = Math.round(carbCalories / 4);
   const fatGrams = Math.round(fatCalories / 9);
-
+  
+  // Remaining calories for carbs
+  remainingCalories = tdee - proteinCalories - fatCalories;
+  
+  // Calculate carbs (4 calories per gram)
+  const carbGrams = Math.round(remainingCalories / 4);
+  
   return {
     calories: Math.round(tdee),
     protein: proteinGrams,
@@ -257,8 +260,7 @@ function WelcomeStep({ onNext }: StepProps) {
       <View className="bg-accent rounded-xl p-6">
         <Text className="text-lg font-semibold text-accent-foreground mb-2">Por que calculamos macros?</Text>
         <Text className="text-accent-foreground">
-          Cada macronutriente tem um papel fundamental na sua saúde e performance. Proteínas ajudam na recuperação
-          muscular, carboidratos fornecem energia e gorduras são essenciais para hormônios.
+          Nossa calculadora usa a fórmula Mifflin-St Jeor para calcular seu metabolismo basal com precisão. Também recomendamos 2,2g de proteína por kg de peso corporal para otimizar a recuperação muscular e promover a saciedade.
         </Text>
       </View>
     </View>
@@ -465,6 +467,7 @@ interface MacroItem {
   value: number;
   unit: string;
   color: string;
+  percentage?: number;
 }
 
 function ResultsStep({ formData, onBack }: ResultsStepProps) {
@@ -480,21 +483,32 @@ function ResultsStep({ formData, onBack }: ResultsStepProps) {
   const adjustedTdee = tdee * goalAdjustment;
 
   // Calculate macros
-  const macros = calculateMacros(adjustedTdee, formData.goal);
+  const macros = calculateMacros(adjustedTdee, formData.weight, formData.goal);
+
+  // Calculate percentages for display
+  const proteinPercentage = Math.round((macros.protein * 4 / macros.calories) * 100);
+  const carbsPercentage = Math.round((macros.carbs * 4 / macros.calories) * 100);
+  const fatPercentage = Math.round((macros.fat * 9 / macros.calories) * 100);
 
   const macroItems: MacroItem[] = [
     { name: "Calorias", value: macros.calories, unit: "kcal", color: "bg-primary" },
-    { name: "Proteínas", value: macros.protein, unit: "g", color: "bg-blue-500" },
-    { name: "Carboidratos", value: macros.carbs, unit: "g", color: "bg-yellow-500" },
-    { name: "Gorduras", value: macros.fat, unit: "g", color: "bg-red-500" },
+    { name: "Proteínas", value: macros.protein, unit: "g", color: "bg-blue-500", percentage: proteinPercentage },
+    { name: "Carboidratos", value: macros.carbs, unit: "g", color: "bg-yellow-500", percentage: carbsPercentage },
+    { name: "Gorduras", value: macros.fat, unit: "g", color: "bg-red-500", percentage: fatPercentage },
   ];
+
+  const goalText = {
+    lose: "perda de peso",
+    maintain: "manutenção",
+    gain: "ganho de massa muscular"
+  }[formData.goal];
 
   return (
     <View className="py-6">
       <Text className="text-2xl font-bold text-center text-foreground mb-2">Seus Resultados</Text>
 
       <Text className="text-muted-foreground mb-6 text-center">
-        Aqui estão suas recomendações diárias de macronutrientes.
+        Aqui estão suas recomendações diárias de macronutrientes para {goalText}.
       </Text>
 
       <View className="mb-6">
@@ -502,9 +516,16 @@ function ResultsStep({ formData, onBack }: ResultsStepProps) {
           <View key={index} className="bg-card rounded-xl border border-border p-4 mb-3">
             <View className="flex-row justify-between items-center mb-1">
               <Text className="font-medium text-foreground">{item.name}</Text>
-              <Text className="font-bold text-lg text-foreground">
-                {item.value} {item.unit}
-              </Text>
+              <View className="flex-row items-center">
+                <Text className="font-bold text-lg text-foreground mr-1">
+                  {item.value} {item.unit}
+                </Text>
+                {item.percentage && (
+                  <Text className="text-xs text-muted-foreground">
+                    ({item.percentage}%)
+                  </Text>
+                )}
+              </View>
             </View>
             <View className="h-2 bg-muted rounded-full w-full overflow-hidden">
               <View className={`h-full ${item.color} rounded-full w-full`} style={{ width: "100%" }} />
@@ -513,11 +534,30 @@ function ResultsStep({ formData, onBack }: ResultsStepProps) {
         ))}
       </View>
 
+      <View className="bg-card rounded-xl border border-border p-4 mb-6">
+        <Text className="font-medium text-foreground mb-3">Detalhes do Cálculo</Text>
+        <View className="flex-row justify-between mb-1">
+          <Text className="text-muted-foreground">Metabolismo Basal (BMR)</Text>
+          <Text className="text-foreground">{Math.round(bmr)} kcal</Text>
+        </View>
+        <View className="flex-row justify-between mb-1">
+          <Text className="text-muted-foreground">Fator de Atividade</Text>
+          <Text className="text-foreground">x {activityMultiplier.toFixed(2)}</Text>
+        </View>
+        <View className="flex-row justify-between mb-1">
+          <Text className="text-muted-foreground">TDEE</Text>
+          <Text className="text-foreground">{Math.round(tdee)} kcal</Text>
+        </View>
+        <View className="flex-row justify-between">
+          <Text className="text-muted-foreground">Ajuste para {goalText}</Text>
+          <Text className="text-foreground">x {goalAdjustment.toFixed(2)}</Text>
+        </View>
+      </View>
+
       <View className="bg-accent rounded-xl p-6 mb-6">
         <Text className="text-lg font-semibold text-accent-foreground mb-2">Dica Nutricional</Text>
         <Text className="text-accent-foreground">
-          Procure distribuir seus macronutrientes ao longo do dia para manter seus níveis de energia e facilitar a
-          recuperação muscular.
+          Sua recomendação de proteína ({macros.protein}g, ou 2,2g por kg de peso) é ideal para otimizar a recuperação muscular e promover a saciedade. Distribua suas proteínas ao longo do dia para melhores resultados.
         </Text>
       </View>
 
