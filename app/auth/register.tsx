@@ -1,11 +1,12 @@
-// app/auth/register.tsx
+// app/auth/register.tsx (updated)
 import React, { useState } from "react";
-import { Text, View, SafeAreaView, TextInput, TouchableOpacity, ActivityIndicator, ScrollView } from "react-native";
+import { Text, View, SafeAreaView, TouchableOpacity, ActivityIndicator, ScrollView } from "react-native";
 import { useRouter } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
 import Button from "../components/ui/Button";
+import FormField from "../components/ui/FormField";
 
 export default function Register() {
   const router = useRouter();
@@ -16,24 +17,46 @@ export default function Register() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  
+  const validate = () => {
+    const newErrors: Record<string, string> = {};
+    let isValid = true;
+    
+    if (!email) {
+      newErrors.email = "O email é obrigatório";
+      isValid = false;
+    } else if (!/\S+@\S+\.\S+/.test(email)) {
+      newErrors.email = "Formato de email inválido";
+      isValid = false;
+    }
+    
+    if (!password) {
+      newErrors.password = "A senha é obrigatória";
+      isValid = false;
+    } else if (password.length < 6) {
+      newErrors.password = "A senha deve ter pelo menos 6 caracteres";
+      isValid = false;
+    }
+    
+    if (!confirmPassword) {
+      newErrors.confirmPassword = "Confirme sua senha";
+      isValid = false;
+    } else if (password !== confirmPassword) {
+      newErrors.confirmPassword = "As senhas não coincidem";
+      isValid = false;
+    }
+    
+    setErrors(newErrors);
+    return isValid;
+  };
   
   const handleRegister = async () => {
     // Reset error message
     setErrorMessage("");
     
     // Validation
-    if (!email || !password || !confirmPassword) {
-      setErrorMessage("Por favor, preencha todos os campos.");
-      return;
-    }
-    
-    if (password !== confirmPassword) {
-      setErrorMessage("As senhas não coincidem.");
-      return;
-    }
-    
-    if (password.length < 6) {
-      setErrorMessage("A senha deve ter pelo menos 6 caracteres.");
+    if (!validate()) {
       return;
     }
     
@@ -43,7 +66,7 @@ export default function Register() {
       if (error) {
         setErrorMessage(error.message || "Erro ao criar conta. Tente novamente.");
       } else {
-        // On success, show confirmation message or redirect
+        // On success, show confirmation message and redirect
         router.replace("/auth/login");
       }
     } catch (error: any) {
@@ -70,42 +93,33 @@ export default function Register() {
           </View>
         ) : null}
         
-        <View className="mb-4">
-          <Text className="font-medium text-foreground mb-2">Email</Text>
-          <TextInput
-            className="border border-border bg-card text-foreground rounded-md px-3 py-2"
-            placeholder="seu@email.com"
-            placeholderTextColor={colors.mutedForeground}
-            keyboardType="email-address"
-            autoCapitalize="none"
-            value={email}
-            onChangeText={setEmail}
-          />
-        </View>
+        <FormField
+          label="Email"
+          value={email}
+          onChangeText={setEmail}
+          placeholder="seu@email.com"
+          keyboardType="email-address"
+          autoCapitalize="none"
+          error={errors.email}
+        />
         
-        <View className="mb-4">
-          <Text className="font-medium text-foreground mb-2">Senha</Text>
-          <TextInput
-            className="border border-border bg-card text-foreground rounded-md px-3 py-2"
-            placeholder="Crie uma senha"
-            placeholderTextColor={colors.mutedForeground}
-            secureTextEntry
-            value={password}
-            onChangeText={setPassword}
-          />
-        </View>
+        <FormField
+          label="Senha"
+          value={password}
+          onChangeText={setPassword}
+          placeholder="Crie uma senha"
+          secureTextEntry
+          error={errors.password}
+        />
         
-        <View className="mb-6">
-          <Text className="font-medium text-foreground mb-2">Confirmar Senha</Text>
-          <TextInput
-            className="border border-border bg-card text-foreground rounded-md px-3 py-2"
-            placeholder="Confirme sua senha"
-            placeholderTextColor={colors.mutedForeground}
-            secureTextEntry
-            value={confirmPassword}
-            onChangeText={setConfirmPassword}
-          />
-        </View>
+        <FormField
+          label="Confirmar Senha"
+          value={confirmPassword}
+          onChangeText={setConfirmPassword}
+          placeholder="Confirme sua senha"
+          secureTextEntry
+          error={errors.confirmPassword}
+        />
         
         <Button
           className="mb-6"
