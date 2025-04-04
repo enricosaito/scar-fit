@@ -49,9 +49,12 @@ export default function Profile() {
         </Text>
         <Text className="text-muted-foreground mb-6">{user?.email}</Text>
 
-        <Pressable className="w-full bg-primary py-2 px-4 rounded-lg mb-2">
-          <Text className="text-white text-center font-medium">Editar Perfil</Text>
-        </Pressable>
+        <Pressable 
+  className="w-full bg-primary py-2 px-4 rounded-lg mb-2" 
+  onPress={() => router.push("/profile/edit")}
+>
+  <Text className="text-white text-center font-medium">Editar Perfil</Text>
+</Pressable>
         
         <Pressable className="w-full bg-transparent border border-border py-2 px-4 rounded-lg" onPress={handleLogout}>
           <Text className="text-foreground text-center font-medium">Sair</Text>
