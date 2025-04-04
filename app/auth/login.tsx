@@ -1,11 +1,12 @@
-// app/auth/login.tsx
+// app/auth/login.tsx (updated)
 import React, { useState } from "react";
-import { Text, View, SafeAreaView, TextInput, TouchableOpacity, ActivityIndicator, ScrollView } from "react-native";
+import { Text, View, SafeAreaView, TouchableOpacity, ActivityIndicator, ScrollView } from "react-native";
 import { useRouter } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
 import Button from "../components/ui/Button";
+import FormField from "../components/ui/FormField";
 
 export default function Login() {
   const router = useRouter();
@@ -55,30 +56,22 @@ export default function Login() {
           </View>
         ) : null}
         
-        <View className="mb-4">
-          <Text className="font-medium text-foreground mb-2">Email</Text>
-          <TextInput
-            className="border border-border bg-card text-foreground rounded-md px-3 py-2"
-            placeholder="seu@email.com"
-            placeholderTextColor={colors.mutedForeground}
-            keyboardType="email-address"
-            autoCapitalize="none"
-            value={email}
-            onChangeText={setEmail}
-          />
-        </View>
+        <FormField
+          label="Email"
+          value={email}
+          onChangeText={setEmail}
+          placeholder="seu@email.com"
+          keyboardType="email-address"
+          autoCapitalize="none"
+        />
         
-        <View className="mb-6">
-          <Text className="font-medium text-foreground mb-2">Senha</Text>
-          <TextInput
-            className="border border-border bg-card text-foreground rounded-md px-3 py-2"
-            placeholder="Sua senha"
-            placeholderTextColor={colors.mutedForeground}
-            secureTextEntry
-            value={password}
-            onChangeText={setPassword}
-          />
-        </View>
+        <FormField
+          label="Senha"
+          value={password}
+          onChangeText={setPassword}
+          placeholder="Sua senha"
+          secureTextEntry
+        />
         
         <Button
           className="mb-4"
