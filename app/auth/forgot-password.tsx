@@ -1,11 +1,12 @@
-// app/auth/forgot-password.tsx
+// app/auth/forgot-password.tsx (updated)
 import React, { useState } from "react";
-import { Text, View, SafeAreaView, TextInput, TouchableOpacity, ActivityIndicator, ScrollView } from "react-native";
+import { Text, View, SafeAreaView, TouchableOpacity, ActivityIndicator, ScrollView } from "react-native";
 import { useRouter } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import { supabase } from "../lib/supabase";
 import { useTheme } from "../context/ThemeContext";
 import Button from "../components/ui/Button";
+import FormField from "../components/ui/FormField";
 
 export default function ForgotPassword() {
   const router = useRouter();
@@ -73,18 +74,14 @@ export default function ForgotPassword() {
             </View>
           ) : null}
           
-          <View className="mb-6">
-            <Text className="font-medium text-foreground mb-2">Email</Text>
-            <TextInput
-              className="border border-border bg-card text-foreground rounded-md px-3 py-2"
-              placeholder="seu@email.com"
-              placeholderTextColor={colors.mutedForeground}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              value={email}
-              onChangeText={setEmail}
-            />
-          </View>
+          <FormField
+            label="Email"
+            value={email}
+            onChangeText={setEmail}
+            placeholder="seu@email.com"
+            keyboardType="email-address"
+            autoCapitalize="none"
+          />
           
           <Button
             className="mb-6"
