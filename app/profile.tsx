@@ -1,4 +1,5 @@
-// app/profile.tsx
+// app/profile.tsx - Fix duplicate logout buttons
+
 import React from "react";
 import { Text, View, SafeAreaView, Pressable, Alert } from "react-native";
 import { useRouter } from "expo-router";
@@ -44,32 +45,21 @@ export default function Profile() {
           <Feather name="user" size={40} color={colors.primary} />
         </View>
 
-        <Text className="text-2xl font-bold text-foreground mb-1">
-          {user?.user_metadata?.name || 'Usuário'}
-        </Text>
+        <Text className="text-2xl font-bold text-foreground mb-1">{user?.user_metadata?.name || "Usuário"}</Text>
         <Text className="text-muted-foreground mb-6">{user?.email}</Text>
 
-        <Pressable 
-          className="w-full bg-primary py-2 px-4 rounded-lg mb-2" 
-          onPress={() => router.push("/profile/edit")}
-        >
+        <Pressable className="w-full bg-primary py-2 px-4 rounded-lg mb-2" onPress={() => router.push("/profile/edit")}>
           <Text className="text-white text-center font-medium">Editar Perfil</Text>
         </Pressable>
 
-        <Pressable 
-          className="w-full bg-transparent border border-border py-2 px-4 rounded-lg mb-4" 
+        <Pressable
+          className="w-full bg-transparent border border-border py-2 px-4 rounded-lg mb-4"
           onPress={() => router.push("/profile/password")}
         >
           <Text className="text-foreground text-center font-medium">Alterar Senha</Text>
         </Pressable>
 
-        <Pressable 
-          className="w-full bg-transparent border border-border py-2 px-4 rounded-lg" 
-          onPress={handleLogout}
-        >
-          <Text className="text-foreground text-center font-medium">Sair</Text>
-        </Pressable>
-        
+        {/* Keep only one logout button */}
         <Pressable className="w-full bg-transparent border border-border py-2 px-4 rounded-lg" onPress={handleLogout}>
           <Text className="text-foreground text-center font-medium">Sair</Text>
         </Pressable>
