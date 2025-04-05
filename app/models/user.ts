@@ -1,5 +1,5 @@
 // app/models/user.ts
-import { supabase } from '../lib/supabase';
+import { supabase } from "../lib/supabase";
 
 export interface UserProfile {
   id: string;
@@ -7,7 +7,7 @@ export interface UserProfile {
   full_name?: string;
   avatar_url?: string;
   created_at: string;
-  plan: 'free' | 'premium';
+  plan: "free" | "premium";
   macros?: {
     calories: number;
     protein: number;
@@ -18,12 +18,12 @@ export interface UserProfile {
 
 export async function createUserProfile(userId: string, email: string) {
   const { data, error } = await supabase
-    .from('profiles')
+    .from("profiles")
     .insert([
       {
         id: userId,
         email,
-        plan: 'free',
+        plan: "free",
         created_at: new Date().toISOString(),
       },
     ])
@@ -37,14 +37,10 @@ export async function createUserProfile(userId: string, email: string) {
 }
 
 export async function getUserProfile(userId: string) {
-  const { data, error } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', userId)
-    .single();
+  const { data, error } = await supabase.from("profiles").select("*").eq("id", userId).single();
 
   if (error) {
-    console.error('Error fetching user profile:', error);
+    console.error("Error fetching user profile:", error);
     return null;
   }
 
@@ -52,11 +48,7 @@ export async function getUserProfile(userId: string) {
 }
 
 export async function updateUserProfile(userId: string, updates: Partial<UserProfile>) {
-  const { data, error } = await supabase
-    .from('profiles')
-    .update(updates)
-    .eq('id', userId)
-    .select();
+  const { data, error } = await supabase.from("profiles").update(updates).eq("id", userId).select();
 
   if (error) {
     throw error;
@@ -65,6 +57,13 @@ export async function updateUserProfile(userId: string, updates: Partial<UserPro
   return data && data.length > 0 ? data[0] : null;
 }
 
-export async function updateUserMacros(userId: string, macros: UserProfile['macros']) {
+export async function updateUserMacros(userId: string, macros: UserProfile["macros"]) {
   return updateUserProfile(userId, { macros });
 }
+
+export default {
+  createUserProfile,
+  getUserProfile,
+  updateUserProfile,
+  updateUserMacros,
+};
