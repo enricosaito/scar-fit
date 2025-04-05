@@ -1,13 +1,34 @@
 // app/profile.tsx
 import React from "react";
-import { Text, View, SafeAreaView, Pressable, Image } from "react-native";
+import { Text, View, SafeAreaView, Pressable, Alert } from "react-native";
 import { useRouter } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import { useTheme } from "./context/ThemeContext";
+import { useAuth } from "./context/AuthContext";
 
 export default function Profile() {
   const router = useRouter();
   const { colors } = useTheme();
+  const { user, signOut } = useAuth();
+
+  const handleLogout = () => {
+    Alert.alert(
+      "Sair",
+      "Tem certeza que deseja sair?",
+      [
+        {
+          text: "Cancelar",
+          style: "cancel",
+        },
+        {
+          text: "Sim, sair",
+          style: "destructive",
+          onPress: signOut,
+        },
+      ],
+      { cancelable: true }
+    );
+  };
 
   return (
     <SafeAreaView className="flex-1 bg-background">
@@ -23,12 +44,35 @@ export default function Profile() {
           <Feather name="user" size={40} color={colors.primary} />
         </View>
 
-        <Text className="text-2xl font-bold text-foreground mb-1">Usuário</Text>
-        <Text className="text-muted-foreground mb-6">usuario@email.com</Text>
+        <Text className="text-2xl font-bold text-foreground mb-1">
+          {user?.user_metadata?.name || 'Usuário'}
+        </Text>
+        <Text className="text-muted-foreground mb-6">{user?.email}</Text>
 
-        <View className="w-full bg-primary py-2 px-4 rounded-lg">
+        <Pressable 
+          className="w-full bg-primary py-2 px-4 rounded-lg mb-2" 
+          onPress={() => router.push("/profile/edit")}
+        >
           <Text className="text-white text-center font-medium">Editar Perfil</Text>
-        </View>
+        </Pressable>
+
+        <Pressable 
+          className="w-full bg-transparent border border-border py-2 px-4 rounded-lg mb-4" 
+          onPress={() => router.push("/profile/password")}
+        >
+          <Text className="text-foreground text-center font-medium">Alterar Senha</Text>
+        </Pressable>
+
+        <Pressable 
+          className="w-full bg-transparent border border-border py-2 px-4 rounded-lg" 
+          onPress={handleLogout}
+        >
+          <Text className="text-foreground text-center font-medium">Sair</Text>
+        </Pressable>
+        
+        <Pressable className="w-full bg-transparent border border-border py-2 px-4 rounded-lg" onPress={handleLogout}>
+          <Text className="text-foreground text-center font-medium">Sair</Text>
+        </Pressable>
       </View>
 
       <View className="p-6">
