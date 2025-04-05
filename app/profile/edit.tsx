@@ -1,4 +1,5 @@
-// app/profile/edit.tsx
+// app/profile/edit.tsx - Improve profile update functionality
+
 import React, { useState, useEffect } from "react";
 import { Text, View, SafeAreaView, TextInput, Pressable, ActivityIndicator, ScrollView, Alert } from "react-native";
 import { useRouter } from "expo-router";
@@ -6,39 +7,55 @@ import { Feather } from "@expo/vector-icons";
 import { useTheme } from "../context/ThemeContext";
 import { useAuth } from "../context/AuthContext";
 import { updateUserProfile } from "../models/user";
+import { supabase } from "../lib/supabase";
 import Button from "../components/ui/Button";
 
 export default function ProfileEdit() {
   const router = useRouter();
   const { colors } = useTheme();
   const { user, userProfile, refreshProfile } = useAuth();
-  
+
   const [fullName, setFullName] = useState("");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [isError, setIsError] = useState(false);
-  
+
   useEffect(() => {
     if (userProfile) {
       setFullName(userProfile.full_name || "");
     }
   }, [userProfile]);
-  
+
   const handleSave = async () => {
     if (!user) return;
-    
+
     setLoading(true);
     setMessage("");
     setIsError(false);
-    
+
     try {
+      // Update both user metadata and the user profile
+      // 1. Update metadata first
+      const { error: metadataError } = await supabase.auth.updateUser({
+        data: { name: fullName },
+      });
+
+      if (metadataError) {
+        throw metadataError;
+      }
+
+      // 2. Update profile in the database
       await updateUserProfile(user.id, { full_name: fullName });
+
+      // 3. Refresh user data to reflect changes
       await refreshProfile();
-      
+
       setMessage("Perfil atualizado com sucesso!");
+
+      // Show success message before navigating back
       setTimeout(() => {
         router.back();
-      }, 1500);
+      }, 1000);
     } catch (error: any) {
       console.error("Error updating profile:", error);
       setMessage(error.message || "Erro ao atualizar perfil");
@@ -47,7 +64,7 @@ export default function ProfileEdit() {
       setLoading(false);
     }
   };
-  
+
   return (
     <SafeAreaView className="flex-1 bg-background">
       <View className="flex-row items-center p-4 border-b border-border">
@@ -96,16 +113,10 @@ export default function ProfileEdit() {
             editable={false}
             placeholderTextColor={colors.mutedForeground}
           />
-          <Text className="text-xs text-muted-foreground mt-1">
-            O email não pode ser alterado.
-          </Text>
+          <Text className="text-xs text-muted-foreground mt-1">O email não pode ser alterado.</Text>
         </View>
 
-        <Button
-          className="mt-4"
-          onPress={handleSave}
-          disabled={loading}
-        >
+        <Button className="mt-4" onPress={handleSave} disabled={loading}>
           {loading ? <ActivityIndicator size="small" color="white" /> : "Salvar alterações"}
         </Button>
       </ScrollView>
