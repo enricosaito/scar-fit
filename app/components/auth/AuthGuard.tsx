@@ -1,9 +1,10 @@
 // app/components/auth/AuthGuard.tsx
-import React, { useEffect } from 'react';
-import { View, ActivityIndicator } from 'react-native';
-import { useRouter, useSegments } from 'expo-router';
-import { useAuth } from '../../context/AuthContext';
-import { useTheme } from '../../context/ThemeContext';
+
+import React, { useEffect } from "react";
+import { View, ActivityIndicator } from "react-native";
+import { useRouter, useSegments } from "expo-router";
+import { useAuth } from "../../context/AuthContext";
+import { useTheme } from "../../context/ThemeContext";
 
 export default function AuthGuard({ children }: { children: React.ReactNode }) {
   const { user, initialized } = useAuth();
@@ -14,14 +15,14 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!initialized) return;
 
-    const inAuthGroup = segments[0] === 'auth';
-    
+    const inAuthGroup = segments[0] === "auth";
+
     if (!user && !inAuthGroup) {
       // Redirect to login if user is not authenticated and not in auth group
-      router.replace('/auth/login');
+      router.replace("/auth/login");
     } else if (user && inAuthGroup) {
       // Redirect to home if user is authenticated and in auth group
-      router.replace('/(tabs)');
+      router.replace("/(tabs)");
     }
   }, [user, initialized, segments]);
 
