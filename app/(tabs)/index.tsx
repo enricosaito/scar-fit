@@ -1,12 +1,13 @@
-// app/(tabs)/index.tsx
+// app/(tabs)/index.tsx (completely redesigned)
 import React, { useState, useEffect } from "react";
-import { Text, View, SafeAreaView, ScrollView, ActivityIndicator, Pressable } from "react-native";
+import { Text, View, Pressable, SafeAreaView, ScrollView, ActivityIndicator, RefreshControl } from "react-native";
 import { useRouter } from "expo-router";
 import { Feather } from "@expo/vector-icons";
-import Button from "../components/ui/Button";
 import { useTheme } from "../context/ThemeContext";
 import { useAuth } from "../context/AuthContext";
 import MacroSummary from "../components/MacroSummary";
+import MealList from "../components/MealList";
+import Header from "../components/ui/Header";
 import { MacroData } from "../models/user";
 import { DailyLog, getUserDailyLog } from "../models/tracking";
 
@@ -16,14 +17,7 @@ export default function Home() {
   const { userProfile, user } = useAuth();
   const [dailyLog, setDailyLog] = useState<DailyLog | null>(null);
   const [loading, setLoading] = useState(false);
-
-  const navigateToCalculator = () => {
-    router.push("/(tabs)/calculator");
-  };
-
-  const navigateToTracking = () => {
-    router.push("/tracking");
-  };
+  const [refreshing, setRefreshing] = useState(false);
 
   // Check if user has saved macros
   const hasMacros = userProfile?.macros && Object.keys(userProfile?.macros || {}).length > 0;
@@ -34,27 +28,76 @@ export default function Home() {
   };
 
   // Load daily log for today
+  const loadTodaysLog = async () => {
+    if (!user) return;
+
+    setLoading(true);
+    try {
+      const dateStr = formatDateForDb(new Date());
+      const log = await getUserDailyLog(user.id, dateStr);
+      setDailyLog(log);
+    } catch (error) {
+      console.error("Error loading daily log:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Pull to refresh function
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await loadTodaysLog();
+    setRefreshing(false);
+  };
+
+  // Group food items by meal type
+  const getMealItems = (mealType: "breakfast" | "lunch" | "dinner" | "snack") => {
+    if (!dailyLog || !dailyLog.items) return [];
+    return dailyLog.items.filter((item) => item.meal_type === mealType);
+  };
+
+  // Prepare meals data for MealList component
+  const prepareMeals = () => {
+    if (!dailyLog) return [];
+
+    return [
+      {
+        type: "breakfast",
+        title: "Café da Manhã",
+        items: getMealItems("breakfast"),
+        icon: "coffee",
+        time: "7:00 - 9:00",
+      },
+      {
+        type: "lunch",
+        title: "Almoço",
+        items: getMealItems("lunch"),
+        icon: "sun",
+        time: "12:00 - 14:00",
+      },
+      {
+        type: "dinner",
+        title: "Jantar",
+        items: getMealItems("dinner"),
+        icon: "moon",
+        time: "18:00 - 20:00",
+      },
+      {
+        type: "snack",
+        title: "Lanches",
+        items: getMealItems("snack"),
+        icon: "package",
+      },
+    ];
+  };
+
+  // Load data when component mounts
   useEffect(() => {
-    const loadTodaysLog = async () => {
-      if (!user) return;
-
-      setLoading(true);
-      try {
-        const dateStr = formatDateForDb(new Date());
-        const log = await getUserDailyLog(user.id, dateStr);
-        setDailyLog(log);
-      } catch (error) {
-        console.error("Error loading daily log:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     loadTodaysLog();
   }, [user]);
 
-  // Get today's date formatted nicely in Portuguese
-  const getTodayDateFormatted = () => {
+  // Get today's date in "Segunda, 15 de Abril" format
+  const getTodayFormatted = () => {
     const days = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
     const months = [
       "Janeiro",
@@ -81,129 +124,71 @@ export default function Home() {
 
   return (
     <SafeAreaView className="flex-1 bg-background">
-      <ScrollView className="flex-1 px-4">
-        <View className="py-6">
-          <Text className="text-3xl font-bold text-foreground mb-2">Olá!</Text>
-          <Text className="text-muted-foreground mb-6">{getTodayDateFormatted()}</Text>
+      <Header title="Scar Fit" />
 
-          {/* Show macros if available */}
-          {hasMacros ? (
+      <ScrollView className="flex-1" refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
+        <View className="px-4 py-3 mt-3">
+          <Text className="text-2xl font-bold text-foreground mb-1">
+            Olá, {userProfile?.full_name?.split(" ")[0] || user?.user_metadata?.name || "Usuário"}!
+          </Text>
+          <Text className="text-muted-foreground mb-6">{getTodayFormatted()}</Text>
+
+          {/* Loading state */}
+          {loading && !refreshing ? (
+            <View className="items-center py-8">
+              <ActivityIndicator size="large" color={colors.primary} />
+            </View>
+          ) : (
             <>
-              {loading ? (
-                <View className="py-4 items-center">
-                  <ActivityIndicator size="large" color={colors.primary} />
-                </View>
-              ) : dailyLog ? (
-                <View className="bg-card rounded-xl border border-border p-4 mb-6">
-                  <View className="flex-row justify-between items-center mb-4">
-                    <Text className="text-xl font-bold text-foreground">Hoje</Text>
-                    <Pressable onPress={navigateToTracking}>
-                      <Text className="text-primary">Ver detalhes</Text>
-                    </Pressable>
-                  </View>
-
-                  <MacroSummary
-                    macros={userProfile?.macros as Partial<MacroData>}
-                    showDate={false}
-                    compact={true}
-                    current={{
-                      calories: dailyLog.total_calories,
-                      protein: dailyLog.total_protein,
-                      carbs: dailyLog.total_carbs,
-                      fat: dailyLog.total_fat,
-                    }}
-                    showProgress={true}
-                  />
-
-                  <View className="flex-row mt-4">
-                    <Button
-                      className="flex-1 mr-2"
-                      onPress={() =>
-                        router.push({
-                          pathname: "/tracking",
-                          params: { showSearch: "true" },
-                        })
-                      }
-                    >
-                      <View className="flex-row items-center">
-                        <Feather name="plus" size={16} color="white" />
-                        <Text className="text-white ml-2">Adicionar</Text>
-                      </View>
-                    </Button>
-
-                    <Button variant="outline" className="flex-1 ml-2" onPress={navigateToTracking}>
-                      <Text className="text-foreground">Ver Detalhes</Text>
-                    </Button>
-                  </View>
+              {/* Macro Goals */}
+              {hasMacros && dailyLog ? (
+                <MacroSummary
+                  macros={userProfile?.macros as Partial<MacroData>}
+                  showDate={false}
+                  compact={true}
+                  current={{
+                    calories: dailyLog.total_calories,
+                    protein: dailyLog.total_protein,
+                    carbs: dailyLog.total_carbs,
+                    fat: dailyLog.total_fat,
+                  }}
+                  showProgress={true}
+                />
+              ) : !hasMacros ? (
+                <View className="bg-card rounded-xl border border-border p-6 mb-6">
+                  <Text className="text-lg font-semibold text-foreground mb-4">Defina suas metas</Text>
+                  <Text className="text-muted-foreground mb-4">
+                    Calcule suas metas nutricionais personalizadas para começar a acompanhar seu progresso.
+                  </Text>
+                  <Pressable
+                    className="bg-primary py-2 px-4 rounded-lg items-center"
+                    onPress={() => router.push("/(tabs)/calculator")}
+                  >
+                    <Text className="text-white font-medium">Calcular Metas</Text>
+                  </Pressable>
                 </View>
               ) : null}
 
-              <View className="mb-6">
-                <Text className="text-xl font-bold text-foreground mb-4">Suas Metas</Text>
-                <MacroSummary macros={userProfile?.macros as Partial<MacroData>} showDate={true} compact={true} />
-                <Button variant="outline" className="mt-3" onPress={navigateToCalculator}>
-                  <View className="flex-row items-center">
-                    <Feather name="sliders" size={16} color={colors.foreground} />
-                    <Text className="text-foreground ml-2">Recalcular Metas</Text>
+              {/* Meal List Section */}
+              {dailyLog && (
+                <>
+                  <View className="flex-row justify-between items-center mt-12 mb-3">
+                    <Text className="text-xl font-bold text-foreground">Refeições</Text>
                   </View>
-                </Button>
+
+                  <MealList meals={prepareMeals()} />
+                </>
+              )}
+
+              {/* Daily Tip */}
+              <View className="bg-accent rounded-xl p-6 mb-4">
+                <Text className="text-lg font-semibold text-accent-foreground mb-2">Registrar uma refeição</Text>
+                <Text className="text-accent-foreground">
+                  Toque no botão azul abaixo com símbolo ( + ) para adicionar uma refeição!
+                </Text>
               </View>
             </>
-          ) : (
-            <View className="bg-card rounded-xl border border-border p-6 mb-6">
-              <Text className="text-lg font-semibold text-foreground mb-4">Comece sua jornada</Text>
-              <Text className="text-muted-foreground mb-4">
-                A calculadora fornecerá recomendações personalizadas para sua ingestão de calorias, proteínas,
-                carboidratos e gorduras.
-              </Text>
-              <Button className="w-full my-2" onPress={navigateToCalculator}>
-                Iniciar Cálculo
-              </Button>
-            </View>
           )}
-
-          <View className="bg-accent rounded-xl p-6">
-            <Text className="text-lg font-semibold text-accent-foreground mb-2">Dica do Dia</Text>
-            <Text className="text-accent-foreground">
-              Lembre-se de beber água suficiente ao longo do dia. A hidratação adequada ajuda no metabolismo e na
-              absorção de nutrientes.
-            </Text>
-          </View>
-
-          {/* Additional informational sections */}
-          <View className="mt-8">
-            <Text className="text-2xl font-bold text-foreground mb-4">Por que calcular macros?</Text>
-
-            <View className="bg-card rounded-xl border border-border p-4 mb-4 flex-row items-center">
-              <View className="w-12 h-12 bg-primary/20 rounded-full items-center justify-center mr-3">
-                <Text className="text-primary text-xl">1</Text>
-              </View>
-              <View className="flex-1">
-                <Text className="font-medium text-foreground mb-1">Controle Nutricional</Text>
-                <Text className="text-muted-foreground">Entenda exatamente o que seu corpo precisa</Text>
-              </View>
-            </View>
-
-            <View className="bg-card rounded-xl border border-border p-4 mb-4 flex-row items-center">
-              <View className="w-12 h-12 bg-primary/20 rounded-full items-center justify-center mr-3">
-                <Text className="text-primary text-xl">2</Text>
-              </View>
-              <View className="flex-1">
-                <Text className="font-medium text-foreground mb-1">Foco nos Resultados</Text>
-                <Text className="text-muted-foreground">Atinja seus objetivos com eficiência e precisão</Text>
-              </View>
-            </View>
-
-            <View className="bg-card rounded-xl border border-border p-4 mb-4 flex-row items-center">
-              <View className="w-12 h-12 bg-primary/20 rounded-full items-center justify-center mr-3">
-                <Text className="text-primary text-xl">3</Text>
-              </View>
-              <View className="flex-1">
-                <Text className="font-medium text-foreground mb-1">Hábitos Saudáveis</Text>
-                <Text className="text-muted-foreground">Desenvolva uma relação melhor com a alimentação</Text>
-              </View>
-            </View>
-          </View>
         </View>
       </ScrollView>
     </SafeAreaView>
