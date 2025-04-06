@@ -1,4 +1,4 @@
-// app/tracking.tsx (refactored)
+// app/tracking.tsx (updated)
 import React, { useState, useEffect } from "react";
 import {
   Text,
@@ -20,14 +20,14 @@ import { useAuth } from "./context/AuthContext";
 import { Food, FoodPortion, searchFoods } from "./models/food";
 import { DailyLog, getUserDailyLog, addFoodToLog, removeFoodFromLog } from "./models/tracking";
 import MealSection from "./components/MealSection";
-import MacroSummary from "./components/MacroSummary";
+import Header from "./components/ui/Header";
 
 type MealType = "breakfast" | "lunch" | "dinner" | "snack";
 
 export default function Tracking() {
   const router = useRouter();
   const { colors } = useTheme();
-  const { mode } = useLocalSearchParams();
+  const { mode, showSearch } = useLocalSearchParams();
   const { user, userProfile } = useAuth();
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
 
@@ -188,30 +188,10 @@ export default function Tracking() {
 
   // Open search modal when in add mode
   useEffect(() => {
-    if (isAddMode) {
+    if (mode === "add" || showSearch === "true") {
       setSearchVisible(true);
     }
-  }, [isAddMode]);
-
-  // Get macro targets from userProfile (or use defaults)
-  const [macroTargets, setMacroTargets] = useState({
-    calories: 2000,
-    protein: 150,
-    carbs: 200,
-    fat: 65,
-  });
-
-  // Use effect to update macros when userProfile changes
-  useEffect(() => {
-    if (userProfile && userProfile.macros) {
-      setMacroTargets({
-        calories: userProfile.macros.calories || 2000,
-        protein: userProfile.macros.protein || 150,
-        carbs: userProfile.macros.carbs || 200,
-        fat: userProfile.macros.fat || 65,
-      });
-    }
-  }, [userProfile]);
+  }, [mode, showSearch]);
 
   // Group food items by meal type
   const getMealItems = (mealType: MealType) => {
@@ -219,17 +199,15 @@ export default function Tracking() {
     return dailyLog.items.filter((item) => item.meal_type === mealType);
   };
 
+  // Get total calories for the day
+  const getTotalCalories = () => {
+    return dailyLog?.total_calories || 0;
+  };
+
   return (
     <SafeAreaView className="flex-1 bg-background">
-      {/* Header with back button */}
-      <View className="flex-row items-center p-4 border-b border-border">
-        <Pressable onPress={() => router.back()} className="p-2">
-          <Feather name="arrow-left" size={24} color={colors.foreground} />
-        </Pressable>
-        <Text className="text-lg font-medium flex-1 text-center text-foreground mr-8">
-          {isAddMode ? "Adicionar Refeição" : "Acompanhamento"}
-        </Text>
-      </View>
+      {/* Custom Header */}
+      <Header title="Gerenciar Refeições" showProfile={false} showNotifications={false} />
 
       <ScrollView className="flex-1 px-4">
         <View className="py-6">
@@ -255,37 +233,27 @@ export default function Tracking() {
 
           {!loading && dailyLog && (
             <>
-              {dailyLog && (
-                <MacroSummary
-                  macros={
-                    userProfile?.macros
-                      ? {
-                          calories: macroTargets.calories,
-                          protein: macroTargets.protein,
-                          carbs: macroTargets.carbs,
-                          fat: macroTargets.fat,
-                        }
-                      : {}
-                  }
-                  showDate={false}
-                  current={{
-                    calories: dailyLog.total_calories,
-                    protein: dailyLog.total_protein,
-                    carbs: dailyLog.total_carbs,
-                    fat: dailyLog.total_fat,
-                  }}
-                  showProgress={true}
-                />
-              )}
+              {/* Total Calories Summary */}
+              <View className="bg-card rounded-xl border border-border p-4 mb-6">
+                <Text className="text-lg font-semibold text-foreground mb-2">Total do Dia</Text>
+                <View className="flex-row items-center justify-between">
+                  <View>
+                    <Text className="text-3xl font-bold text-foreground">{Math.round(getTotalCalories())}</Text>
+                    <Text className="text-muted-foreground">calorias</Text>
+                  </View>
+                  <Button onPress={() => setSearchVisible(true)} className="bg-primary px-4 py-2">
+                    <View className="flex-row items-center">
+                      <Feather name="plus" size={16} color="white" />
+                      <Text className="text-white ml-2">Adicionar Alimento</Text>
+                    </View>
+                  </Button>
+                </View>
+              </View>
 
               {/* Meals */}
               <View className="mb-6">
                 <View className="flex-row justify-between items-center mb-4">
                   <Text className="text-xl font-bold text-foreground">Refeições</Text>
-
-                  <Button variant="outline" size="sm" onPress={() => setSearchVisible(true)}>
-                    Adicionar Refeição
-                  </Button>
                 </View>
 
                 {dailyLog.items && dailyLog.items.length > 0 ? (
@@ -348,8 +316,8 @@ export default function Tracking() {
                 <View className="bg-accent rounded-xl p-6">
                   <Text className="text-lg font-semibold text-accent-foreground mb-2">Dica do Dia</Text>
                   <Text className="text-accent-foreground">
-                    Lembre-se de beber água suficiente ao longo do dia. A hidratação adequada ajuda no metabolismo e na
-                    absorção de nutrientes.
+                    Para ter mais energia ao longo do dia, procure distribuir suas refeições em intervalos regulares de
+                    3-4 horas.
                   </Text>
                 </View>
               )}
@@ -413,7 +381,7 @@ export default function Tracking() {
                           <Text className="text-primary text-xs">{item.kcal} kcal/100g</Text>
                         </View>
                         <View className="flex-row mt-1">
-                          <Text className="text-xs text-blue-500 mr-2">P: {item.protein_g}g</Text>
+                          <Text className="text-xs text-purple-500 mr-2">P: {item.protein_g}g</Text>
                           <Text className="text-xs text-yellow-500 mr-2">C: {item.carbs_g}g</Text>
                           <Text className="text-xs text-red-500">G: {item.fat_g}g</Text>
                         </View>
@@ -463,7 +431,7 @@ export default function Tracking() {
                   </View>
                   <View className="items-center">
                     <Text className="text-sm text-muted-foreground">Proteínas</Text>
-                    <Text className="text-lg font-medium text-blue-500">{selectedFood.protein_g}g</Text>
+                    <Text className="text-lg font-medium text-purple-500">{selectedFood.protein_g}g</Text>
                     <Text className="text-xs text-muted-foreground">por 100g</Text>
                   </View>
                   <View className="items-center">
@@ -559,7 +527,7 @@ export default function Tracking() {
                   </View>
                   <View>
                     <Text className="text-muted-foreground text-xs">Proteínas</Text>
-                    <Text className="text-blue-500">
+                    <Text className="text-purple-500">
                       {Math.round((selectedFood.protein_g * parseFloat(quantity || "0")) / 100)}g
                     </Text>
                   </View>
