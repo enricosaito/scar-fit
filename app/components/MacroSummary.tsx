@@ -1,9 +1,10 @@
-// app/components/MacroSummary.tsx (enhanced version)
+// app/components/MacroSummary.tsx (updated)
 import React from "react";
-import { View, Text } from "react-native";
+import { View, Text, StyleSheet } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { useTheme } from "../context/ThemeContext";
 import { MacroData } from "../models/user";
+import CalorieProgress from "./CalorieProgress";
 
 interface MacroSummaryProps {
   macros: Partial<MacroData>;
@@ -73,35 +74,22 @@ export default function MacroSummary({
         </Text>
       )}
 
-      {/* Calorie display */}
+      {/* Calorie display with circular progress */}
       <View className="items-center mb-4">
         <Text className="text-sm font-medium text-primary mb-1">Total Diário</Text>
-        <Text className={`${compact ? "text-2xl" : "text-3xl"} font-bold text-foreground`}>
-          {showProgress ? Math.round(currentCalories) : macros.calories || 0}
-          {showProgress && <Text className="text-muted-foreground text-lg"> / {macros.calories || 0}</Text>}
-        </Text>
-        <Text className="text-muted-foreground">calorias</Text>
+        <CalorieProgress
+          current={showProgress ? currentCalories : macros.calories || 0}
+          goal={macros.calories || 2000}
+          size={compact ? 100 : 140}
+          strokeWidth={compact ? 8 : 12}
+          compact={compact}
+        />
+        <Text className="text-muted-foreground mt-2">calorias</Text>
       </View>
 
       {/* Progress bars when showProgress is true */}
       {showProgress && (
         <View className="mb-4">
-          {/* Calories Progress */}
-          <View className="mb-3">
-            <View className="flex-row justify-between items-center mb-1">
-              <Text className="font-medium text-foreground">Calorias</Text>
-              <Text className="text-muted-foreground">
-                {Math.round(currentCalories)} / {macros.calories || 0} kcal
-              </Text>
-            </View>
-            <View className="h-2 bg-muted rounded-full overflow-hidden">
-              <View
-                className="h-full bg-primary rounded-full"
-                style={{ width: `${calculateProgress(currentCalories, macros.calories || 0)}%` }}
-              />
-            </View>
-          </View>
-
           {/* Protein Progress */}
           <View className="mb-3">
             <View className="flex-row justify-between items-center mb-1">
