@@ -64,12 +64,15 @@ export default function TabLayout() {
             </View>
           ),
         }}
-        listeners={({ navigation }) => ({
+        listeners={() => ({
           tabPress: (e) => {
             // Prevent default action
             e.preventDefault();
-            // Navigate to tracking with "add" mode
-            router.push("/tracking?mode=add");
+            // Instead of going to tracking with add mode, just show the search directly
+            router.push({
+              pathname: "/tracking",
+              params: { showSearch: "true" },
+            });
           },
         })}
       />
