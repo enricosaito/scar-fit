@@ -94,7 +94,7 @@ export default function Home() {
                   <ActivityIndicator size="large" color={colors.primary} />
                 </View>
               ) : dailyLog ? (
-                <>
+                <View className="bg-card rounded-xl border border-border p-4 mb-6">
                   <View className="flex-row justify-between items-center mb-4">
                     <Text className="text-xl font-bold text-foreground">Hoje</Text>
                     <Pressable onPress={navigateToTracking}>
@@ -115,7 +115,7 @@ export default function Home() {
                     showProgress={true}
                   />
 
-                  <View className="flex-row mb-6">
+                  <View className="flex-row mt-4">
                     <Button
                       className="flex-1 mr-2"
                       onPress={() =>
@@ -125,25 +125,28 @@ export default function Home() {
                         })
                       }
                     >
-                      <Feather name="plus" size={16} color="white" className="mr-2" />
-                      <Text className="text-white">Adicionar Refeição</Text>
+                      <View className="flex-row items-center">
+                        <Feather name="plus" size={16} color="white" />
+                        <Text className="text-white ml-2">Adicionar</Text>
+                      </View>
                     </Button>
 
                     <Button variant="outline" className="flex-1 ml-2" onPress={navigateToTracking}>
                       <Text className="text-foreground">Ver Detalhes</Text>
                     </Button>
                   </View>
-                </>
+                </View>
               ) : null}
 
               <View className="mb-6">
                 <Text className="text-xl font-bold text-foreground mb-4">Suas Metas</Text>
                 <MacroSummary macros={userProfile?.macros as Partial<MacroData>} showDate={true} compact={true} />
-                <View className="mt-2">
-                  <Button variant="outline" onPress={navigateToCalculator}>
-                    Recalcular Metas
-                  </Button>
-                </View>
+                <Button variant="outline" className="mt-3" onPress={navigateToCalculator}>
+                  <View className="flex-row items-center">
+                    <Feather name="sliders" size={16} color={colors.foreground} />
+                    <Text className="text-foreground ml-2">Recalcular Metas</Text>
+                  </View>
+                </Button>
               </View>
             </>
           ) : (
