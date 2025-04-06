@@ -60,7 +60,7 @@ export default function TabLayout() {
         options={{
           title: "",
           tabBarIcon: ({ color }) => (
-            <View className="bg-primary h-14 w-14 rounded-full items-center justify-center -mt-3 mb-1 shadow-lg">
+            <View className="bg-primary h-14 w-14 rounded-full items-center justify-center -mt-5 shadow-lg">
               <Feather name="plus" size={28} color="white" />
             </View>
           ),
@@ -69,11 +69,8 @@ export default function TabLayout() {
           tabPress: (e) => {
             // Prevent default action
             e.preventDefault();
-            // Navigate directly to search
-            router.push({
-              pathname: "/tracking",
-              params: { showSearch: "true" },
-            });
+            // Just navigate to tracking without showing search
+            router.push("/tracking");
           },
         })}
       />
