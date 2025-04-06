@@ -1,10 +1,11 @@
 // app/components/MacroSummary.tsx (updated)
 import React from "react";
-import { View, Text, StyleSheet } from "react-native";
+import { View, Text } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { useTheme } from "../context/ThemeContext";
 import { MacroData } from "../models/user";
 import CalorieProgress from "./CalorieProgress";
+import Svg, { Circle, G } from "react-native-svg";
 
 interface MacroSummaryProps {
   macros: Partial<MacroData>;
@@ -55,45 +56,60 @@ export default function MacroSummary({
   const currentCarbs = current.carbs !== undefined ? current.carbs : 0;
   const currentFat = current.fat !== undefined ? current.fat : 0;
 
+  // Calculate calories left
+  const caloriesLeft = Math.max(0, (macros.calories || 0) - currentCalories);
+
+  // Format today's date (e.g., "Domingo, 6 de Abril")
+  const formatTodayDate = () => {
+    const today = new Date();
+    const days = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
+    const months = [
+      "Janeiro",
+      "Fevereiro",
+      "Março",
+      "Abril",
+      "Maio",
+      "Junho",
+      "Julho",
+      "Agosto",
+      "Setembro",
+      "Outubro",
+      "Novembro",
+      "Dezembro",
+    ];
+
+    const dayOfWeek = days[today.getDay()];
+    const dayOfMonth = today.getDate();
+    const month = months[today.getMonth()];
+
+    return `${dayOfWeek}, ${dayOfMonth} de ${month}`;
+  };
+
   return (
     <View className="bg-card rounded-xl border border-border p-4">
-      {showDate && macros.updatedAt && (
-        <View className="flex-row justify-between items-center mb-2">
-          <Text className="text-lg font-semibold text-foreground">
-            {showProgress ? "Progresso de Hoje" : "Suas Metas"}
-          </Text>
-          <Text className="text-xs text-muted-foreground">
-            {new Date(macros.updatedAt).toLocaleDateString("pt-BR")}
-          </Text>
+      {/* Today's date with weekday */}
+      <Text className="text-lg font-semibold text-foreground mb-2">{formatTodayDate()}</Text>
+
+      {/* New layout: Calorie circle on left, macros on right */}
+      <View className="flex-row">
+        {/* Left side: Calorie circle */}
+        <View className="flex-1 items-center justify-center">
+          <CalorieCircleWithCaloriesLeft
+            current={currentCalories}
+            goal={macros.calories || 2000}
+            caloriesLeft={caloriesLeft}
+          />
         </View>
-      )}
 
-      {!showDate && (
-        <Text className="text-lg font-semibold text-foreground mb-2">
-          {showProgress ? "Progresso de Hoje" : "Suas Metas"}
-        </Text>
-      )}
-
-      {/* Calorie display with circular progress */}
-      <View className="items-center mb-4">
-        <Text className="text-sm font-medium text-primary mb-1">Total Diário</Text>
-        <CalorieProgress
-          current={showProgress ? currentCalories : macros.calories || 0}
-          goal={macros.calories || 2000}
-          size={compact ? 120 : 160} // Increased from 100/140
-          strokeWidth={compact ? 10 : 14} // Increased from 8/12
-          compact={compact}
-        />
-        <Text className="text-muted-foreground mt-2">calorias</Text>
-      </View>
-
-      {/* Progress bars when showProgress is true */}
-      {showProgress && (
-        <View className="mb-4">
+        {/* Right side: Macro stats */}
+        <View className="flex-1 justify-center">
           {/* Protein Progress */}
           <View className="mb-3">
             <View className="flex-row justify-between items-center mb-1">
-              <Text className="font-medium text-foreground">Proteínas</Text>
+              <View className="flex-row items-center">
+                <View className="w-3 h-3 rounded-full bg-purple-500 mr-1" />
+                <Text className="font-medium text-foreground">Proteínas</Text>
+              </View>
               <Text className="text-muted-foreground">
                 {Math.round(currentProtein)} / {macros.protein || 0}g
               </Text>
@@ -109,7 +125,10 @@ export default function MacroSummary({
           {/* Carbs Progress */}
           <View className="mb-3">
             <View className="flex-row justify-between items-center mb-1">
-              <Text className="font-medium text-foreground">Carboidratos</Text>
+              <View className="flex-row items-center">
+                <View className="w-3 h-3 rounded-full bg-yellow-500 mr-1" />
+                <Text className="font-medium text-foreground">Carboidratos</Text>
+              </View>
               <Text className="text-muted-foreground">
                 {Math.round(currentCarbs)} / {macros.carbs || 0}g
               </Text>
@@ -125,7 +144,10 @@ export default function MacroSummary({
           {/* Fats Progress */}
           <View>
             <View className="flex-row justify-between items-center mb-1">
-              <Text className="font-medium text-foreground">Gorduras</Text>
+              <View className="flex-row items-center">
+                <View className="w-3 h-3 rounded-full bg-red-500 mr-1" />
+                <Text className="font-medium text-foreground">Gorduras</Text>
+              </View>
               <Text className="text-muted-foreground">
                 {Math.round(currentFat)} / {macros.fat || 0}g
               </Text>
@@ -138,56 +160,69 @@ export default function MacroSummary({
             </View>
           </View>
         </View>
-      )}
+      </View>
+    </View>
+  );
+}
 
-      {/* Three cards for macros */}
-      {(!showProgress || !compact) && (
-        <View className="flex-row justify-between mb-4">
-          {/* Protein Card */}
-          <View className="bg-card rounded-xl border border-border p-2 w-[31%] items-center">
-            <View className="w-8 h-8 bg-blue-500/10 rounded-full items-center justify-center mb-1">
-              <Feather name="award" size={16} color="#3b82f6" />
-            </View>
-            <Text className="text-base font-bold text-foreground">
-              {showProgress ? Math.round(currentProtein) : macros.protein || 0}
-            </Text>
-            <Text className="text-xs text-muted-foreground">g proteína</Text>
-            <Text className="text-xs text-purple-500 font-medium">{proteinPercentage}%</Text>
-          </View>
+// New component for the calorie circle with "calories left" display
+function CalorieCircleWithCaloriesLeft({ current, goal, caloriesLeft }) {
+  const { colors } = useTheme();
 
-          {/* Carbs Card */}
-          <View className="bg-card rounded-xl border border-border p-2 w-[31%] items-center">
-            <View className="w-8 h-8 bg-yellow-500/10 rounded-full items-center justify-center mb-1">
-              <Feather name="box" size={16} color="#eab308" />
-            </View>
-            <Text className="text-base font-bold text-foreground">
-              {showProgress ? Math.round(currentCarbs) : macros.carbs || 0}
-            </Text>
-            <Text className="text-xs text-muted-foreground">g carboidratos</Text>
-            <Text className="text-xs text-yellow-500 font-medium">{carbsPercentage}%</Text>
-          </View>
+  // Calculate percentage
+  const percentage = goal > 0 ? Math.min(100, (current / goal) * 100) : 0;
 
-          {/* Fats Card */}
-          <View className="bg-card rounded-xl border border-border p-2 w-[31%] items-center">
-            <View className="w-8 h-8 bg-red-500/10 rounded-full items-center justify-center mb-1">
-              <Feather name="droplet" size={16} color="#ef4444" />
-            </View>
-            <Text className="text-base font-bold text-foreground">
-              {showProgress ? Math.round(currentFat) : macros.fat || 0}
-            </Text>
-            <Text className="text-xs text-muted-foreground">g gorduras</Text>
-            <Text className="text-xs text-red-500 font-medium">{fatPercentage}%</Text>
-          </View>
+  // Calculate circle properties
+  const size = 140;
+  const strokeWidth = 10;
+  const radius = (size - strokeWidth) / 2;
+  const circumference = radius * 2 * Math.PI;
+  const strokeDashoffset = circumference - (percentage / 100) * circumference;
+
+  // Get color based on percentage
+  const getProgressColor = () => {
+    if (percentage <= 70) return "#3b82f6"; // Bright blue for under target
+    if (percentage <= 100) return "#22c55e"; // Green for near target
+    return "#ef4444"; // Red for over target
+  };
+
+  return (
+    <View className="items-center justify-center">
+      <View className="relative">
+        <Svg width={size} height={size}>
+          {/* Background Circle */}
+          <Circle
+            cx={size / 2}
+            cy={size / 2}
+            r={radius}
+            strokeWidth={strokeWidth}
+            stroke={colors.border}
+            fill="transparent"
+          />
+
+          {/* Progress Circle */}
+          <G rotation="-90" origin={`${size / 2}, ${size / 2}`}>
+            <Circle
+              cx={size / 2}
+              cy={size / 2}
+              r={radius}
+              strokeWidth={strokeWidth}
+              stroke={getProgressColor()}
+              strokeLinecap="round"
+              fill="transparent"
+              strokeDasharray={circumference}
+              strokeDashoffset={strokeDashoffset}
+            />
+          </G>
+        </Svg>
+
+        {/* Centered Text - Calories Left */}
+        <View className="absolute top-0 left-0 right-0 bottom-0 items-center justify-center">
+          <Text className="text-3xl font-bold text-white">{Math.round(caloriesLeft)}</Text>
+          <Text className="text-xs text-white">restantes</Text>
         </View>
-      )}
-
-      {!compact && !showProgress && (
-        <View className="h-4 flex-row rounded-full overflow-hidden">
-          <View className="h-full bg-blue-500" style={{ width: `${proteinPercentage}%` }} />
-          <View className="h-full bg-yellow-500" style={{ width: `${carbsPercentage}%` }} />
-          <View className="h-full bg-red-500" style={{ width: `${fatPercentage}%` }} />
-        </View>
-      )}
+      </View>
+      <Text className="text-muted-foreground mt-2">de {goal} calorias</Text>
     </View>
   );
 }
