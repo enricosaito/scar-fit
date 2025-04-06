@@ -188,10 +188,10 @@ export default function Tracking() {
 
   // Open search modal when in add mode
   useEffect(() => {
-    if (mode === "add" || showSearch === "true") {
+    if (showSearch === "true") {
       setSearchVisible(true);
     }
-  }, [mode, showSearch]);
+  }, [showSearch]);
 
   // Group food items by meal type
   const getMealItems = (mealType: MealType) => {
