@@ -31,9 +31,9 @@ export default function CalorieProgress({
 
   // Get color based on percentage
   const getProgressColor = () => {
-    if (percentage <= 70) return colors.primary; // Under target: blue
-    if (percentage <= 100) return "#22c55e"; // Near target: green
-    return "#ef4444"; // Over target: red
+    if (percentage <= 70) return "#3b82f6"; // Bright blue for under target
+    if (percentage <= 100) return "#22c55e"; // Green for near target
+    return "#ef4444"; // Red for over target
   };
 
   return (
