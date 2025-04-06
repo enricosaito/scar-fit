@@ -1,10 +1,12 @@
 // app/(tabs)/calculator.tsx
 import React, { useState } from "react";
-import { Text, View, SafeAreaView, ScrollView, Pressable, TextInput } from "react-native";
+import { Text, View, SafeAreaView, ScrollView, Pressable, TextInput, ActivityIndicator, Alert } from "react-native";
 import { useRouter } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import Button from "../components/ui/Button";
 import { useTheme } from "../context/ThemeContext";
+import { useAuth } from "../context/AuthContext";
+import { saveUserMacros } from "../models/user";
 
 // Define types
 type Gender = "male" | "female";
@@ -46,9 +48,9 @@ const calculateBMR = (gender: Gender, weight: string, height: string, age: strin
 
   // Mifflin-St Jeor formula
   if (gender === "male") {
-    return (10 * numWeight) + (6.25 * numHeight) - (5 * numAge) + 5;
+    return 10 * numWeight + 6.25 * numHeight - 5 * numAge + 5;
   } else {
-    return (10 * numWeight) + (6.25 * numHeight) - (5 * numAge) - 161;
+    return 10 * numWeight + 6.25 * numHeight - 5 * numAge - 161;
   }
 };
 
@@ -86,19 +88,32 @@ interface MacroResult {
 // Calculate macros based on TDEE and weight
 const calculateMacros = (tdee: number, weight: string, goal: Goal): MacroResult => {
   const numWeight = parseFloat(weight);
-  
+
   if (isNaN(numWeight)) {
     return { calories: 0, protein: 0, carbs: 0, fat: 0 };
   }
-  
-  // Calculate protein (2.2g per kg)
-  const proteinGrams = Math.round(numWeight * 2.2);
-  
+
+  // For more precise protein calculation based on goal
+  let proteinMultiplier: number;
+  switch (goal) {
+    case "lose":
+      proteinMultiplier = 2.4; // Higher protein for weight loss to preserve muscle
+      break;
+    case "gain":
+      proteinMultiplier = 2.0; // Slightly lower for bulking
+      break;
+    default:
+      proteinMultiplier = 2.2; // Standard recommendation
+  }
+
+  // Calculate protein (protein multiplier per kg)
+  const proteinGrams = Math.round(numWeight * proteinMultiplier);
+
   // Calculate protein calories (4 calories per gram)
   const proteinCalories = proteinGrams * 4;
-  
+
   let fatPercentage: number, remainingCalories: number;
-  
+
   switch (goal) {
     case "lose":
       fatPercentage = 0.3; // 30% fat for weight loss (helps with satiety)
@@ -112,17 +127,17 @@ const calculateMacros = (tdee: number, weight: string, goal: Goal): MacroResult 
     default:
       fatPercentage = 0.25;
   }
-  
+
   // Calculate fat calories and grams
   const fatCalories = tdee * fatPercentage;
   const fatGrams = Math.round(fatCalories / 9);
-  
+
   // Remaining calories for carbs
   remainingCalories = tdee - proteinCalories - fatCalories;
-  
+
   // Calculate carbs (4 calories per gram)
   const carbGrams = Math.round(remainingCalories / 4);
-  
+
   return {
     calories: Math.round(tdee),
     protein: proteinGrams,
@@ -260,7 +275,9 @@ function WelcomeStep({ onNext }: StepProps) {
       <View className="bg-accent rounded-xl p-6">
         <Text className="text-lg font-semibold text-accent-foreground mb-2">Por que calculamos macros?</Text>
         <Text className="text-accent-foreground">
-          Nossa calculadora usa a fórmula Mifflin-St Jeor para calcular seu metabolismo basal com precisão. Também recomendamos 2,2g de proteína por kg de peso corporal para otimizar a recuperação muscular e promover a saciedade.
+          Nossa calculadora usa a fórmula Mifflin-St Jeor para calcular seu metabolismo basal com precisão. Também
+          recomendamos 2,2g de proteína por kg de peso corporal para otimizar a recuperação muscular e promover a
+          saciedade.
         </Text>
       </View>
     </View>
@@ -472,7 +489,11 @@ interface MacroItem {
 
 function ResultsStep({ formData, onBack }: ResultsStepProps) {
   const { colors } = useTheme();
-  
+  const { user, refreshProfile } = useAuth();
+  const [isSaving, setIsSaving] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
+  const router = useRouter();
+
   // Calculate BMR
   const bmr = calculateBMR(formData.gender, formData.weight, formData.height, formData.age);
 
@@ -488,15 +509,50 @@ function ResultsStep({ formData, onBack }: ResultsStepProps) {
   const macros = calculateMacros(adjustedTdee, formData.weight, formData.goal);
 
   // Calculate percentages for display
-  const proteinPercentage = Math.round((macros.protein * 4 / macros.calories) * 100);
-  const carbsPercentage = Math.round((macros.carbs * 4 / macros.calories) * 100);
-  const fatPercentage = Math.round((macros.fat * 9 / macros.calories) * 100);
+  const proteinPercentage = Math.round(((macros.protein * 4) / macros.calories) * 100);
+  const carbsPercentage = Math.round(((macros.carbs * 4) / macros.calories) * 100);
+  const fatPercentage = Math.round(((macros.fat * 9) / macros.calories) * 100);
 
   const goalText = {
     lose: "perda de peso",
     maintain: "manutenção",
-    gain: "ganho de massa muscular"
+    gain: "ganho de massa muscular",
   }[formData.goal];
+
+  // Add this function to save results
+  const handleSaveResults = async () => {
+    if (!user) {
+      // If not logged in, redirect to login
+      router.push("/auth/login");
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      await saveUserMacros(user.id, {
+        calories: macros.calories,
+        protein: macros.protein,
+        carbs: macros.carbs,
+        fat: macros.fat,
+        goal: formData.goal,
+        activityLevel: formData.activityLevel,
+      });
+
+      // Refresh the profile to update context
+      await refreshProfile();
+      setIsSaved(true);
+
+      // Reset after 3 seconds
+      setTimeout(() => {
+        setIsSaved(false);
+      }, 3000);
+    } catch (error) {
+      console.error("Error saving macros:", error);
+      Alert.alert("Erro", "Não foi possível salvar seus resultados. Tente novamente.");
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   return (
     <View className="py-6">
@@ -511,7 +567,7 @@ function ResultsStep({ formData, onBack }: ResultsStepProps) {
         <Text className="text-sm font-medium text-primary mb-1">Total Diário</Text>
         <Text className="text-5xl font-bold text-foreground mb-2">{macros.calories}</Text>
         <Text className="text-muted-foreground mb-4">calorias</Text>
-        
+
         <View className="w-16 h-16 bg-primary/10 rounded-full items-center justify-center mb-1">
           <Feather name="battery-charging" size={28} color={colors.primary} />
         </View>
@@ -528,7 +584,7 @@ function ResultsStep({ formData, onBack }: ResultsStepProps) {
           <Text className="text-xs text-muted-foreground mb-1">g proteína</Text>
           <Text className="text-xs text-blue-500 font-medium">{proteinPercentage}%</Text>
         </View>
-        
+
         {/* Carbs Card */}
         <View className="bg-card rounded-xl border border-border p-4 w-[31%] items-center">
           <View className="w-10 h-10 bg-yellow-500/10 rounded-full items-center justify-center mb-2">
@@ -538,7 +594,7 @@ function ResultsStep({ formData, onBack }: ResultsStepProps) {
           <Text className="text-xs text-muted-foreground mb-1">g carboidratos</Text>
           <Text className="text-xs text-yellow-500 font-medium">{carbsPercentage}%</Text>
         </View>
-        
+
         {/* Fats Card */}
         <View className="bg-card rounded-xl border border-border p-4 w-[31%] items-center">
           <View className="w-10 h-10 bg-red-500/10 rounded-full items-center justify-center mb-2">
@@ -554,18 +610,9 @@ function ResultsStep({ formData, onBack }: ResultsStepProps) {
       <View className="bg-card rounded-xl border border-border p-4 mb-6">
         <Text className="font-medium text-foreground mb-3">Distribuição de Macros</Text>
         <View className="h-4 flex-row rounded-full overflow-hidden mb-3">
-          <View
-            className="h-full bg-blue-500"
-            style={{ width: `${proteinPercentage}%` }}
-          />
-          <View
-            className="h-full bg-yellow-500"
-            style={{ width: `${carbsPercentage}%` }}
-          />
-          <View
-            className="h-full bg-red-500"
-            style={{ width: `${fatPercentage}%` }}
-          />
+          <View className="h-full bg-blue-500" style={{ width: `${proteinPercentage}%` }} />
+          <View className="h-full bg-yellow-500" style={{ width: `${carbsPercentage}%` }} />
+          <View className="h-full bg-red-500" style={{ width: `${fatPercentage}%` }} />
         </View>
         <View className="flex-row justify-between">
           <View className="flex-row items-center">
@@ -607,7 +654,8 @@ function ResultsStep({ formData, onBack }: ResultsStepProps) {
       <View className="bg-accent rounded-xl p-6 mb-6">
         <Text className="text-lg font-semibold text-accent-foreground mb-2">Dica Nutricional</Text>
         <Text className="text-accent-foreground">
-          Sua recomendação de proteína ({macros.protein}g, ou 2,2g por kg de peso) é ideal para otimizar a recuperação muscular e promover a saciedade. Distribua suas proteínas ao longo do dia para melhores resultados.
+          Sua recomendação de proteína ({macros.protein}g, ou 2,2g por kg de peso) é ideal para otimizar a recuperação
+          muscular e promover a saciedade. Distribua suas proteínas ao longo do dia para melhores resultados.
         </Text>
       </View>
 
@@ -615,7 +663,9 @@ function ResultsStep({ formData, onBack }: ResultsStepProps) {
         <Button variant="outline" onPress={onBack} className="flex-1 mr-2">
           Voltar
         </Button>
-        <Button className="flex-1 ml-2">Salvar Resultados</Button>
+        <Button className="flex-1 ml-2" onPress={handleSaveResults} disabled={isSaving || isSaved}>
+          {isSaving ? <ActivityIndicator size="small" color="white" /> : isSaved ? "Salvo!" : "Salvar Resultados"}
+        </Button>
       </View>
     </View>
   );
