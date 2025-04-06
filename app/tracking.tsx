@@ -1,4 +1,4 @@
-// app/tracking.tsx
+// app/tracking.tsx (refactored)
 import React, { useState, useEffect } from "react";
 import {
   Text,
@@ -19,72 +19,16 @@ import { useTheme } from "./context/ThemeContext";
 import { useAuth } from "./context/AuthContext";
 import { Food, FoodPortion, searchFoods } from "./models/food";
 import { DailyLog, getUserDailyLog, addFoodToLog, removeFoodFromLog } from "./models/tracking";
+import MealSection from "./components/MealSection";
+import MacroSummary from "./components/MacroSummary";
 
 type MealType = "breakfast" | "lunch" | "dinner" | "snack";
-
-interface MealSectionProps {
-  title: string;
-  icon: string;
-  items: FoodPortion[];
-  colors: any;
-  onRemove: (index: number) => void;
-}
-
-// Meal Section Component
-const MealSection = ({ title, icon, items, colors, onRemove }: MealSectionProps) => {
-  if (!items || items.length === 0) return null;
-
-  return (
-    <View className="bg-card rounded-xl border border-border p-4 mb-4">
-      <View className="flex-row items-center mb-3">
-        <View className="w-8 h-8 rounded-full bg-primary/10 items-center justify-center mr-2">
-          <Feather name={icon} size={16} color={colors.primary} />
-        </View>
-        <Text className="text-lg font-medium text-foreground">{title}</Text>
-      </View>
-
-      {items.map((item, index) => (
-        <View key={index} className="py-3 border-t border-border">
-          <View className="flex-row justify-between items-start">
-            <View className="flex-1">
-              <Text className="text-foreground font-medium mb-1">{item.food.description}</Text>
-              <Text className="text-muted-foreground text-xs">{item.quantity}g</Text>
-            </View>
-            <View className="items-end">
-              <Text className="text-foreground">{Math.round((item.food.kcal * item.quantity) / 100)} kcal</Text>
-              <View className="flex-row mt-1">
-                <Text className="text-xs text-blue-500 mr-2">
-                  P: {Math.round((item.food.protein_g * item.quantity) / 100)}g
-                </Text>
-                <Text className="text-xs text-yellow-500 mr-2">
-                  C: {Math.round((item.food.carbs_g * item.quantity) / 100)}g
-                </Text>
-                <Text className="text-xs text-red-500">G: {Math.round((item.food.fat_g * item.quantity) / 100)}g</Text>
-              </View>
-            </View>
-            <Pressable
-              className="ml-2 p-2"
-              onPress={() => {
-                Alert.alert("Remover item", "Tem certeza que deseja remover este item?", [
-                  { text: "Cancelar", style: "cancel" },
-                  { text: "Remover", onPress: () => onRemove(index), style: "destructive" },
-                ]);
-              }}
-            >
-              <Feather name="trash-2" size={18} color={colors.mutedForeground} />
-            </Pressable>
-          </View>
-        </View>
-      ))}
-    </View>
-  );
-};
 
 export default function Tracking() {
   const router = useRouter();
   const { colors } = useTheme();
   const { mode } = useLocalSearchParams();
-  const { user } = useAuth();
+  const { user, userProfile } = useAuth();
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
 
   // Daily log state
@@ -249,15 +193,7 @@ export default function Tracking() {
     }
   }, [isAddMode]);
 
-  // Calculate progress percentages
-  const calculateProgress = (current: number, target: number) => {
-    if (!target) return 0;
-    const percentage = (current / target) * 100;
-    return Math.min(100, Math.max(0, percentage));
-  };
-
   // Get macro targets from userProfile (or use defaults)
-  const { userProfile } = useAuth();
   const [macroTargets, setMacroTargets] = useState({
     calories: 2000,
     protein: 150,
@@ -319,74 +255,28 @@ export default function Tracking() {
 
           {!loading && dailyLog && (
             <>
-              {/* Daily Summary */}
-              <View className="bg-card rounded-xl border border-border p-6 mb-6">
-                <Text className="text-xl font-bold text-foreground mb-4">Resumo Diário</Text>
-
-                {/* Calories */}
-                <View className="mb-4">
-                  <View className="flex-row justify-between items-center mb-1">
-                    <Text className="font-medium text-foreground">Calorias</Text>
-                    <Text className="text-muted-foreground">
-                      {Math.round(dailyLog.total_calories)} / {macroTargets.calories} kcal
-                    </Text>
-                  </View>
-                  <View className="h-2 bg-muted rounded-full overflow-hidden">
-                    <View
-                      className="h-full bg-primary rounded-full"
-                      style={{ width: `${calculateProgress(dailyLog.total_calories, macroTargets.calories)}%` }}
-                    />
-                  </View>
-                </View>
-
-                {/* Protein */}
-                <View className="mb-4">
-                  <View className="flex-row justify-between items-center mb-1">
-                    <Text className="font-medium text-foreground">Proteínas</Text>
-                    <Text className="text-muted-foreground">
-                      {Math.round(dailyLog.total_protein)} / {macroTargets.protein}g
-                    </Text>
-                  </View>
-                  <View className="h-2 bg-muted rounded-full overflow-hidden">
-                    <View
-                      className="h-full bg-blue-500 rounded-full"
-                      style={{ width: `${calculateProgress(dailyLog.total_protein, macroTargets.protein)}%` }}
-                    />
-                  </View>
-                </View>
-
-                {/* Carbs */}
-                <View className="mb-4">
-                  <View className="flex-row justify-between items-center mb-1">
-                    <Text className="font-medium text-foreground">Carboidratos</Text>
-                    <Text className="text-muted-foreground">
-                      {Math.round(dailyLog.total_carbs)} / {macroTargets.carbs}g
-                    </Text>
-                  </View>
-                  <View className="h-2 bg-muted rounded-full overflow-hidden">
-                    <View
-                      className="h-full bg-yellow-500 rounded-full"
-                      style={{ width: `${calculateProgress(dailyLog.total_carbs, macroTargets.carbs)}%` }}
-                    />
-                  </View>
-                </View>
-
-                {/* Fats */}
-                <View>
-                  <View className="flex-row justify-between items-center mb-1">
-                    <Text className="font-medium text-foreground">Gorduras</Text>
-                    <Text className="text-muted-foreground">
-                      {Math.round(dailyLog.total_fat)} / {macroTargets.fat}g
-                    </Text>
-                  </View>
-                  <View className="h-2 bg-muted rounded-full overflow-hidden">
-                    <View
-                      className="h-full bg-red-500 rounded-full"
-                      style={{ width: `${calculateProgress(dailyLog.total_fat, macroTargets.fat)}%` }}
-                    />
-                  </View>
-                </View>
-              </View>
+              {dailyLog && (
+                <MacroSummary
+                  macros={
+                    userProfile?.macros
+                      ? {
+                          calories: macroTargets.calories,
+                          protein: macroTargets.protein,
+                          carbs: macroTargets.carbs,
+                          fat: macroTargets.fat,
+                        }
+                      : {}
+                  }
+                  showDate={false}
+                  current={{
+                    calories: dailyLog.total_calories,
+                    protein: dailyLog.total_protein,
+                    carbs: dailyLog.total_carbs,
+                    fat: dailyLog.total_fat,
+                  }}
+                  showProgress={true}
+                />
+              )}
 
               {/* Meals */}
               <View className="mb-6">
