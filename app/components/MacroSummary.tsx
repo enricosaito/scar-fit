@@ -80,8 +80,8 @@ export default function MacroSummary({
         <CalorieProgress
           current={showProgress ? currentCalories : macros.calories || 0}
           goal={macros.calories || 2000}
-          size={compact ? 100 : 140}
-          strokeWidth={compact ? 8 : 12}
+          size={compact ? 120 : 160} // Increased from 100/140
+          strokeWidth={compact ? 10 : 14} // Increased from 8/12
           compact={compact}
         />
         <Text className="text-muted-foreground mt-2">calorias</Text>
@@ -100,7 +100,7 @@ export default function MacroSummary({
             </View>
             <View className="h-2 bg-muted rounded-full overflow-hidden">
               <View
-                className="h-full bg-blue-500 rounded-full"
+                className="h-full bg-purple-500 rounded-full"
                 style={{ width: `${calculateProgress(currentProtein, macros.protein || 0)}%` }}
               />
             </View>
@@ -152,7 +152,7 @@ export default function MacroSummary({
               {showProgress ? Math.round(currentProtein) : macros.protein || 0}
             </Text>
             <Text className="text-xs text-muted-foreground">g proteína</Text>
-            <Text className="text-xs text-blue-500 font-medium">{proteinPercentage}%</Text>
+            <Text className="text-xs text-purple-500 font-medium">{proteinPercentage}%</Text>
           </View>
 
           {/* Carbs Card */}
