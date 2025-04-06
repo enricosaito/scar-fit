@@ -34,7 +34,7 @@ export default function MealSection({ title, icon, items, colors, onRemove }: Me
             <View className="items-end">
               <Text className="text-foreground">{Math.round((item.food.kcal * item.quantity) / 100)} kcal</Text>
               <View className="flex-row mt-1">
-                <Text className="text-xs text-blue-500 mr-2">
+                <Text className="text-xs text-purple-500 mr-2">
                   P: {Math.round((item.food.protein_g * item.quantity) / 100)}g
                 </Text>
                 <Text className="text-xs text-yellow-500 mr-2">
