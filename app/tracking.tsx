@@ -5,12 +5,22 @@ import { Feather } from "@expo/vector-icons";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import Button from "./components/ui/Button";
 import { useTheme } from "./context/ThemeContext";
+import { useAuth } from "./context/AuthContext";
 
 export default function Tracking() {
   const router = useRouter();
   const { colors } = useTheme();
   const { mode } = useLocalSearchParams();
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const { userProfile } = useAuth();
+
+  // Get user's saved macros if available
+  const macros = userProfile?.macros || {
+    calories: 2000,
+    protein: 150,
+    carbs: 200,
+    fat: 65,
+  };
 
   // Format date as "Segunda, 15 de Abril" in Portuguese
   const formatDate = (date: Date): string => {
@@ -89,7 +99,7 @@ export default function Tracking() {
             <View className="mb-4">
               <View className="flex-row justify-between items-center mb-1">
                 <Text className="font-medium text-foreground">Calorias</Text>
-                <Text className="text-muted-foreground">0 / 2000 kcal</Text>
+                <Text className="text-muted-foreground">0 / {macros.calories} kcal</Text>
               </View>
               <View className="h-2 bg-muted rounded-full overflow-hidden">
                 <View className="h-full bg-primary rounded-full" style={{ width: "0%" }} />
@@ -100,7 +110,7 @@ export default function Tracking() {
             <View className="mb-4">
               <View className="flex-row justify-between items-center mb-1">
                 <Text className="font-medium text-foreground">Proteínas</Text>
-                <Text className="text-muted-foreground">0 / 150g</Text>
+                <Text className="text-muted-foreground">0 / {macros.protein}g</Text>
               </View>
               <View className="h-2 bg-muted rounded-full overflow-hidden">
                 <View className="h-full bg-blue-500 rounded-full" style={{ width: "0%" }} />
@@ -111,7 +121,7 @@ export default function Tracking() {
             <View className="mb-4">
               <View className="flex-row justify-between items-center mb-1">
                 <Text className="font-medium text-foreground">Carboidratos</Text>
-                <Text className="text-muted-foreground">0 / 200g</Text>
+                <Text className="text-muted-foreground">0 / {macros.carbs}g</Text>
               </View>
               <View className="h-2 bg-muted rounded-full overflow-hidden">
                 <View className="h-full bg-yellow-500 rounded-full" style={{ width: "0%" }} />
@@ -122,7 +132,7 @@ export default function Tracking() {
             <View>
               <View className="flex-row justify-between items-center mb-1">
                 <Text className="font-medium text-foreground">Gorduras</Text>
-                <Text className="text-muted-foreground">0 / 65g</Text>
+                <Text className="text-muted-foreground">0 / {macros.fat}g</Text>
               </View>
               <View className="h-2 bg-muted rounded-full overflow-hidden">
                 <View className="h-full bg-red-500 rounded-full" style={{ width: "0%" }} />
