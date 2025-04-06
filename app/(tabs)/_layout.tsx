@@ -1,4 +1,4 @@
-// app/(tabs)/_layout.tsx (updated)
+// app/(tabs)/_layout.tsx (improved tab positioning)
 import { Tabs } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import { FontAwesome5 } from "@expo/vector-icons";
@@ -17,16 +17,19 @@ export default function TabLayout() {
         tabBarStyle: {
           backgroundColor: colors.card,
           borderTopColor: colors.border,
-          height: 56, // Reduced from 60 to move it up a bit
-          paddingTop: 8, // Increased padding to move icons up
-          paddingBottom: 8,
+          height: 70, // Increased height for more space
+          paddingVertical: 15, // Added vertical padding to center the content
         },
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.mutedForeground,
+        tabBarIconStyle: {
+          marginTop: 0, // Adjusted to move icons up
+        },
         tabBarLabelStyle: {
           fontSize: 12,
           fontWeight: "500",
-          marginBottom: 4, // Adjust to position text better
+          marginTop: 0, // Adjusted to reduce spacing between icon and label
+          marginBottom: 4,
         },
       }}
     >
@@ -34,14 +37,22 @@ export default function TabLayout() {
         name="index"
         options={{
           title: "Início",
-          tabBarIcon: ({ color }) => <Feather name="home" size={24} color={color} />,
+          tabBarIcon: ({ color }) => (
+            <View className="items-center justify-center">
+              <Feather name="home" size={24} color={color} />
+            </View>
+          ),
         }}
       />
       <Tabs.Screen
         name="calculator"
         options={{
-          title: "Calculadora",
-          tabBarIcon: ({ color }) => <Feather name="sliders" size={24} color={color} />,
+          title: "Calcular",
+          tabBarIcon: ({ color }) => (
+            <View className="items-center justify-center">
+              <Feather name="sliders" size={24} color={color} />
+            </View>
+          ),
         }}
       />
       <Tabs.Screen
@@ -49,7 +60,7 @@ export default function TabLayout() {
         options={{
           title: "",
           tabBarIcon: ({ color }) => (
-            <View className="bg-primary h-14 w-14 rounded-full items-center justify-center -mt-4 shadow-lg">
+            <View className="bg-primary h-14 w-14 rounded-full items-center justify-center -mt-3 mb-1 shadow-lg">
               <Feather name="plus" size={28} color="white" />
             </View>
           ),
@@ -70,14 +81,22 @@ export default function TabLayout() {
         name="recipes"
         options={{
           title: "Receitas",
-          tabBarIcon: ({ color }) => <FontAwesome5 name="utensils" size={22} color={color} />,
+          tabBarIcon: ({ color }) => (
+            <View className="items-center justify-center">
+              <FontAwesome5 name="utensils" size={22} color={color} />
+            </View>
+          ),
         }}
       />
       <Tabs.Screen
         name="more"
         options={{
           title: "Mais",
-          tabBarIcon: ({ color }) => <Feather name="more-horizontal" size={24} color={color} />,
+          tabBarIcon: ({ color }) => (
+            <View className="items-center justify-center">
+              <Feather name="more-horizontal" size={24} color={color} />
+            </View>
+          ),
         }}
       />
     </Tabs>
