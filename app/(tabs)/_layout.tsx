@@ -1,4 +1,4 @@
-// app/(tabs)/_layout.tsx
+// app/(tabs)/_layout.tsx (updated)
 import { Tabs } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import { FontAwesome5 } from "@expo/vector-icons";
@@ -13,30 +13,21 @@ export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
-        headerShown: true,
+        headerShown: false,
         tabBarStyle: {
           backgroundColor: colors.card,
           borderTopColor: colors.border,
+          height: 56, // Reduced from 60 to move it up a bit
+          paddingTop: 8, // Increased padding to move icons up
+          paddingBottom: 8,
         },
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.mutedForeground,
-        // Add common header elements
-        headerStyle: {
-          backgroundColor: colors.card,
+        tabBarLabelStyle: {
+          fontSize: 12,
+          fontWeight: "500",
+          marginBottom: 4, // Adjust to position text better
         },
-        headerTintColor: colors.foreground,
-        headerLeft: () => (
-          <Pressable onPress={() => router.push("/profile")} className="ml-4 p-2">
-            <Feather name="user" size={22} color={colors.foreground} />
-          </Pressable>
-        ),
-        headerRight: () => (
-          <Pressable onPress={() => router.push("/notifications")} className="mr-4 p-2">
-            <Feather name="bell" size={22} color={colors.foreground} />
-          </Pressable>
-        ),
-        headerTitle: "Scar Fit",
-        headerTitleAlign: "center",
       }}
     >
       <Tabs.Screen
@@ -51,7 +42,6 @@ export default function TabLayout() {
         options={{
           title: "Calculadora",
           tabBarIcon: ({ color }) => <Feather name="sliders" size={24} color={color} />,
-          headerShown: false, // Hide header for calculator
         }}
       />
       <Tabs.Screen
@@ -59,7 +49,7 @@ export default function TabLayout() {
         options={{
           title: "",
           tabBarIcon: ({ color }) => (
-            <View className="bg-primary h-14 w-14 rounded-full items-center justify-center -mt-5 shadow-lg">
+            <View className="bg-primary h-14 w-14 rounded-full items-center justify-center -mt-4 shadow-lg">
               <Feather name="plus" size={28} color="white" />
             </View>
           ),
@@ -68,7 +58,7 @@ export default function TabLayout() {
           tabPress: (e) => {
             // Prevent default action
             e.preventDefault();
-            // Instead of going to tracking with add mode, just show the search directly
+            // Navigate directly to search
             router.push({
               pathname: "/tracking",
               params: { showSearch: "true" },
@@ -80,7 +70,6 @@ export default function TabLayout() {
         name="recipes"
         options={{
           title: "Receitas",
-          // Use FontAwesome5 for chef-hat icon
           tabBarIcon: ({ color }) => <FontAwesome5 name="utensils" size={22} color={color} />,
         }}
       />
