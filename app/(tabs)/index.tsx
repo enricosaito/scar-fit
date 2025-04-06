@@ -1,41 +1,151 @@
 // app/(tabs)/index.tsx
-import React from "react";
-import { Text, View, SafeAreaView, ScrollView } from "react-native";
+import React, { useState, useEffect } from "react";
+import { Text, View, SafeAreaView, ScrollView, ActivityIndicator, Pressable } from "react-native";
 import { useRouter } from "expo-router";
+import { Feather } from "@expo/vector-icons";
 import Button from "../components/ui/Button";
 import { useTheme } from "../context/ThemeContext";
 import { useAuth } from "../context/AuthContext";
 import MacroSummary from "../components/MacroSummary";
-import { MacroData } from "../models/user"; // Import the MacroData type
+import { MacroData } from "../models/user";
+import { DailyLog, getUserDailyLog } from "../models/tracking";
 
 export default function Home() {
   const router = useRouter();
-  const { userProfile } = useAuth();
+  const { colors } = useTheme();
+  const { userProfile, user } = useAuth();
+  const [dailyLog, setDailyLog] = useState<DailyLog | null>(null);
+  const [loading, setLoading] = useState(false);
 
   const navigateToCalculator = () => {
     router.push("/(tabs)/calculator");
   };
 
+  const navigateToTracking = () => {
+    router.push("/tracking");
+  };
+
   // Check if user has saved macros
   const hasMacros = userProfile?.macros && Object.keys(userProfile?.macros || {}).length > 0;
+
+  // Format date for database queries (YYYY-MM-DD)
+  const formatDateForDb = (date: Date): string => {
+    return date.toISOString().split("T")[0];
+  };
+
+  // Load daily log for today
+  useEffect(() => {
+    const loadTodaysLog = async () => {
+      if (!user) return;
+
+      setLoading(true);
+      try {
+        const dateStr = formatDateForDb(new Date());
+        const log = await getUserDailyLog(user.id, dateStr);
+        setDailyLog(log);
+      } catch (error) {
+        console.error("Error loading daily log:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadTodaysLog();
+  }, [user]);
+
+  // Get today's date formatted nicely in Portuguese
+  const getTodayDateFormatted = () => {
+    const days = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
+    const months = [
+      "Janeiro",
+      "Fevereiro",
+      "Março",
+      "Abril",
+      "Maio",
+      "Junho",
+      "Julho",
+      "Agosto",
+      "Setembro",
+      "Outubro",
+      "Novembro",
+      "Dezembro",
+    ];
+
+    const today = new Date();
+    const dayName = days[today.getDay()];
+    const day = today.getDate();
+    const month = months[today.getMonth()];
+
+    return `${dayName}, ${day} de ${month}`;
+  };
 
   return (
     <SafeAreaView className="flex-1 bg-background">
       <ScrollView className="flex-1 px-4">
         <View className="py-6">
-          <Text className="text-3xl font-bold text-foreground text-center mb-2">Calculadora de Macros</Text>
-          <Text className="text-muted-foreground text-center mb-6">
-            Descubra seus valores ideais de macronutrientes baseado nos seus objetivos
-          </Text>
+          <Text className="text-3xl font-bold text-foreground mb-2">Olá!</Text>
+          <Text className="text-muted-foreground mb-6">{getTodayDateFormatted()}</Text>
 
           {/* Show macros if available */}
           {hasMacros ? (
-            <View className="mb-6">
-              <MacroSummary macros={userProfile?.macros as Partial<MacroData>} />
-              <View className="mt-2">
-                <Button onPress={navigateToCalculator}>Recalcular</Button>
+            <>
+              {loading ? (
+                <View className="py-4 items-center">
+                  <ActivityIndicator size="large" color={colors.primary} />
+                </View>
+              ) : dailyLog ? (
+                <>
+                  <View className="flex-row justify-between items-center mb-4">
+                    <Text className="text-xl font-bold text-foreground">Hoje</Text>
+                    <Pressable onPress={navigateToTracking}>
+                      <Text className="text-primary">Ver detalhes</Text>
+                    </Pressable>
+                  </View>
+
+                  <MacroSummary
+                    macros={userProfile?.macros as Partial<MacroData>}
+                    showDate={false}
+                    compact={true}
+                    current={{
+                      calories: dailyLog.total_calories,
+                      protein: dailyLog.total_protein,
+                      carbs: dailyLog.total_carbs,
+                      fat: dailyLog.total_fat,
+                    }}
+                    showProgress={true}
+                  />
+
+                  <View className="flex-row mb-6">
+                    <Button
+                      className="flex-1 mr-2"
+                      onPress={() =>
+                        router.push({
+                          pathname: "/tracking",
+                          params: { showSearch: "true" },
+                        })
+                      }
+                    >
+                      <Feather name="plus" size={16} color="white" className="mr-2" />
+                      <Text className="text-white">Adicionar Refeição</Text>
+                    </Button>
+
+                    <Button variant="outline" className="flex-1 ml-2" onPress={navigateToTracking}>
+                      <Text className="text-foreground">Ver Detalhes</Text>
+                    </Button>
+                  </View>
+                </>
+              ) : null}
+
+              <View className="mb-6">
+                <Text className="text-xl font-bold text-foreground mb-4">Suas Metas</Text>
+                <MacroSummary macros={userProfile?.macros as Partial<MacroData>} showDate={true} compact={true} />
+                <View className="mt-2">
+                  <Button variant="outline" onPress={navigateToCalculator}>
+                    Recalcular Metas
+                  </Button>
+                </View>
               </View>
-            </View>
+            </>
           ) : (
             <View className="bg-card rounded-xl border border-border p-6 mb-6">
               <Text className="text-lg font-semibold text-foreground mb-4">Comece sua jornada</Text>
@@ -50,10 +160,10 @@ export default function Home() {
           )}
 
           <View className="bg-accent rounded-xl p-6">
-            <Text className="text-lg font-semibold text-accent-foreground mb-2">Sabia que...</Text>
+            <Text className="text-lg font-semibold text-accent-foreground mb-2">Dica do Dia</Text>
             <Text className="text-accent-foreground">
-              Macronutrientes são os nutrientes que seu corpo precisa em grandes quantidades: proteínas, carboidratos e
-              gorduras.
+              Lembre-se de beber água suficiente ao longo do dia. A hidratação adequada ajuda no metabolismo e na
+              absorção de nutrientes.
             </Text>
           </View>
 
