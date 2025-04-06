@@ -5,11 +5,13 @@ import { useRouter } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import { useTheme } from "./context/ThemeContext";
 import { useAuth } from "./context/AuthContext";
+import MacroSummary from "./components/MacroSummary";
+import { resetUserMacros } from "./models/user";
 
 export default function Profile() {
   const router = useRouter();
   const { colors } = useTheme();
-  const { user, signOut } = useAuth();
+  const { user, signOut, userProfile, refreshProfile } = useAuth();
 
   const handleLogout = () => {
     Alert.alert(
@@ -24,6 +26,36 @@ export default function Profile() {
           text: "Sim, sair",
           style: "destructive",
           onPress: signOut,
+        },
+      ],
+      { cancelable: true }
+    );
+  };
+
+  const handleResetMacros = () => {
+    Alert.alert(
+      "Resetar Macros",
+      "Tem certeza que deseja apagar seus dados de macronutrientes?",
+      [
+        {
+          text: "Cancelar",
+          style: "cancel",
+        },
+        {
+          text: "Sim, resetar",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              if (user) {
+                await resetUserMacros(user.id);
+                await refreshProfile();
+                Alert.alert("Sucesso", "Seus dados foram resetados com sucesso.");
+              }
+            } catch (error) {
+              console.error("Error resetting macros:", error);
+              Alert.alert("Erro", "Não foi possível resetar seus dados. Tente novamente.");
+            }
+          },
         },
       ],
       { cancelable: true }
@@ -45,37 +77,39 @@ export default function Profile() {
         </View>
 
         <Text className="text-2xl font-bold text-foreground mb-1">
-          {user?.user_metadata?.name || 'Usuário'}
+          {user?.user_metadata?.name || userProfile?.full_name || "Usuário"}
         </Text>
         <Text className="text-muted-foreground mb-6">{user?.email}</Text>
 
-        <Pressable 
-          className="w-full bg-primary py-2 px-4 rounded-lg mb-2" 
-          onPress={() => router.push("/profile/edit")}
-        >
+        <Pressable className="w-full bg-primary py-2 px-4 rounded-lg mb-2" onPress={() => router.push("/profile/edit")}>
           <Text className="text-white text-center font-medium">Editar Perfil</Text>
         </Pressable>
 
-        <Pressable 
-          className="w-full bg-transparent border border-border py-2 px-4 rounded-lg mb-4" 
+        <Pressable
+          className="w-full bg-transparent border border-border py-2 px-4 rounded-lg mb-4"
           onPress={() => router.push("/profile/password")}
         >
           <Text className="text-foreground text-center font-medium">Alterar Senha</Text>
         </Pressable>
 
-        <Pressable 
-          className="w-full bg-transparent border border-border py-2 px-4 rounded-lg" 
-          onPress={handleLogout}
-        >
-          <Text className="text-foreground text-center font-medium">Sair</Text>
-        </Pressable>
-        
         <Pressable className="w-full bg-transparent border border-border py-2 px-4 rounded-lg" onPress={handleLogout}>
           <Text className="text-foreground text-center font-medium">Sair</Text>
         </Pressable>
       </View>
 
       <View className="p-6">
+        {userProfile?.macros && (
+          <View className="mb-6">
+            <View className="flex-row justify-between items-center mb-4">
+              <Text className="text-lg font-bold text-foreground">Suas Metas Nutricionais</Text>
+              <Pressable onPress={handleResetMacros}>
+                <Text className="text-primary text-sm">Resetar</Text>
+              </Pressable>
+            </View>
+            <MacroSummary macros={userProfile.macros} compact={true} />
+          </View>
+        )}
+
         <Text className="text-lg font-bold text-foreground mb-4">Estatísticas</Text>
 
         <View className="flex-row mb-4">
