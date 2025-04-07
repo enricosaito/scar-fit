@@ -1,6 +1,6 @@
-// app/profile.tsx
+// app/profile.tsx (updated with ScrollView)
 import React from "react";
-import { Text, View, SafeAreaView, Pressable, Alert } from "react-native";
+import { Text, View, SafeAreaView, Pressable, Alert, ScrollView } from "react-native";
 import { useRouter } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import { useTheme } from "./context/ThemeContext";
@@ -71,69 +71,71 @@ export default function Profile() {
         <Text className="text-lg font-medium flex-1 text-center text-foreground mr-8">Meu Perfil</Text>
       </View>
 
-      <View className="p-6 items-center">
-        <View className="w-24 h-24 bg-primary/20 rounded-full items-center justify-center mb-4">
-          <Feather name="user" size={40} color={colors.primary} />
+      <ScrollView className="flex-1">
+        <View className="p-6 items-center">
+          <View className="w-24 h-24 bg-primary/20 rounded-full items-center justify-center mb-4">
+            <Feather name="user" size={40} color={colors.primary} />
+          </View>
+
+          <Text className="text-2xl font-bold text-foreground mb-1">
+            {user?.user_metadata?.name || userProfile?.full_name || "Usuário"}
+          </Text>
+          <Text className="text-muted-foreground mb-6">{user?.email}</Text>
+
+          <Pressable
+            className="w-full bg-primary py-2 px-4 rounded-lg mb-4"
+            onPress={() => router.push("/profile/edit")}
+          >
+            <Text className="text-white text-center font-medium">Editar Perfil</Text>
+          </Pressable>
+
+          <Pressable
+            className="w-full bg-transparent border border-red-500 py-2 px-4 rounded-lg flex-row justify-center items-center"
+            onPress={handleLogout}
+          >
+            <Feather name="log-out" size={18} color="#ef4444" className="mr-2" />
+            <Text className="text-red-500 text-center font-medium ml-2">Sair</Text>
+          </Pressable>
         </View>
 
-        <Text className="text-2xl font-bold text-foreground mb-1">
-          {user?.user_metadata?.name || userProfile?.full_name || "Usuário"}
-        </Text>
-        <Text className="text-muted-foreground mb-6">{user?.email}</Text>
-
-        <Pressable className="w-full bg-primary py-2 px-4 rounded-lg mb-2" onPress={() => router.push("/profile/edit")}>
-          <Text className="text-white text-center font-medium">Editar Perfil</Text>
-        </Pressable>
-
-        <Pressable
-          className="w-full bg-transparent border border-border py-2 px-4 rounded-lg mb-4"
-          onPress={() => router.push("/profile/password")}
-        >
-          <Text className="text-foreground text-center font-medium">Alterar Senha</Text>
-        </Pressable>
-
-        <Pressable className="w-full bg-transparent border border-border py-2 px-4 rounded-lg" onPress={handleLogout}>
-          <Text className="text-foreground text-center font-medium">Sair</Text>
-        </Pressable>
-      </View>
-
-      <View className="p-6">
-        {userProfile?.macros && (
-          <View className="mb-6">
-            <View className="flex-row justify-between items-center mb-4">
-              <Text className="text-lg font-bold text-foreground">Suas Metas Nutricionais</Text>
-              <Pressable onPress={handleResetMacros}>
-                <Text className="text-primary text-sm">Resetar</Text>
-              </Pressable>
+        <View className="px-6 pb-6">
+          {userProfile?.macros && (
+            <View className="mb-6">
+              <View className="flex-row justify-between items-center mb-4">
+                <Text className="text-lg font-bold text-foreground">Suas Metas Nutricionais</Text>
+                <Pressable onPress={handleResetMacros}>
+                  <Text className="text-primary text-sm">Resetar</Text>
+                </Pressable>
+              </View>
+              <MacroSummary macros={userProfile.macros} compact={true} />
             </View>
-            <MacroSummary macros={userProfile.macros} compact={true} />
-          </View>
-        )}
+          )}
 
-        <Text className="text-lg font-bold text-foreground mb-4">Estatísticas</Text>
+          <Text className="text-lg font-bold text-foreground mb-4">Estatísticas</Text>
 
-        <View className="flex-row mb-4">
-          <View className="flex-1 bg-card rounded-xl border border-border p-4 mr-2">
-            <Text className="text-muted-foreground">Dias Ativos</Text>
-            <Text className="text-2xl font-bold text-foreground">0</Text>
-          </View>
+          <View className="flex-row mb-4">
+            <View className="flex-1 bg-card rounded-xl border border-border p-4 mr-2">
+              <Text className="text-muted-foreground">Dias Ativos</Text>
+              <Text className="text-2xl font-bold text-foreground">0</Text>
+            </View>
 
-          <View className="flex-1 bg-card rounded-xl border border-border p-4 ml-2">
-            <Text className="text-muted-foreground">Refeições</Text>
-            <Text className="text-2xl font-bold text-foreground">0</Text>
-          </View>
-        </View>
-
-        <View className="bg-card rounded-xl border border-border p-4">
-          <Text className="text-muted-foreground mb-2">Plano Atual</Text>
-          <View className="flex-row justify-between items-center">
-            <Text className="text-lg font-bold text-foreground">Gratuito</Text>
-            <View className="bg-primary py-1 px-3 rounded-full">
-              <Text className="text-white text-xs font-medium">Upgrade</Text>
+            <View className="flex-1 bg-card rounded-xl border border-border p-4 ml-2">
+              <Text className="text-muted-foreground">Refeições</Text>
+              <Text className="text-2xl font-bold text-foreground">0</Text>
             </View>
           </View>
+
+          <View className="bg-card rounded-xl border border-border p-4 mb-6">
+            <Text className="text-muted-foreground mb-2">Plano Atual</Text>
+            <View className="flex-row justify-between items-center">
+              <Text className="text-lg font-bold text-foreground">Gratuito</Text>
+              <View className="bg-primary py-1 px-3 rounded-full">
+                <Text className="text-white text-xs font-medium">Upgrade</Text>
+              </View>
+            </View>
+          </View>
         </View>
-      </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }

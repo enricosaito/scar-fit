@@ -1,4 +1,4 @@
-// app/(tabs)/_layout.tsx
+// app/(tabs)/_layout.tsx (improved tab positioning)
 import { Tabs } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import { FontAwesome5 } from "@expo/vector-icons";
@@ -13,45 +13,46 @@ export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
-        headerShown: true,
+        headerShown: false,
         tabBarStyle: {
           backgroundColor: colors.card,
           borderTopColor: colors.border,
+          height: 70, // Increased height for more space
+          paddingVertical: 15, // Added vertical padding to center the content
         },
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.mutedForeground,
-        // Add common header elements
-        headerStyle: {
-          backgroundColor: colors.card,
+        tabBarIconStyle: {
+          marginTop: 0, // Adjusted to move icons up
         },
-        headerTintColor: colors.foreground,
-        headerLeft: () => (
-          <Pressable onPress={() => router.push("/profile")} className="ml-4 p-2">
-            <Feather name="user" size={22} color={colors.foreground} />
-          </Pressable>
-        ),
-        headerRight: () => (
-          <Pressable onPress={() => router.push("/notifications")} className="mr-4 p-2">
-            <Feather name="bell" size={22} color={colors.foreground} />
-          </Pressable>
-        ),
-        headerTitle: "Scar Fit",
-        headerTitleAlign: "center",
+        tabBarLabelStyle: {
+          fontSize: 12,
+          fontWeight: "500",
+          marginTop: 0, // Adjusted to reduce spacing between icon and label
+          marginBottom: 4,
+        },
       }}
     >
       <Tabs.Screen
         name="index"
         options={{
           title: "Início",
-          tabBarIcon: ({ color }) => <Feather name="home" size={24} color={color} />,
+          tabBarIcon: ({ color }) => (
+            <View className="items-center justify-center">
+              <Feather name="home" size={24} color={color} />
+            </View>
+          ),
         }}
       />
       <Tabs.Screen
         name="calculator"
         options={{
-          title: "Calculadora",
-          tabBarIcon: ({ color }) => <Feather name="sliders" size={24} color={color} />,
-          headerShown: false, // Hide header for calculator
+          title: "Calcular",
+          tabBarIcon: ({ color }) => (
+            <View className="items-center justify-center">
+              <Feather name="sliders" size={24} color={color} />
+            </View>
+          ),
         }}
       />
       <Tabs.Screen
@@ -64,12 +65,12 @@ export default function TabLayout() {
             </View>
           ),
         }}
-        listeners={({ navigation }) => ({
+        listeners={() => ({
           tabPress: (e) => {
             // Prevent default action
             e.preventDefault();
-            // Navigate to tracking with "add" mode
-            router.push("/tracking?mode=add");
+            // Just navigate to tracking without showing search
+            router.push("/tracking");
           },
         })}
       />
@@ -77,15 +78,22 @@ export default function TabLayout() {
         name="recipes"
         options={{
           title: "Receitas",
-          // Use FontAwesome5 for chef-hat icon
-          tabBarIcon: ({ color }) => <FontAwesome5 name="utensils" size={22} color={color} />,
+          tabBarIcon: ({ color }) => (
+            <View className="items-center justify-center">
+              <FontAwesome5 name="utensils" size={22} color={color} />
+            </View>
+          ),
         }}
       />
       <Tabs.Screen
         name="more"
         options={{
           title: "Mais",
-          tabBarIcon: ({ color }) => <Feather name="more-horizontal" size={24} color={color} />,
+          tabBarIcon: ({ color }) => (
+            <View className="items-center justify-center">
+              <Feather name="more-horizontal" size={24} color={color} />
+            </View>
+          ),
         }}
       />
     </Tabs>
