@@ -42,6 +42,9 @@ export default function NutritionSummary({ macros, current = {}, compact = false
   // Amount to display: either remaining or over
   const caloriesAmount = Math.abs(caloriesDiff);
 
+  // Check if protein goal is achieved or exceeded
+  const isProteinGoalMet = currentProtein >= (macros.protein || 0);
+
   // Format today's date (e.g., "Domingo, 6 de Abril")
   const formatTodayDate = () => {
     const today = new Date();
@@ -159,23 +162,27 @@ export default function NutritionSummary({ macros, current = {}, compact = false
               <Text className="text-foreground font-medium">Proteínas</Text>
             </View>
 
-            {/* Main text - protein remaining */}
-            <Text className="text-xl text-white mb-1">
-              <Text className="font-bold">{Math.round(Math.max(0, (macros.protein || 0) - currentProtein))}g</Text>{" "}
-              restantes
-            </Text>
+            {/* Main text - protein remaining or goal achieved */}
+            {isProteinGoalMet ? (
+              <Text className="text-xl text-white mb-1">
+                <Text className="font-bold">Proteínas batidas 💪</Text>
+              </Text>
+            ) : (
+              <Text className="text-xl text-white mb-1">
+                <Text className="font-bold">{Math.round(Math.max(0, (macros.protein || 0) - currentProtein))}g</Text>{" "}
+                restantes
+              </Text>
+            )}
 
             {/* Protein progress bar - thinner but with subtle glow */}
             <View className="h-2 rounded-full overflow-hidden bg-purple-900/30">
-              {/* Static background (darker purple) - already handled by the parent View */}
-
               {/* Animated foreground bar */}
               <Animated.View
                 style={[
                   {
                     width: proteinWidth,
                     height: "100%",
-                    backgroundColor: "#a855f7", // Tailwind purple-500
+                    backgroundColor: isProteinGoalMet ? "#8b5cf6" : "#a855f7", // Darker purple when goal met
                     borderRadius: 9999,
                     shadowColor: "#c084fc", // Tailwind purple-400
                     shadowOffset: { width: 0, height: 1 },
@@ -241,7 +248,7 @@ function CalorieCircle({ current, goal, caloriesAmount, isOverGoal }) {
 
   // Get dynamic progress color based on percentage and overrun
   const getProgressColor = () => {
-    if (isOverGoal) return "#ef4444"; // Tailwind red-500 for over goal
+    if (isOverGoal) return "#1e40af"; // Tailwind blue-800 for over goal (darker blue)
     if (percentage >= 90 && percentage <= 100) return "#22c55e"; // Tailwind green-500
     return "#3b82f6"; // Tailwind blue-500 (base color)
   };
@@ -278,10 +285,10 @@ function CalorieCircle({ current, goal, caloriesAmount, isOverGoal }) {
 
         {/* Centered Text - Calories Left or Over */}
         <View className="absolute top-0 left-0 right-0 bottom-0 items-center justify-center">
-          <Text className={`text-3xl font-bold ${isOverGoal ? "text-red-400" : "text-white"}`}>
+          <Text className={`text-3xl font-bold ${isOverGoal ? "text-blue-300" : "text-white"}`}>
             {Math.round(caloriesAmount)}
           </Text>
-          <Text className={`text-xs ${isOverGoal ? "text-red-400" : "text-white"}`}>
+          <Text className={`text-xs ${isOverGoal ? "text-blue-300" : "text-white"}`}>
             {isOverGoal ? "acima" : "restantes"}
           </Text>
         </View>

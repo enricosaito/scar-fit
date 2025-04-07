@@ -4,7 +4,6 @@ import { View, Text } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { useTheme } from "../context/ThemeContext";
 import { MacroData } from "../models/user";
-import CalorieProgress from "./CalorieProgress";
 import Svg, { Circle, G } from "react-native-svg";
 
 interface MacroSummaryProps {

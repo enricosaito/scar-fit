@@ -1,11 +1,11 @@
-// app/(tabs)/index.tsx (completely redesigned)
+// app/(tabs)/index.tsx (partial update to implement the new component)
 import React, { useState, useEffect } from "react";
 import { Text, View, Pressable, SafeAreaView, ScrollView, ActivityIndicator, RefreshControl } from "react-native";
 import { useRouter } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import { useTheme } from "../context/ThemeContext";
 import { useAuth } from "../context/AuthContext";
-import MacroSummary from "../components/MacroSummary";
+import NutritionSummary from "../components/NutritionSummary"; // Import the new component
 import MealList from "../components/MealList";
 import Header from "../components/ui/Header";
 import { MacroData } from "../models/user";
@@ -18,6 +18,7 @@ export default function Home() {
   const [dailyLog, setDailyLog] = useState<DailyLog | null>(null);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [showMacroDetails, setShowMacroDetails] = useState(true); // State for toggling macro details
 
   // Check if user has saved macros
   const hasMacros = userProfile?.macros && Object.keys(userProfile?.macros || {}).length > 0;
@@ -49,6 +50,11 @@ export default function Home() {
     await loadTodaysLog();
     setRefreshing(false);
   };
+
+  // Load data when component mounts
+  useEffect(() => {
+    loadTodaysLog();
+  }, [user]);
 
   // Group food items by meal type
   const getMealItems = (mealType: "breakfast" | "lunch" | "dinner" | "snack") => {
@@ -91,47 +97,15 @@ export default function Home() {
     ];
   };
 
-  // Load data when component mounts
-  useEffect(() => {
-    loadTodaysLog();
-  }, [user]);
-
-  // Get today's date in "Segunda, 15 de Abril" format
-  const getTodayFormatted = () => {
-    const days = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
-    const months = [
-      "Janeiro",
-      "Fevereiro",
-      "Março",
-      "Abril",
-      "Maio",
-      "Junho",
-      "Julho",
-      "Agosto",
-      "Setembro",
-      "Outubro",
-      "Novembro",
-      "Dezembro",
-    ];
-
-    const today = new Date();
-    const dayName = days[today.getDay()];
-    const day = today.getDate();
-    const month = months[today.getMonth()];
-
-    return `${dayName}, ${day} de ${month}`;
-  };
-
   return (
     <SafeAreaView className="flex-1 bg-background">
-      <Header title="Scar Fit" />
+      <Header title="Scar Fit ⚡️" />
 
       <ScrollView className="flex-1" refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
         <View className="px-4 py-3 mt-3">
           <Text className="text-2xl font-bold text-foreground mb-1">
             Olá, {userProfile?.full_name?.split(" ")[0] || user?.user_metadata?.name || "Usuário"}!
           </Text>
-          <Text className="text-muted-foreground mb-6">{getTodayFormatted()}</Text>
 
           {/* Loading state */}
           {loading && !refreshing ? (
@@ -140,19 +114,18 @@ export default function Home() {
             </View>
           ) : (
             <>
-              {/* Macro Goals */}
+              {/* Nutrition Summary with new component */}
               {hasMacros && dailyLog ? (
-                <MacroSummary
+                <NutritionSummary
                   macros={userProfile?.macros as Partial<MacroData>}
-                  showDate={false}
-                  compact={true}
                   current={{
                     calories: dailyLog.total_calories,
                     protein: dailyLog.total_protein,
                     carbs: dailyLog.total_carbs,
                     fat: dailyLog.total_fat,
                   }}
-                  showProgress={true}
+                  showDetails={showMacroDetails}
+                  onToggleDetails={() => setShowMacroDetails(!showMacroDetails)}
                 />
               ) : !hasMacros ? (
                 <View className="bg-card rounded-xl border border-border p-6 mb-6">
@@ -169,6 +142,7 @@ export default function Home() {
                 </View>
               ) : null}
 
+              {/* Rest of the component remains the same */}
               {/* Meal List Section */}
               {dailyLog && (
                 <>
