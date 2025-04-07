@@ -4,15 +4,12 @@ import { View, Text, Pressable, Modal, SafeAreaView } from "react-native";
 import { useRouter } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import { useTheme } from "../context/ThemeContext";
+import { useAddMenu } from "../context/AddMenuContext";
 
-interface AddMenuProps {
-  visible: boolean;
-  onClose: () => void;
-}
-
-export default function AddMenu({ visible, onClose }: AddMenuProps) {
+export default function AddMenu() {
   const router = useRouter();
   const { colors } = useTheme();
+  const { isMenuVisible, hideMenu } = useAddMenu();
 
   const menuItems = [
     {
@@ -21,7 +18,7 @@ export default function AddMenu({ visible, onClose }: AddMenuProps) {
       title: "Adicionar Alimento",
       subtitle: "Pesquisar no banco de dados",
       action: () => {
-        onClose();
+        hideMenu();
         router.push("/tracking?showSearch=true");
       },
       pro: false,
@@ -32,7 +29,7 @@ export default function AddMenu({ visible, onClose }: AddMenuProps) {
       title: "Escanear Código de Barras",
       subtitle: "Adicionar alimento por código de barras",
       action: () => {
-        onClose();
+        hideMenu();
         router.push("/pro-subscription");
       },
       pro: true,
@@ -43,7 +40,7 @@ export default function AddMenu({ visible, onClose }: AddMenuProps) {
       title: "Detectar Alimento por Foto",
       subtitle: "Identificar alimento por imagem",
       action: () => {
-        onClose();
+        hideMenu();
         router.push("/pro-subscription");
       },
       pro: true,
@@ -54,7 +51,7 @@ export default function AddMenu({ visible, onClose }: AddMenuProps) {
       title: "Adicionar Exercício",
       subtitle: "Registrar atividade física",
       action: () => {
-        onClose();
+        hideMenu();
         router.push("/exercise");
       },
       pro: false,
@@ -63,10 +60,10 @@ export default function AddMenu({ visible, onClose }: AddMenuProps) {
 
   return (
     <Modal
-      visible={visible}
+      visible={isMenuVisible}
       transparent={true}
       animationType="fade"
-      onRequestClose={onClose}
+      onRequestClose={hideMenu}
     >
       <SafeAreaView className="flex-1 bg-background/95">
         <View className="flex-1 justify-end">
@@ -102,7 +99,7 @@ export default function AddMenu({ visible, onClose }: AddMenuProps) {
             
             <Pressable
               className="bg-card p-4 items-center rounded-xl border border-border mt-4"
-              onPress={onClose}
+              onPress={hideMenu}
             >
               <Text className="text-primary font-medium">Cancelar</Text>
             </Pressable>
