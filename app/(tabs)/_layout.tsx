@@ -1,4 +1,4 @@
-// app/(tabs)/_layout.tsx (improved tab positioning)
+// app/(tabs)/_layout.tsx (updated)
 import { Tabs } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import { FontAwesome5 } from "@expo/vector-icons";
@@ -69,8 +69,8 @@ export default function TabLayout() {
           tabPress: (e) => {
             // Prevent default action
             e.preventDefault();
-            // Just navigate to tracking without showing search
-            router.push("/tracking");
+            // Navigate to add tab which will show the menu
+            router.push("/(tabs)/add");
           },
         })}
       />
