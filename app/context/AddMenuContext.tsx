@@ -15,11 +15,7 @@ export function AddMenuProvider({ children }: { children: React.ReactNode }) {
   const showMenu = () => setIsMenuVisible(true);
   const hideMenu = () => setIsMenuVisible(false);
 
-  return (
-    <AddMenuContext.Provider value={{ isMenuVisible, showMenu, hideMenu }}>
-      {children}
-    </AddMenuContext.Provider>
-  );
+  return <AddMenuContext.Provider value={{ isMenuVisible, showMenu, hideMenu }}>{children}</AddMenuContext.Provider>;
 }
 
 export function useAddMenu() {
@@ -29,3 +25,5 @@ export function useAddMenu() {
   }
   return context;
 }
+
+export default AddMenuProvider;
