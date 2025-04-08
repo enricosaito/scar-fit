@@ -19,7 +19,7 @@ export default function AddMenu() {
       subtitle: "Pesquisar no banco de dados",
       action: () => {
         hideMenu();
-        router.push("/tracking?showSearch=true");
+        router.push("/food-tracker"); 
       },
       pro: false,
     },
