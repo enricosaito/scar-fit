@@ -1,6 +1,6 @@
-// app/components/AddMenu.tsx
+// app/components/tracking/AddMenu.tsx (minimal fixes)
 import React, { useEffect, useRef } from "react";
-import { View, Text, Pressable, Modal, SafeAreaView, Animated, Dimensions } from "react-native";
+import { View, Text, Pressable, Modal, SafeAreaView, Animated, Platform } from "react-native";
 import { useRouter } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import { useTheme } from "../../context/ThemeContext";
@@ -22,13 +22,13 @@ export default function AddMenu() {
         Animated.timing(backdropOpacity, {
           toValue: 0.7,
           duration: 300,
-          useNativeDriver: true,
+          useNativeDriver: true, // This is fine for opacity
         }),
         Animated.spring(menuTranslateY, {
           toValue: 0,
           friction: 8,
           tension: 80,
-          useNativeDriver: true,
+          useNativeDriver: true, // This is fine for translations
         }),
       ]).start();
     } else {
@@ -109,23 +109,32 @@ export default function AddMenu() {
             backgroundColor: "#000",
             opacity: backdropOpacity,
           }}
-          onTouchEnd={hideMenu}
-        />
+        >
+          <Pressable onPress={hideMenu} style={{ flex: 1 }} />
+        </Animated.View>
 
         {/* Menu Content */}
         <View className="flex-1 justify-end">
           <Animated.View
-            style={{
-              backgroundColor: colors.background,
-              borderTopLeftRadius: 24,
-              borderTopRightRadius: 24,
-              shadowColor: "#000",
-              shadowOffset: { width: 0, height: -3 },
-              shadowOpacity: 0.1,
-              shadowRadius: 10,
-              elevation: 10,
-              transform: [{ translateY: menuTranslateY }],
-            }}
+            style={[
+              {
+                backgroundColor: colors.background,
+                borderTopLeftRadius: 24,
+                borderTopRightRadius: 24,
+                transform: [{ translateY: menuTranslateY }],
+              },
+              // Replace boxShadow with platform-specific shadow styling
+              Platform.OS === "ios"
+                ? {
+                    shadowColor: "#000",
+                    shadowOffset: { width: 0, height: -3 },
+                    shadowOpacity: 0.1,
+                    shadowRadius: 10,
+                  }
+                : {
+                    elevation: 10,
+                  },
+            ]}
           >
             {/* Handle Indicator */}
             <View className="items-center pt-3 pb-2">
@@ -139,13 +148,19 @@ export default function AddMenu() {
                 <Pressable
                   key={item.id}
                   className="flex-row items-center bg-card mb-3 p-4 rounded-xl border border-border"
-                  style={{
-                    shadowColor: colors.primary,
-                    shadowOffset: { width: 0, height: 2 },
-                    shadowOpacity: 0.05,
-                    shadowRadius: 8,
-                    elevation: 2,
-                  }}
+                  style={[
+                    // Platform specific shadow styling
+                    Platform.OS === "ios"
+                      ? {
+                          shadowColor: colors.primary,
+                          shadowOffset: { width: 0, height: 2 },
+                          shadowOpacity: 0.05,
+                          shadowRadius: 8,
+                        }
+                      : {
+                          elevation: 2,
+                        },
+                  ]}
                   onPress={item.action}
                 >
                   <View
