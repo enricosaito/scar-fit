@@ -1,14 +1,14 @@
-// app/(tabs)/_layout.tsx (improved tab positioning)
+// app/(tabs)/_layout.tsx (updated)
 import { Tabs } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import { FontAwesome5 } from "@expo/vector-icons";
 import { Pressable, View } from "react-native";
-import { useRouter } from "expo-router";
 import { useTheme } from "../context/ThemeContext";
+import { useAddMenu } from "../context/AddMenuContext";
 
 export default function TabLayout() {
-  const router = useRouter();
   const { colors } = useTheme();
+  const { showMenu } = useAddMenu();
 
   return (
     <Tabs
@@ -17,18 +17,18 @@ export default function TabLayout() {
         tabBarStyle: {
           backgroundColor: colors.card,
           borderTopColor: colors.border,
-          height: 70, // Increased height for more space
-          paddingVertical: 15, // Added vertical padding to center the content
+          height: 70,
+          paddingVertical: 15,
         },
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.mutedForeground,
         tabBarIconStyle: {
-          marginTop: 0, // Adjusted to move icons up
+          marginTop: 0,
         },
         tabBarLabelStyle: {
           fontSize: 12,
           fontWeight: "500",
-          marginTop: 0, // Adjusted to reduce spacing between icon and label
+          marginTop: 0,
           marginBottom: 4,
         },
       }}
@@ -59,20 +59,18 @@ export default function TabLayout() {
         name="add"
         options={{
           title: "",
-          tabBarIcon: ({ color }) => (
-            <View className="bg-primary h-14 w-14 rounded-full items-center justify-center -mt-5 shadow-lg">
-              <Feather name="plus" size={28} color="white" />
-            </View>
+          tabBarButton: (props) => (
+            <Pressable
+              {...props}
+              onPress={showMenu}
+              className="h-full justify-center items-center"
+            >
+              <View className="bg-primary h-14 w-14 rounded-full items-center justify-center -mt-5 shadow-lg">
+                <Feather name="plus" size={28} color="white" />
+              </View>
+            </Pressable>
           ),
         }}
-        listeners={() => ({
-          tabPress: (e) => {
-            // Prevent default action
-            e.preventDefault();
-            // Just navigate to tracking without showing search
-            router.push("/tracking");
-          },
-        })}
       />
       <Tabs.Screen
         name="recipes"
