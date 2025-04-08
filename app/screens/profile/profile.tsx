@@ -5,7 +5,7 @@ import { useRouter } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import { useTheme } from "../../context/ThemeContext";
 import { useAuth } from "../../context/AuthContext";
-import MacroSummary from "../../components/MacroSummary";
+import MacroSummary from "../../components/tracking/MacroSummary";
 import { resetUserMacros } from "../../models/user";
 
 export default function Profile() {

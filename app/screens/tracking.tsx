@@ -19,7 +19,7 @@ import { useTheme } from "../context/ThemeContext";
 import { useAuth } from "../context/AuthContext";
 import { Food, FoodPortion, searchFoods } from "../models/food";
 import { DailyLog, getUserDailyLog, addFoodToLog, removeFoodFromLog } from "../models/tracking";
-import MealSection from "../components/MealSection";
+import MealSection from "../components/tracking/MealSection";
 import Header from "../components/ui/Header";
 
 type MealType = "breakfast" | "lunch" | "dinner" | "snack";

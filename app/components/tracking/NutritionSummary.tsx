@@ -3,8 +3,8 @@ import React, { useEffect, useState, useRef } from "react";
 import { View, Text, Animated } from "react-native";
 import Svg, { Circle, G } from "react-native-svg";
 import { Feather } from "@expo/vector-icons";
-import { useTheme } from "../context/ThemeContext";
-import { MacroData } from "../models/user";
+import { useTheme } from "../../context/ThemeContext";
+import { MacroData } from "../../models/user";
 
 interface NutritionSummaryProps {
   macros: Partial<MacroData>;

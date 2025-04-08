@@ -3,8 +3,8 @@ import React, { useEffect, useRef } from "react";
 import { View, Text, Pressable, Modal, SafeAreaView, Animated, Dimensions } from "react-native";
 import { useRouter } from "expo-router";
 import { Feather } from "@expo/vector-icons";
-import { useTheme } from "../context/ThemeContext";
-import { useAddMenu } from "../context/AddMenuContext";
+import { useTheme } from "../../context/ThemeContext";
+import { useAddMenu } from "../../context/AddMenuContext";
 
 export default function AddMenu() {
   const router = useRouter();

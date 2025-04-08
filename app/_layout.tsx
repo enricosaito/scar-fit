@@ -6,7 +6,7 @@ import { AuthProvider } from "./context/AuthContext";
 import { AddMenuProvider } from "./context/AddMenuContext";
 import { ToastProvider } from "./context/ToastContext";
 import AuthGuard from "./components/auth/AuthGuard";
-import AddMenu from "./components/AddMenu";
+import AddMenu from "./components/tracking/AddMenu";
 import "../global.css";
 
 export default function RootLayout() {

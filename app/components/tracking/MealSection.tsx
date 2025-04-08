@@ -2,7 +2,7 @@
 import React from "react";
 import { Text, View, Pressable, Alert } from "react-native";
 import { Feather } from "@expo/vector-icons";
-import { FoodPortion } from "../models/food";
+import { FoodPortion } from "../../models/food";
 
 interface MealSectionProps {
   title: string;
