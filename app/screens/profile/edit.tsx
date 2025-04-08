@@ -3,12 +3,12 @@ import React, { useState, useEffect } from "react";
 import { Text, View, SafeAreaView, TextInput, Pressable, ActivityIndicator, ScrollView, Alert } from "react-native";
 import { useRouter } from "expo-router";
 import { Feather } from "@expo/vector-icons";
-import { useTheme } from "../context/ThemeContext";
-import { useAuth } from "../context/AuthContext";
-import { updateUserProfile } from "../models/user";
-import Button from "../components/ui/Button";
-import { supabase } from "../lib/supabase";
-import FormField from "../components/ui/FormField";
+import { useTheme } from "../../context/ThemeContext";
+import { useAuth } from "../../context/AuthContext";
+import { updateUserProfile } from "../../models/user";
+import Button from "../../components/ui/Button";
+import { supabase } from "../../lib/supabase";
+import FormField from "../../components/ui/FormField";
 
 export default function ProfileEdit() {
   const router = useRouter();
