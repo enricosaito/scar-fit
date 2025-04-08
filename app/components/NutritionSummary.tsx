@@ -142,6 +142,9 @@ export default function NutritionSummary({
     outputRange: ["0%", "100%"],
   });
 
+  // Shared dark background color for unfilled progress
+  const unfilledTrackColor = "#111827"; // A dark color that works well in your theme
+
   return (
     <View className="bg-card rounded-xl border border-border p-4">
       {/* Today's date with weekday */}
@@ -161,6 +164,7 @@ export default function NutritionSummary({
             goal={macros.calories || 2000}
             caloriesAmount={caloriesAmount}
             isOverGoal={isOverCalorieGoal}
+            unfilledColor={unfilledTrackColor}
           />
         </View>
 
@@ -187,8 +191,8 @@ export default function NutritionSummary({
               </Text>
             )}
 
-            {/* Protein progress bar - thinner but with subtle glow */}
-            <View className="h-2 rounded-full overflow-hidden bg-purple-900/30">
+            {/* Protein progress bar - with same dark background as calorie circle */}
+            <View className="h-2 rounded-full overflow-hidden" style={{ backgroundColor: unfilledTrackColor }}>
               {/* Animated foreground bar */}
               <Animated.View
                 style={[
@@ -245,7 +249,7 @@ export default function NutritionSummary({
 }
 
 // Enhanced component for the calorie circle with "calories left" display and animation
-function CalorieCircleWithCaloriesLeft({ current, goal, caloriesAmount, isOverGoal }) {
+function CalorieCircleWithCaloriesLeft({ current, goal, caloriesAmount, isOverGoal, unfilledColor }) {
   const { colors } = useTheme();
   const [animatedProgress, setAnimatedProgress] = useState(0);
   const animationRef = useRef(null);
@@ -312,35 +316,17 @@ function CalorieCircleWithCaloriesLeft({ current, goal, caloriesAmount, isOverGo
     return "#3b82f6"; // Tailwind blue-500 (base color)
   };
 
-  // Create a darker color for the unfilled track (50% darker)
-  const darkenColor = (color) => {
-    // Simple function to darken a hex color
-    const hex = color.replace("#", "");
-    let r = parseInt(hex.substr(0, 2), 16);
-    let g = parseInt(hex.substr(2, 2), 16);
-    let b = parseInt(hex.substr(4, 2), 16);
-
-    r = Math.floor(r * 0.4);
-    g = Math.floor(g * 0.4);
-    b = Math.floor(b * 0.4);
-
-    return `#${r.toString(16).padStart(2, "0")}${g.toString(16).padStart(2, "0")}${b.toString(16).padStart(2, "0")}`;
-  };
-
-  // Get the darkened background color
-  const darkTrackColor = darkenColor(colors.border);
-
   return (
     <View className="items-center justify-center">
       <View className="relative">
         <Svg width={size} height={size}>
-          {/* Background Circle - darker version */}
+          {/* Background Circle - dark version */}
           <Circle
             cx={size / 2}
             cy={size / 2}
             r={radius}
             strokeWidth={strokeWidth}
-            stroke={darkTrackColor}
+            stroke={unfilledColor}
             fill="transparent"
           />
 
