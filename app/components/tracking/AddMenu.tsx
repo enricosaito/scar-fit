@@ -1,6 +1,6 @@
-// app/components/tracking/AddMenu.tsx (minimal fixes)
+// app/components/tracking/AddMenu.tsx
 import React, { useEffect, useRef } from "react";
-import { View, Text, Pressable, Modal, SafeAreaView, Animated, Platform } from "react-native";
+import { View, Text, Pressable, Modal, SafeAreaView, Animated, Dimensions, Platform } from "react-native";
 import { useRouter } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import { useTheme } from "../../context/ThemeContext";
@@ -11,9 +11,12 @@ export default function AddMenu() {
   const { colors } = useTheme();
   const { isMenuVisible, hideMenu } = useAddMenu();
 
+  // Get device height to ensure full rendering
+  const { height: screenHeight } = Dimensions.get("window");
+
   // Animation values
   const backdropOpacity = useRef(new Animated.Value(0)).current;
-  const menuTranslateY = useRef(new Animated.Value(200)).current;
+  const menuTranslateY = useRef(new Animated.Value(screenHeight)).current;
 
   useEffect(() => {
     if (isMenuVisible) {
@@ -22,13 +25,13 @@ export default function AddMenu() {
         Animated.timing(backdropOpacity, {
           toValue: 0.7,
           duration: 300,
-          useNativeDriver: true, // This is fine for opacity
+          useNativeDriver: true,
         }),
         Animated.spring(menuTranslateY, {
           toValue: 0,
           friction: 8,
           tension: 80,
-          useNativeDriver: true, // This is fine for translations
+          useNativeDriver: true,
         }),
       ]).start();
     } else {
@@ -40,13 +43,13 @@ export default function AddMenu() {
           useNativeDriver: true,
         }),
         Animated.timing(menuTranslateY, {
-          toValue: 200,
+          toValue: screenHeight,
           duration: 250,
           useNativeDriver: true,
         }),
       ]).start();
     }
-  }, [isMenuVisible]);
+  }, [isMenuVisible, screenHeight]);
 
   const menuItems = [
     {
@@ -95,9 +98,18 @@ export default function AddMenu() {
     },
   ];
 
+  // Add extra padding for iOS devices with notch/dynamic island
+  const bottomSafeArea = Platform.OS === "ios" ? 34 : 0;
+
   return (
-    <Modal visible={isMenuVisible} transparent={true} animationType="none" onRequestClose={hideMenu}>
-      <SafeAreaView className="flex-1" style={{ backgroundColor: "transparent" }}>
+    <Modal
+      visible={isMenuVisible}
+      transparent={true}
+      animationType="none"
+      onRequestClose={hideMenu}
+      statusBarTranslucent={true}
+    >
+      <View className="flex-1" style={{ backgroundColor: "transparent" }}>
         {/* Backdrop */}
         <Animated.View
           style={{
@@ -109,58 +121,44 @@ export default function AddMenu() {
             backgroundColor: "#000",
             opacity: backdropOpacity,
           }}
-        >
-          <Pressable onPress={hideMenu} style={{ flex: 1 }} />
-        </Animated.View>
+          onTouchEnd={hideMenu}
+        />
 
         {/* Menu Content */}
         <View className="flex-1 justify-end">
           <Animated.View
-            style={[
-              {
-                backgroundColor: colors.background,
-                borderTopLeftRadius: 24,
-                borderTopRightRadius: 24,
-                transform: [{ translateY: menuTranslateY }],
-              },
-              // Replace boxShadow with platform-specific shadow styling
-              Platform.OS === "ios"
-                ? {
-                    shadowColor: "#000",
-                    shadowOffset: { width: 0, height: -3 },
-                    shadowOpacity: 0.1,
-                    shadowRadius: 10,
-                  }
-                : {
-                    elevation: 10,
-                  },
-            ]}
+            style={{
+              backgroundColor: colors.background,
+              borderTopLeftRadius: 24,
+              borderTopRightRadius: 24,
+              shadowColor: "#000",
+              shadowOffset: { width: 0, height: -3 },
+              shadowOpacity: 0.1,
+              shadowRadius: 10,
+              elevation: 10,
+              transform: [{ translateY: menuTranslateY }],
+              maxHeight: screenHeight * 0.85, // Limiting max height
+            }}
           >
             {/* Handle Indicator */}
             <View className="items-center pt-3 pb-2">
               <View className="w-12 h-1 rounded-full bg-border" />
             </View>
 
-            <View className="px-4 pb-8">
+            <View className="px-4 pb-8" style={{ paddingBottom: 8 + bottomSafeArea }}>
               <Text className="text-2xl font-bold text-foreground mb-6">Adicionar</Text>
 
               {menuItems.map((item) => (
                 <Pressable
                   key={item.id}
                   className="flex-row items-center bg-card mb-3 p-4 rounded-xl border border-border"
-                  style={[
-                    // Platform specific shadow styling
-                    Platform.OS === "ios"
-                      ? {
-                          shadowColor: colors.primary,
-                          shadowOffset: { width: 0, height: 2 },
-                          shadowOpacity: 0.05,
-                          shadowRadius: 8,
-                        }
-                      : {
-                          elevation: 2,
-                        },
-                  ]}
+                  style={{
+                    shadowColor: colors.primary,
+                    shadowOffset: { width: 0, height: 2 },
+                    shadowOpacity: 0.05,
+                    shadowRadius: 8,
+                    elevation: 2,
+                  }}
                   onPress={item.action}
                 >
                   <View
@@ -190,7 +188,7 @@ export default function AddMenu() {
             </View>
           </Animated.View>
         </View>
-      </SafeAreaView>
+      </View>
     </Modal>
   );
 }
