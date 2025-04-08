@@ -1,4 +1,4 @@
-// app/(tabs)/_layout.tsx (updated)
+// app/(tabs)/_layout.tsx
 import { Tabs } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import { FontAwesome5 } from "@expo/vector-icons";
@@ -64,8 +64,12 @@ export default function TabLayout() {
               {...props}
               onPress={showMenu}
               className="h-full justify-center items-center"
+              style={{ paddingTop: 0 }}
             >
-              <View className="bg-primary h-14 w-14 rounded-full items-center justify-center -mt-5 shadow-lg">
+              <View
+                className="bg-primary rounded-full items-center justify-center -mt-5 shadow-lg"
+                style={{ width: 56, height: 56 }}
+              >
                 <Feather name="plus" size={28} color="white" />
               </View>
             </Pressable>
