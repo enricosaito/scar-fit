@@ -103,7 +103,7 @@ export default function Home() {
 
       <ScrollView className="flex-1" refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
         <View className="px-4 py-3 mt-3">
-          <Text className="text-2xl font-bold text-foreground mb-1">
+          <Text className="text-2xl font-bold text-foreground mb-5">
             Olá, {userProfile?.full_name?.split(" ")[0] || user?.user_metadata?.name || "Usuário"}!
           </Text>
 
