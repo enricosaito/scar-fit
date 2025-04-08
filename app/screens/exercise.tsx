@@ -3,8 +3,8 @@ import React, { useState } from "react";
 import { Text, View, SafeAreaView, Pressable, ScrollView, TextInput, FlatList } from "react-native";
 import { useRouter } from "expo-router";
 import { Feather } from "@expo/vector-icons";
-import { useTheme } from "./context/ThemeContext";
-import Button from "./components/ui/Button";
+import { useTheme } from "../context/ThemeContext";
+import Button from "../components/ui/Button";
 
 type ExerciseCategory = "cardio" | "strength" | "flexibility" | "sports" | "other";
 

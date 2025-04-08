@@ -3,7 +3,7 @@ import React from "react";
 import { Text, View, SafeAreaView, Pressable, ScrollView } from "react-native";
 import { useRouter } from "expo-router";
 import { Feather } from "@expo/vector-icons";
-import { useTheme } from "./context/ThemeContext";
+import { useTheme } from "../context/ThemeContext";
 
 export default function Notifications() {
   const router = useRouter();

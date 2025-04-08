@@ -14,13 +14,13 @@ import {
 } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { useRouter, useLocalSearchParams } from "expo-router";
-import Button from "./components/ui/Button";
-import { useTheme } from "./context/ThemeContext";
-import { useAuth } from "./context/AuthContext";
-import { Food, FoodPortion, searchFoods } from "./models/food";
-import { DailyLog, getUserDailyLog, addFoodToLog, removeFoodFromLog } from "./models/tracking";
-import MealSection from "./components/MealSection";
-import Header from "./components/ui/Header";
+import Button from "../components/ui/Button";
+import { useTheme } from "../context/ThemeContext";
+import { useAuth } from "../context/AuthContext";
+import { Food, FoodPortion, searchFoods } from "../models/food";
+import { DailyLog, getUserDailyLog, addFoodToLog, removeFoodFromLog } from "../models/tracking";
+import MealSection from "../components/MealSection";
+import Header from "../components/ui/Header";
 
 type MealType = "breakfast" | "lunch" | "dinner" | "snack";
 
