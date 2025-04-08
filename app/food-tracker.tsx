@@ -222,7 +222,12 @@ export default function FoodTracker() {
 
   return (
     <SafeAreaView className="flex-1 bg-background">
-      <Header title="Rastreador de Alimentos" />
+      <View className="flex-row items-center py-3 px-4 border-b border-border">
+  <Pressable onPress={() => router.back()} className="p-2 mr-3">
+    <Feather name="arrow-left" size={24} color={colors.foreground} />
+  </Pressable>
+  <Text className="text-lg font-semibold text-foreground flex-1">Rastreador de Alimentos</Text>
+</View>
 
       <View className="flex-1">
         {/* Search Bar - Always visible at top */}
