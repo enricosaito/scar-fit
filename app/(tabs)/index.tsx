@@ -5,8 +5,8 @@ import { useRouter } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import { useTheme } from "../context/ThemeContext";
 import { useAuth } from "../context/AuthContext";
-import NutritionSummary from "../components/NutritionSummary"; // Import the new component
-import MealList from "../components/MealList";
+import NutritionSummary from "../components/tracking/NutritionSummary"; // Import the new component
+import MealList from "../components/tracking/MealList";
 import Header from "../components/ui/Header";
 import { MacroData } from "../models/user";
 import { DailyLog, getUserDailyLog } from "../models/tracking";

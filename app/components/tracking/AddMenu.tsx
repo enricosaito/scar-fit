@@ -3,8 +3,8 @@ import React, { useEffect, useRef } from "react";
 import { View, Text, Pressable, Modal, SafeAreaView, Animated, Dimensions } from "react-native";
 import { useRouter } from "expo-router";
 import { Feather } from "@expo/vector-icons";
-import { useTheme } from "../context/ThemeContext";
-import { useAddMenu } from "../context/AddMenuContext";
+import { useTheme } from "../../context/ThemeContext";
+import { useAddMenu } from "../../context/AddMenuContext";
 
 export default function AddMenu() {
   const router = useRouter();
@@ -56,7 +56,7 @@ export default function AddMenu() {
       subtitle: "Pesquisar no banco de dados",
       action: () => {
         hideMenu();
-        router.push("/food-tracker");
+        router.push("/screens/food-tracker");
       },
       pro: false,
     },
@@ -67,7 +67,7 @@ export default function AddMenu() {
       subtitle: "Adicionar alimento por código de barras",
       action: () => {
         hideMenu();
-        router.push("/pro-subscription");
+        router.push("/screens/pro-subscription");
       },
       pro: true,
     },
@@ -78,7 +78,7 @@ export default function AddMenu() {
       subtitle: "Identificar alimento por imagem",
       action: () => {
         hideMenu();
-        router.push("/pro-subscription");
+        router.push("/screens/pro-subscription");
       },
       pro: true,
     },
@@ -89,7 +89,7 @@ export default function AddMenu() {
       subtitle: "Registrar atividade física",
       action: () => {
         hideMenu();
-        router.push("/exercise");
+        router.push("/screens/exercise");
       },
       pro: false,
     },

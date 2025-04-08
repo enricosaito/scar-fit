@@ -15,12 +15,12 @@ import {
 } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { useRouter, useLocalSearchParams } from "expo-router";
-import { useTheme } from "./context/ThemeContext";
-import { useAuth } from "./context/AuthContext";
-import { Food, FoodPortion, searchFoods } from "./models/food";
-import { DailyLog, getUserDailyLog, addFoodToLog, removeFoodFromLog } from "./models/tracking";
-import Button from "./components/ui/Button";
-import Header from "./components/ui/Header";
+import { useTheme } from "../context/ThemeContext";
+import { useAuth } from "../context/AuthContext";
+import { Food, FoodPortion, searchFoods } from "../models/food";
+import { DailyLog, getUserDailyLog, addFoodToLog, removeFoodFromLog } from "../models/tracking";
+import Button from "../components/ui/Button";
+import Header from "../components/ui/Header";
 
 type MealType = "breakfast" | "lunch" | "dinner" | "snack";
 
@@ -28,11 +28,11 @@ export default function FoodTracker() {
   const router = useRouter();
   const { colors } = useTheme();
   const { user, userProfile } = useAuth();
-  
+
   // State for date selection
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [datePickerVisible, setDatePickerVisible] = useState(false);
-  
+
   // Daily log state
   const [dailyLog, setDailyLog] = useState<DailyLog | null>(null);
   const [loading, setLoading] = useState(false);
@@ -54,8 +54,18 @@ export default function FoodTracker() {
   const formatDate = (date: Date): string => {
     const days = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
     const months = [
-      "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", 
-      "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
+      "Janeiro",
+      "Fevereiro",
+      "Março",
+      "Abril",
+      "Maio",
+      "Junho",
+      "Julho",
+      "Agosto",
+      "Setembro",
+      "Outubro",
+      "Novembro",
+      "Dezembro",
     ];
 
     const dayName = days[date.getDay()];
@@ -130,10 +140,10 @@ export default function FoodTracker() {
   const handleSelectFood = (food: Food) => {
     setSelectedFood(food);
     setAddFoodVisible(true);
-    
+
     // Add to recent searches if not already there
-    if (!recentSearches.some(item => item.id === food.id)) {
-      setRecentSearches(prev => [food, ...prev].slice(0, 5));
+    if (!recentSearches.some((item) => item.id === food.id)) {
+      setRecentSearches((prev) => [food, ...prev].slice(0, 5));
     }
   };
 
@@ -223,11 +233,11 @@ export default function FoodTracker() {
   return (
     <SafeAreaView className="flex-1 bg-background">
       <View className="flex-row items-center py-3 px-4 border-b border-border">
-  <Pressable onPress={() => router.back()} className="p-2 mr-3">
-    <Feather name="arrow-left" size={24} color={colors.foreground} />
-  </Pressable>
-  <Text className="text-lg font-semibold text-foreground flex-1">Rastreador de Alimentos</Text>
-</View>
+        <Pressable onPress={() => router.back()} className="p-2 mr-3">
+          <Feather name="arrow-left" size={24} color={colors.foreground} />
+        </Pressable>
+        <Text className="text-lg font-semibold text-foreground flex-1">Rastreador de Alimentos</Text>
+      </View>
 
       <View className="flex-1">
         {/* Search Bar - Always visible at top */}
@@ -283,8 +293,8 @@ export default function FoodTracker() {
           </View>
         ) : (
           // Daily Tracking View
-          <ScrollView 
-            className="flex-1" 
+          <ScrollView
+            className="flex-1"
             refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
           >
             {/* Date Selector */}
@@ -312,7 +322,7 @@ export default function FoodTracker() {
                 {/* Daily Summary Card */}
                 <View className="mx-4 mb-6 bg-card rounded-xl border border-border p-4">
                   <Text className="text-lg font-semibold text-foreground mb-3">Resumo do Dia</Text>
-                  
+
                   <View className="flex-row">
                     {/* Consumed */}
                     <View className="flex-1 items-center">
@@ -320,24 +330,24 @@ export default function FoodTracker() {
                       <Text className="text-2xl font-bold text-foreground">{Math.round(getTotalCalories())}</Text>
                       <Text className="text-xs text-muted-foreground">calorias</Text>
                     </View>
-                    
+
                     {/* Divider */}
                     <View className="w-px bg-border mx-4" />
-                    
+
                     {/* Goal */}
                     <View className="flex-1 items-center">
                       <Text className="text-muted-foreground text-sm mb-1">Meta</Text>
                       <Text className="text-2xl font-bold text-primary">{getCalorieGoal()}</Text>
                       <Text className="text-xs text-muted-foreground">calorias</Text>
                     </View>
-                    
+
                     {/* Divider */}
                     <View className="w-px bg-border mx-4" />
-                    
+
                     {/* Remaining */}
                     <View className="flex-1 items-center">
                       <Text className="text-muted-foreground text-sm mb-1">Restante</Text>
-                      <Text 
+                      <Text
                         className={`text-2xl font-bold ${
                           getCaloriesRemaining() >= 0 ? "text-green-500" : "text-red-500"
                         }`}
@@ -347,16 +357,16 @@ export default function FoodTracker() {
                       <Text className="text-xs text-muted-foreground">calorias</Text>
                     </View>
                   </View>
-                  
+
                   {/* Progress Bar */}
                   <View className="mt-4">
                     <View className="h-2 bg-muted rounded-full overflow-hidden">
-                      <View 
+                      <View
                         className={`h-full rounded-full ${
                           getTotalCalories() <= getCalorieGoal() ? "bg-primary" : "bg-red-500"
                         }`}
                         style={{
-                          width: `${Math.min(100, (getTotalCalories() / getCalorieGoal()) * 100)}%`
+                          width: `${Math.min(100, (getTotalCalories() / getCalorieGoal()) * 100)}%`,
                         }}
                       />
                     </View>
@@ -375,12 +385,12 @@ export default function FoodTracker() {
                       calories={getMealCalories("breakfast")}
                       onAddFood={() => {
                         setSelectedMealType("breakfast");
-                        setSearchQuery("");  // Clear search to show recent searches instead
+                        setSearchQuery(""); // Clear search to show recent searches instead
                       }}
                       onRemoveFood={handleRemoveFood}
                       colors={colors}
                     />
-                    
+
                     {/* Lunch */}
                     <MealSection
                       title="Almoço"
@@ -390,12 +400,12 @@ export default function FoodTracker() {
                       calories={getMealCalories("lunch")}
                       onAddFood={() => {
                         setSelectedMealType("lunch");
-                        setSearchQuery("");  // Clear search to show recent searches instead
+                        setSearchQuery(""); // Clear search to show recent searches instead
                       }}
                       onRemoveFood={handleRemoveFood}
                       colors={colors}
                     />
-                    
+
                     {/* Dinner */}
                     <MealSection
                       title="Jantar"
@@ -405,12 +415,12 @@ export default function FoodTracker() {
                       calories={getMealCalories("dinner")}
                       onAddFood={() => {
                         setSelectedMealType("dinner");
-                        setSearchQuery("");  // Clear search to show recent searches instead
+                        setSearchQuery(""); // Clear search to show recent searches instead
                       }}
                       onRemoveFood={handleRemoveFood}
                       colors={colors}
                     />
-                    
+
                     {/* Snacks */}
                     <MealSection
                       title="Lanches"
@@ -420,12 +430,12 @@ export default function FoodTracker() {
                       calories={getMealCalories("snack")}
                       onAddFood={() => {
                         setSelectedMealType("snack");
-                        setSearchQuery("");  // Clear search to show recent searches instead
+                        setSearchQuery(""); // Clear search to show recent searches instead
                       }}
                       onRemoveFood={handleRemoveFood}
                       colors={colors}
                     />
-                    
+
                     {/* No meals placeholder */}
                     {dailyLog.items.length === 0 && (
                       <View className="bg-card rounded-xl border border-border p-8 items-center mt-2">
@@ -442,7 +452,7 @@ export default function FoodTracker() {
                     )}
                   </View>
                 )}
-                
+
                 {/* Recent searches (show when search is empty) */}
                 {searchQuery.length < 2 && recentSearches.length > 0 && (
                   <View className="px-4 pb-6">
@@ -462,13 +472,13 @@ export default function FoodTracker() {
                     ))}
                   </View>
                 )}
-                
+
                 {/* Tip */}
                 <View className="mx-4 mb-6 bg-accent rounded-xl p-6">
                   <Text className="text-lg font-semibold text-accent-foreground mb-2">Dica do Dia</Text>
                   <Text className="text-accent-foreground">
-                    Para manter uma dieta equilibrada, tente consumir proteínas em todas as refeições.
-                    Isso ajuda a controlar a fome e manter a massa muscular.
+                    Para manter uma dieta equilibrada, tente consumir proteínas em todas as refeições. Isso ajuda a
+                    controlar a fome e manter a massa muscular.
                   </Text>
                 </View>
               </>
@@ -532,22 +542,22 @@ export default function FoodTracker() {
                   placeholder="100"
                   placeholderTextColor={colors.mutedForeground}
                 />
-                
+
                 {/* Quick quantity buttons */}
                 <View className="flex-row ml-2">
-                  <Pressable 
+                  <Pressable
                     className="bg-card border border-border rounded-md px-3 py-2 mr-1"
                     onPress={() => setQuantity("50")}
                   >
                     <Text className="text-foreground">50g</Text>
                   </Pressable>
-                  <Pressable 
+                  <Pressable
                     className="bg-card border border-border rounded-md px-3 py-2 mr-1"
                     onPress={() => setQuantity("100")}
                   >
                     <Text className="text-foreground">100g</Text>
                   </Pressable>
-                  <Pressable 
+                  <Pressable
                     className="bg-card border border-border rounded-md px-3 py-2"
                     onPress={() => setQuantity("200")}
                   >
@@ -668,16 +678,13 @@ interface MealSectionProps {
 
 function MealSection({ title, icon, iconColor, items, calories, onAddFood, onRemoveFood, colors }: MealSectionProps) {
   const [expanded, setExpanded] = useState(true);
-  
+
   return (
     <View className="mb-4">
       <View className="bg-card rounded-t-xl border border-border p-3">
-        <Pressable 
-          className="flex-row items-center justify-between"
-          onPress={() => setExpanded(!expanded)}
-        >
+        <Pressable className="flex-row items-center justify-between" onPress={() => setExpanded(!expanded)}>
           <View className="flex-row items-center">
-            <View 
+            <View
               className="w-8 h-8 rounded-full items-center justify-center mr-2"
               style={{ backgroundColor: `${iconColor}20` }}
             >
@@ -685,26 +692,22 @@ function MealSection({ title, icon, iconColor, items, calories, onAddFood, onRem
             </View>
             <Text className="text-lg font-medium text-foreground">{title}</Text>
           </View>
-          
+
           <View className="flex-row items-center">
             <Text className="text-foreground font-medium mr-2">
               {calories > 0 ? `${Math.round(calories)} kcal` : "-"}
             </Text>
-            <Pressable 
+            <Pressable
               className="bg-primary/10 w-8 h-8 rounded-full items-center justify-center mr-2"
               onPress={onAddFood}
             >
               <Feather name="plus" size={18} color={colors.primary} />
             </Pressable>
-            <Feather 
-              name={expanded ? "chevron-up" : "chevron-down"} 
-              size={20} 
-              color={colors.mutedForeground} 
-            />
+            <Feather name={expanded ? "chevron-up" : "chevron-down"} size={20} color={colors.mutedForeground} />
           </View>
         </Pressable>
       </View>
-      
+
       {expanded && items.length > 0 && (
         <View className="bg-card rounded-b-xl border-b border-l border-r border-border">
           {items.map((item, index) => (
@@ -715,7 +718,7 @@ function MealSection({ title, icon, iconColor, items, calories, onAddFood, onRem
                   <Text className="text-muted-foreground text-xs">{item.quantity}g</Text>
                 </View>
                 <View className="items-end">
-                <Text className="text-foreground">{Math.round((item.food.kcal * item.quantity) / 100)} kcal</Text>
+                  <Text className="text-foreground">{Math.round((item.food.kcal * item.quantity) / 100)} kcal</Text>
                   <View className="flex-row mt-1">
                     <Text className="text-xs text-purple-500 mr-2">
                       P: {Math.round((item.food.protein_g * item.quantity) / 100)}g
@@ -744,16 +747,11 @@ function MealSection({ title, icon, iconColor, items, calories, onAddFood, onRem
           ))}
         </View>
       )}
-      
+
       {expanded && items.length === 0 && (
         <View className="bg-card rounded-b-xl border-b border-l border-r border-border p-4 items-center">
-          <Text className="text-muted-foreground">
-            Ainda não há alimentos registrados para esta refeição
-          </Text>
-          <Pressable 
-            className="mt-2 flex-row items-center" 
-            onPress={onAddFood}
-          >
+          <Text className="text-muted-foreground">Ainda não há alimentos registrados para esta refeição</Text>
+          <Pressable className="mt-2 flex-row items-center" onPress={onAddFood}>
             <Feather name="plus" size={16} color={colors.primary} />
             <Text className="text-primary ml-1">Adicionar alimento</Text>
           </Pressable>

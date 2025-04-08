@@ -3,8 +3,8 @@ import React from "react";
 import { Text, View, SafeAreaView, Pressable, ScrollView, Image } from "react-native";
 import { useRouter } from "expo-router";
 import { Feather } from "@expo/vector-icons";
-import { useTheme } from "./context/ThemeContext";
-import Button from "./components/ui/Button";
+import { useTheme } from "../context/ThemeContext";
+import Button from "../components/ui/Button";
 
 export default function ProSubscription() {
   const router = useRouter();
@@ -75,7 +75,7 @@ export default function ProSubscription() {
 
           <View className="bg-card rounded-xl border border-border p-6 mb-6">
             <Text className="text-xl font-bold text-foreground mb-4 text-center">Escolha Seu Plano</Text>
-            
+
             <Pressable className="border-2 border-primary rounded-xl p-4 mb-3 bg-primary/5">
               <View className="flex-row justify-between items-center mb-2">
                 <Text className="text-lg font-bold text-foreground">Anual</Text>
@@ -86,7 +86,7 @@ export default function ProSubscription() {
               <Text className="text-2xl font-bold text-primary mb-1">R$ 99,90/ano</Text>
               <Text className="text-muted-foreground">Equivalente a R$ 8,32/mês</Text>
             </Pressable>
-            
+
             <Pressable className="border border-border rounded-xl p-4 mb-3">
               <Text className="text-lg font-bold text-foreground mb-2">Mensal</Text>
               <Text className="text-2xl font-bold text-foreground mb-1">R$ 14,90/mês</Text>
@@ -95,10 +95,13 @@ export default function ProSubscription() {
           </View>
 
           <Button className="mb-3">Começar Teste Gratuito de 7 Dias</Button>
-          <Button variant="outline" onPress={() => router.back()}>Continuar com Versão Gratuita</Button>
+          <Button variant="outline" onPress={() => router.back()}>
+            Continuar com Versão Gratuita
+          </Button>
 
           <Text className="text-xs text-muted-foreground text-center mt-6">
-            A assinatura será renovada automaticamente. Você pode cancelar a qualquer momento nas configurações da sua conta.
+            A assinatura será renovada automaticamente. Você pode cancelar a qualquer momento nas configurações da sua
+            conta.
           </Text>
         </View>
       </ScrollView>

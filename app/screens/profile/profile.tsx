@@ -3,10 +3,10 @@ import React from "react";
 import { Text, View, SafeAreaView, Pressable, Alert, ScrollView } from "react-native";
 import { useRouter } from "expo-router";
 import { Feather } from "@expo/vector-icons";
-import { useTheme } from "./context/ThemeContext";
-import { useAuth } from "./context/AuthContext";
-import MacroSummary from "./components/MacroSummary";
-import { resetUserMacros } from "./models/user";
+import { useTheme } from "../../context/ThemeContext";
+import { useAuth } from "../../context/AuthContext";
+import MacroSummary from "../../components/tracking/MacroSummary";
+import { resetUserMacros } from "../../models/user";
 
 export default function Profile() {
   const router = useRouter();
@@ -84,7 +84,7 @@ export default function Profile() {
 
           <Pressable
             className="w-full bg-primary py-2 px-4 rounded-lg mb-4"
-            onPress={() => router.push("/profile/edit")}
+            onPress={() => router.push("/screens/profile/edit")}
           >
             <Text className="text-white text-center font-medium">Editar Perfil</Text>
           </Pressable>

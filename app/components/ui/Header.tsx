@@ -18,7 +18,7 @@ export default function Header({ title = "Scar Fit", showProfile = true, showNot
   return (
     <View className="flex-row items-center justify-between px-4 py-3 border-b border-border shadow-sm">
       {showProfile ? (
-        <Pressable onPress={() => router.push("/profile")} className="p-1">
+        <Pressable onPress={() => router.push("/screens/profile/profile")} className="p-1">
           <View className="w-10 h-10 rounded-full bg-primary/15 items-center justify-center">
             <Feather name="user" size={20} color={colors.primary} />
           </View>
@@ -33,7 +33,7 @@ export default function Header({ title = "Scar Fit", showProfile = true, showNot
       </Text>
 
       {showNotifications ? (
-        <Pressable onPress={() => router.push("/notifications")} className="p-1">
+        <Pressable onPress={() => router.push("/screens/notifications")} className="p-1">
           <View className="w-10 h-10 rounded-full bg-primary/15 items-center justify-center">
             <Feather name="bell" size={20} color={colors.primary} />
           </View>
