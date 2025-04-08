@@ -1,4 +1,4 @@
-// app/(tabs)/_layout.tsx (updated)
+// app/(tabs)/_layout.tsx
 import { Tabs } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import { FontAwesome5 } from "@expo/vector-icons";
@@ -57,15 +57,39 @@ export default function TabLayout() {
       />
       <Tabs.Screen
         name="add"
+        listeners={({ navigation }) => ({
+          tabPress: (e) => {
+            // Prevent default tab navigation behavior
+            e.preventDefault();
+            // Show the menu instead
+            showMenu();
+          },
+        })}
         options={{
           title: "",
           tabBarButton: (props) => (
             <Pressable
               {...props}
-              onPress={showMenu}
+              onPress={(e) => {
+                // Prevent navigation
+                e.preventDefault();
+                // Show the menu
+                showMenu();
+              }}
               className="h-full justify-center items-center"
             >
-              <View className="bg-primary h-14 w-14 rounded-full items-center justify-center -mt-5 shadow-lg">
+              <View
+                className="bg-primary rounded-full items-center justify-center -mt-5 shadow-lg"
+                style={{
+                  width: 56,
+                  height: 56,
+                  shadowColor: "#000",
+                  shadowOffset: { width: 0, height: 2 },
+                  shadowOpacity: 0.25,
+                  shadowRadius: 3.84,
+                  elevation: 5,
+                }}
+              >
                 <Feather name="plus" size={28} color="white" />
               </View>
             </Pressable>

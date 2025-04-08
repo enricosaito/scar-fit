@@ -76,7 +76,8 @@ export default function NutritionSummary({
     const dayOfMonth = today.getDate();
     const month = months[today.getMonth()];
 
-    return `${dayOfWeek}, ${dayOfMonth} de ${month}`;
+    // return `${dayOfWeek}, ${dayOfMonth} de ${month}`;
+    return "Meu Progresso de Hoje";
   };
 
   // Calculate progress percentages
@@ -151,7 +152,7 @@ export default function NutritionSummary({
       <View className="flex-row justify-between items-center mb-4">
         <Text className="text-lg font-semibold text-foreground">{formatTodayDate()}</Text>
         {onToggleDetails && (
-          <Feather name={showDetails ? "chevron-up" : "chevron-down"} size={18} color={colors.mutedForeground} />
+          <Feather name={showDetails ? "calendar" : "chevron-down"} size={18} color={colors.mutedForeground} />
         )}
       </View>
 
