@@ -20,14 +20,14 @@ export default function RootLayout() {
               <AddMenu />
               <Stack screenOptions={{ headerShown: false }}>
                 <Stack.Screen name="(tabs)" />
-                <Stack.Screen name="profile" />
-                <Stack.Screen name="profile/edit" />
-                <Stack.Screen name="profile/password" />
-                <Stack.Screen name="notifications" />
-                <Stack.Screen name="tracking" options={{ presentation: "modal" }} />
-                <Stack.Screen name="food-tracker" />
-                <Stack.Screen name="exercise" />
-                <Stack.Screen name="pro-subscription" />
+                <Stack.Screen name="screens/profile/profile" />
+                <Stack.Screen name="screens/profile/edit" />
+                <Stack.Screen name="screens/profile/password" />
+                <Stack.Screen name="screens/notifications" />
+                <Stack.Screen name="screens/tracking" options={{ presentation: "modal" }} />
+                <Stack.Screen name="screens/food-tracker" />
+                <Stack.Screen name="screens/exercise" />
+                <Stack.Screen name="screens/pro-subscription" />
                 <Stack.Screen name="auth" />
               </Stack>
             </AuthGuard>
