@@ -1,5 +1,5 @@
 // app/components/NutritionSummary.tsx
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { View, Text, Animated } from "react-native";
 import Svg, { Circle, G } from "react-native-svg";
 import { Feather } from "@expo/vector-icons";
@@ -15,9 +15,17 @@ interface NutritionSummaryProps {
     fat?: number;
   };
   compact?: boolean;
+  showDetails?: boolean;
+  onToggleDetails?: () => void;
 }
 
-export default function NutritionSummary({ macros, current = {}, compact = false }: NutritionSummaryProps) {
+export default function NutritionSummary({
+  macros,
+  current = {},
+  compact = false,
+  showDetails = true,
+  onToggleDetails = () => {},
+}: NutritionSummaryProps) {
   const { colors } = useTheme();
 
   // Animation values
@@ -134,20 +142,29 @@ export default function NutritionSummary({ macros, current = {}, compact = false
     outputRange: ["0%", "100%"],
   });
 
+  // Shared dark background color for unfilled progress
+  const unfilledTrackColor = "#111827"; // A dark color that works well in your theme
+
   return (
     <View className="bg-card rounded-xl border border-border p-4">
       {/* Today's date with weekday */}
-      <Text className="text-lg font-semibold text-foreground mb-4">{formatTodayDate()}</Text>
+      <View className="flex-row justify-between items-center mb-4">
+        <Text className="text-lg font-semibold text-foreground">{formatTodayDate()}</Text>
+        {onToggleDetails && (
+          <Feather name={showDetails ? "chevron-up" : "chevron-down"} size={18} color={colors.mutedForeground} />
+        )}
+      </View>
 
       {/* Main layout */}
       <View className="flex-row mb-4">
         {/* Left side: Calorie circle */}
         <View className="w-2/5 items-center justify-center">
-          <CalorieCircle
+          <CalorieCircleWithCaloriesLeft
             current={currentCalories}
             goal={macros.calories || 2000}
             caloriesAmount={caloriesAmount}
             isOverGoal={isOverCalorieGoal}
+            unfilledColor={unfilledTrackColor}
           />
         </View>
 
@@ -164,18 +181,18 @@ export default function NutritionSummary({ macros, current = {}, compact = false
 
             {/* Main text - protein remaining or goal achieved */}
             {isProteinGoalMet ? (
-              <Text className="text-xl text-white mb-1">
+              <Text className="text-xl text-foreground mb-1">
                 <Text className="font-bold">Proteínas batidas 💪</Text>
               </Text>
             ) : (
-              <Text className="text-xl text-white mb-1">
+              <Text className="text-xl text-foreground mb-1">
                 <Text className="font-bold">{Math.round(Math.max(0, (macros.protein || 0) - currentProtein))}g</Text>{" "}
                 restantes
               </Text>
             )}
 
-            {/* Protein progress bar - thinner but with subtle glow */}
-            <View className="h-2 rounded-full overflow-hidden bg-purple-900/30">
+            {/* Protein progress bar - with same dark background as calorie circle */}
+            <View className="h-2 rounded-full overflow-hidden" style={{ backgroundColor: unfilledTrackColor }}>
               {/* Animated foreground bar */}
               <Animated.View
                 style={[
@@ -199,42 +216,88 @@ export default function NutritionSummary({ macros, current = {}, compact = false
             </Text>
           </View>
 
-          {/* Carbs and Fats aligned under protein section */}
-          <View className="flex-row justify-between mt-3 px-1">
-            {/* Carbs */}
-            <View className="items-center">
-              <View className="flex-row items-center">
-                <View className="w-2 h-2 rounded-full bg-yellow-500 mr-1" />
-                <Text className="text-sm text-muted-foreground">
-                  <Text className="text-yellow-500">{Math.round(currentCarbs)}g</Text> / {macros.carbs || 0}g
-                </Text>
+          {showDetails && (
+            /* Carbs and Fats aligned under protein section */
+            <View className="flex-row justify-between mt-3 px-1">
+              {/* Carbs */}
+              <View className="items-center">
+                <View className="flex-row items-center">
+                  <View className="w-2 h-2 rounded-full bg-yellow-500 mr-1" />
+                  <Text className="text-sm text-muted-foreground">
+                    <Text className="text-yellow-500">{Math.round(currentCarbs)}g</Text> / {macros.carbs || 0}g
+                  </Text>
+                </View>
+                <Text className="text-xs text-muted-foreground mt-0.5">Carbos</Text>
               </View>
-              <Text className="text-xs text-muted-foreground mt-0.5">Carbos</Text>
-            </View>
 
-            {/* Fats */}
-            <View className="items-center">
-              <View className="flex-row items-center">
-                <View className="w-2 h-2 rounded-full bg-red-500 mr-1" />
-                <Text className="text-sm text-muted-foreground">
-                  <Text className="text-red-500">{Math.round(currentFat)}g</Text> / {macros.fat || 0}g
-                </Text>
+              {/* Fats */}
+              <View className="items-center">
+                <View className="flex-row items-center">
+                  <View className="w-2 h-2 rounded-full bg-red-500 mr-1" />
+                  <Text className="text-sm text-muted-foreground">
+                    <Text className="text-red-500">{Math.round(currentFat)}g</Text> / {macros.fat || 0}g
+                  </Text>
+                </View>
+                <Text className="text-xs text-muted-foreground mt-0.5">Gorduras</Text>
               </View>
-              <Text className="text-xs text-muted-foreground mt-0.5">Gorduras</Text>
             </View>
-          </View>
+          )}
         </View>
       </View>
     </View>
   );
 }
 
-// Component for the calorie circle with "calories left" or "calories over" display
-function CalorieCircle({ current, goal, caloriesAmount, isOverGoal }) {
+// Enhanced component for the calorie circle with "calories left" display and animation
+function CalorieCircleWithCaloriesLeft({ current, goal, caloriesAmount, isOverGoal, unfilledColor }) {
   const { colors } = useTheme();
+  const [animatedProgress, setAnimatedProgress] = useState(0);
+  const animationRef = useRef(null);
 
   // Calculate percentage
   const percentage = goal > 0 ? Math.min(120, (current / goal) * 100) : 0;
+
+  // Animation effect for the progress
+  useEffect(() => {
+    // Clear any existing animation
+    if (animationRef.current) {
+      clearTimeout(animationRef.current);
+    }
+
+    // Start with current value
+    let startVal = animatedProgress;
+    const endVal = percentage;
+    const duration = 1000; // 1 second
+    const frameRate = 16; // ~60fps
+    const totalFrames = duration / frameRate;
+    let frame = 0;
+
+    // Animation function
+    const animateProgress = () => {
+      frame++;
+      const progress = frame / totalFrames;
+      const easedProgress = 1 - Math.pow(1 - progress, 3); // Cubic ease out
+
+      // Calculate new value based on easing
+      const newValue = startVal + (endVal - startVal) * easedProgress;
+      setAnimatedProgress(newValue);
+
+      // Continue animation if not complete
+      if (frame < totalFrames) {
+        animationRef.current = setTimeout(animateProgress, frameRate);
+      }
+    };
+
+    // Start animation
+    animateProgress();
+
+    // Cleanup
+    return () => {
+      if (animationRef.current) {
+        clearTimeout(animationRef.current);
+      }
+    };
+  }, [percentage]);
 
   // Calculate circle properties
   const size = 140;
@@ -243,7 +306,7 @@ function CalorieCircle({ current, goal, caloriesAmount, isOverGoal }) {
   const circumference = radius * 2 * Math.PI;
 
   // Handle the case when over goal
-  const progressPercentage = isOverGoal ? 100 : percentage;
+  const progressPercentage = isOverGoal ? 100 : animatedProgress;
   const strokeDashoffset = circumference - (progressPercentage / 100) * circumference;
 
   // Get dynamic progress color based on percentage and overrun
@@ -257,13 +320,13 @@ function CalorieCircle({ current, goal, caloriesAmount, isOverGoal }) {
     <View className="items-center justify-center">
       <View className="relative">
         <Svg width={size} height={size}>
-          {/* Background Circle */}
+          {/* Background Circle - dark version */}
           <Circle
             cx={size / 2}
             cy={size / 2}
             r={radius}
             strokeWidth={strokeWidth}
-            stroke={colors.border}
+            stroke={unfilledColor}
             fill="transparent"
           />
 

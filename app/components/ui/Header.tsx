@@ -1,4 +1,4 @@
-// app/components/ui/Header.tsx (updated)
+// app/components/ui/Header.tsx
 import React from "react";
 import { View, Text, Pressable } from "react-native";
 import { Feather } from "@expo/vector-icons";
@@ -16,11 +16,10 @@ export default function Header({ title = "Scar Fit", showProfile = true, showNot
   const router = useRouter();
 
   return (
-    <View className="flex-row items-center justify-between px-4 py-3 border-b border-border">
+    <View className="flex-row items-center justify-between px-4 py-3 border-b border-border shadow-sm">
       {showProfile ? (
         <Pressable onPress={() => router.push("/profile")} className="p-1">
-          {/* Added blue translucent circle around profile icon */}
-          <View className="w-10 h-10 rounded-full bg-primary/20 items-center justify-center">
+          <View className="w-10 h-10 rounded-full bg-primary/15 items-center justify-center">
             <Feather name="user" size={20} color={colors.primary} />
           </View>
         </Pressable>
@@ -28,11 +27,16 @@ export default function Header({ title = "Scar Fit", showProfile = true, showNot
         <View className="w-10" />
       )}
 
-      <Text className="text-lg font-semibold text-foreground">{title}</Text>
+      <Text className="text-base font-semibold text-center text-foreground">
+        {title}
+        {title === "Scar Fit" && <Text className="text-primary"> ⚡</Text>}
+      </Text>
 
       {showNotifications ? (
-        <Pressable onPress={() => router.push("/notifications")} className="p-2">
-          <Feather name="bell" size={22} color={colors.primary} />
+        <Pressable onPress={() => router.push("/notifications")} className="p-1">
+          <View className="w-10 h-10 rounded-full bg-primary/15 items-center justify-center">
+            <Feather name="bell" size={20} color={colors.primary} />
+          </View>
         </Pressable>
       ) : (
         <View className="w-10" />
