@@ -1,44 +1,36 @@
-// app/components/auth/AuthGuard.tsx (updated)
+// app/components/auth/AuthGuard.tsx (simplified to keep users on current screen)
 import React, { useEffect } from "react";
-import { View, ActivityIndicator } from "react-native";
 import { useRouter, useSegments } from "expo-router";
 import { useAuth } from "../../context/AuthContext";
-import { useTheme } from "../../context/ThemeContext";
 
 export default function AuthGuard({ children }: { children: React.ReactNode }) {
-  const { user, initialized, userProfile } = useAuth();
+  const { user, initialized, userProfile, loading, profileLoading } = useAuth();
   const segments = useSegments();
   const router = useRouter();
-  const { colors } = useTheme();
 
   useEffect(() => {
-    if (!initialized) return;
+    // Don't do anything until fully initialized and not in a loading state
+    if (!initialized || loading || profileLoading) return;
 
     const inAuthGroup = segments[0] === "auth";
     const inOnboarding = segments[0] === "screens" && segments[1] === "onboarding";
 
     // Check if user has macros already configured
-    const hasMacros = userProfile?.macros && Object.keys(userProfile.macros).length > 0;
+    const hasMacros = userProfile?.macros && Object.keys(userProfile?.macros || {}).length > 0;
 
+    // Only perform navigation if not already on the correct screen
     if (!user && !inAuthGroup) {
-      // Redirect to login if user is not authenticated and not in auth group
+      // Not logged in and not on auth screen - go to login
       router.replace("/auth/login");
     } else if (user && inAuthGroup) {
-      // Redirect to home if user is authenticated and in auth group
+      // Logged in but on auth screen - go to home
       router.replace("/(tabs)");
     } else if (user && !hasMacros && !inOnboarding && !inAuthGroup) {
-      // Only redirect to onboarding if user is authenticated but doesn't have macros set
+      // Logged in, no macros, not on onboarding - go to onboarding
       router.replace("/screens/onboarding");
     }
-  }, [user, initialized, segments, userProfile]);
+  }, [initialized, loading, profileLoading, user, userProfile, segments]);
 
-  if (!initialized) {
-    return (
-      <View className="flex-1 bg-background justify-center items-center">
-        <ActivityIndicator size="large" color={colors.primary} />
-      </View>
-    );
-  }
-
+  // Just render children - no loading screen
   return <>{children}</>;
 }
