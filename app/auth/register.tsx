@@ -11,18 +11,18 @@ import FormField from "../components/ui/FormField";
 export default function Register() {
   const router = useRouter();
   const { colors } = useTheme();
-  const { signUp, loading } = useAuth();
-  
+  const { signUp, signIn, loading } = useAuth(); // <-- Add signIn here
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
-  
+
   const validate = () => {
     const newErrors: Record<string, string> = {};
     let isValid = true;
-    
+
     if (!email) {
       newErrors.email = "O email é obrigatório";
       isValid = false;
@@ -30,7 +30,7 @@ export default function Register() {
       newErrors.email = "Formato de email inválido";
       isValid = false;
     }
-    
+
     if (!password) {
       newErrors.password = "A senha é obrigatória";
       isValid = false;
@@ -38,7 +38,7 @@ export default function Register() {
       newErrors.password = "A senha deve ter pelo menos 6 caracteres";
       isValid = false;
     }
-    
+
     if (!confirmPassword) {
       newErrors.confirmPassword = "Confirme sua senha";
       isValid = false;
@@ -46,34 +46,41 @@ export default function Register() {
       newErrors.confirmPassword = "As senhas não coincidem";
       isValid = false;
     }
-    
+
     setErrors(newErrors);
     return isValid;
   };
-  
+
   const handleRegister = async () => {
     // Reset error message
     setErrorMessage("");
-    
+
     // Validation
     if (!validate()) {
       return;
     }
-    
+
     try {
       const { error } = await signUp(email, password);
-      
+
       if (error) {
         setErrorMessage(error.message || "Erro ao criar conta. Tente novamente.");
       } else {
-        // On success, show confirmation message and redirect
-        router.replace("/auth/login");
+        // On success, sign in automatically and redirect to onboarding
+        const signInResult = await signIn(email, password);
+
+        if (!signInResult.error) {
+          router.replace("/screens/onboarding");
+        } else {
+          // If sign in fails, just go to login screen
+          router.replace("/auth/login");
+        }
       }
     } catch (error: any) {
       setErrorMessage(error.message || "Ocorreu um erro inesperado. Tente novamente.");
     }
   };
-  
+
   return (
     <SafeAreaView className="flex-1 bg-background">
       <ScrollView className="flex-1 px-4">
@@ -84,15 +91,15 @@ export default function Register() {
           <Text className="text-3xl font-bold text-foreground mb-2">Scar Fit</Text>
           <Text className="text-muted-foreground text-center">Sua saúde em primeiro lugar</Text>
         </View>
-        
+
         <Text className="text-2xl font-bold text-foreground mb-6">Criar Conta</Text>
-        
+
         {errorMessage ? (
           <View className="mb-4 bg-red-500/10 p-3 rounded-lg border border-red-500/30">
             <Text className="text-red-500">{errorMessage}</Text>
           </View>
         ) : null}
-        
+
         <FormField
           label="Email"
           value={email}
@@ -102,7 +109,7 @@ export default function Register() {
           autoCapitalize="none"
           error={errors.email}
         />
-        
+
         <FormField
           label="Senha"
           value={password}
@@ -111,7 +118,7 @@ export default function Register() {
           secureTextEntry
           error={errors.password}
         />
-        
+
         <FormField
           label="Confirmar Senha"
           value={confirmPassword}
@@ -120,15 +127,11 @@ export default function Register() {
           secureTextEntry
           error={errors.confirmPassword}
         />
-        
-        <Button
-          className="mb-6"
-          onPress={handleRegister}
-          disabled={loading}
-        >
+
+        <Button className="mb-6" onPress={handleRegister} disabled={loading}>
           {loading ? <ActivityIndicator size="small" color="white" /> : "Criar Conta"}
         </Button>
-        
+
         <View className="flex-row justify-center items-center">
           <Text className="text-muted-foreground">Já tem uma conta? </Text>
           <TouchableOpacity onPress={() => router.push("/auth/login")}>

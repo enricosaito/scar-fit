@@ -71,6 +71,7 @@ export default function RootLayout() {
               <Stack.Screen name="screens/food-tracker" />
               <Stack.Screen name="screens/exercise" />
               <Stack.Screen name="screens/pro-subscription" />
+              <Stack.Screen name="screens/onboarding" />
               <Stack.Screen name="auth" />
             </Stack>
           </AuthGuard>

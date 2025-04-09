@@ -1,4 +1,4 @@
-// app/(tabs)/calculator.tsx
+// app/screens/onboarding.tsx
 import React, { useState } from "react";
 import { Text, View, SafeAreaView, ScrollView, Pressable, TextInput, ActivityIndicator, Alert } from "react-native";
 import { useRouter } from "expo-router";
@@ -8,7 +8,7 @@ import { useTheme } from "../context/ThemeContext";
 import { useAuth } from "../context/AuthContext";
 import { saveUserMacros } from "../models/user";
 
-// Define types
+// Reuse the types and helper functions from the calculator.tsx file
 type Gender = "male" | "female";
 type ActivityLevel = "sedentary" | "light" | "moderate" | "active" | "extreme";
 type Goal = "lose" | "maintain" | "gain";
@@ -146,7 +146,7 @@ const calculateMacros = (tdee: number, weight: string, goal: Goal): MacroResult 
   };
 };
 
-export default function Calculator() {
+export default function Onboarding() {
   const router = useRouter();
   const { colors } = useTheme();
   const [currentStep, setCurrentStep] = useState<number>(0);
@@ -158,6 +158,7 @@ export default function Calculator() {
     activityLevel: "moderate",
     goal: "maintain",
   });
+  const { user, refreshProfile } = useAuth();
 
   const handleNextStep = (): void => {
     if (currentStep < STEPS.length - 1) {
@@ -253,9 +254,9 @@ interface StepProps {
 function WelcomeStep({ onNext }: StepProps) {
   return (
     <View className="py-6">
-      <Text className="text-3xl font-bold text-center text-foreground mb-2">Calculadora de Macros</Text>
+      <Text className="text-3xl font-bold text-center text-foreground mb-2">Bem-vindo ao ScarFit!</Text>
       <Text className="text-muted-foreground text-center mb-6">
-        Vamos descobrir suas necessidades nutricionais ideais
+        Vamos começar descobrindo suas necessidades nutricionais ideais
       </Text>
 
       <View className="bg-card rounded-xl border border-border p-6 mb-6">
@@ -542,10 +543,10 @@ function ResultsStep({ formData, onBack }: ResultsStepProps) {
       await refreshProfile();
       setIsSaved(true);
 
-      // Reset after 3 seconds
+      // Redirect to home after a short delay
       setTimeout(() => {
-        setIsSaved(false);
-      }, 3000);
+        router.replace("/(tabs)");
+      }, 1500);
     } catch (error) {
       console.error("Error saving macros:", error);
       Alert.alert("Erro", "Não foi possível salvar seus resultados. Tente novamente.");
@@ -654,8 +655,9 @@ function ResultsStep({ formData, onBack }: ResultsStepProps) {
       <View className="bg-accent rounded-xl p-6 mb-6">
         <Text className="text-lg font-semibold text-accent-foreground mb-2">Dica Nutricional</Text>
         <Text className="text-accent-foreground">
-          Sua recomendação de proteína ({macros.protein}g, ou 2,2g por kg de peso) é ideal para otimizar a recuperação
-          muscular e promover a saciedade. Distribua suas proteínas ao longo do dia para melhores resultados.
+          Sua recomendação de proteína ({macros.protein}g, ou {formData.gender === "male" ? "2,2g" : "2,0g"} por kg de
+          peso) é ideal para otimizar a recuperação muscular e promover a saciedade. Distribua suas proteínas ao longo
+          do dia para melhores resultados.
         </Text>
       </View>
 

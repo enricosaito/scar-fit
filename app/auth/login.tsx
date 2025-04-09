@@ -12,20 +12,20 @@ export default function Login() {
   const router = useRouter();
   const { colors } = useTheme();
   const { signIn, loading } = useAuth();
-  
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
-  
+
   const handleLogin = async () => {
     if (!email || !password) {
       setErrorMessage("Por favor, preencha todos os campos.");
       return;
     }
-    
+
     try {
       const { error } = await signIn(email, password);
-      
+
       if (error) {
         setErrorMessage(error.message || "Erro ao fazer login. Tente novamente.");
       } else {
@@ -36,7 +36,7 @@ export default function Login() {
       setErrorMessage(error.message || "Ocorreu um erro inesperado. Tente novamente.");
     }
   };
-  
+
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
       <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
@@ -48,15 +48,15 @@ export default function Login() {
             <Text className="text-3xl font-bold text-foreground mb-2">Scar Fit</Text>
             <Text className="text-muted-foreground text-center">Sua saúde em primeiro lugar</Text>
           </View>
-          
+
           <Text className="text-2xl font-bold text-foreground mb-6">Login</Text>
-          
+
           {errorMessage ? (
             <View className="mb-4 bg-red-500/10 p-3 rounded-lg border border-red-500/30">
               <Text className="text-red-500">{errorMessage}</Text>
             </View>
           ) : null}
-          
+
           <FormField
             label="Email"
             value={email}
@@ -65,7 +65,7 @@ export default function Login() {
             keyboardType="email-address"
             autoCapitalize="none"
           />
-          
+
           <FormField
             label="Senha"
             value={password}
@@ -73,19 +73,15 @@ export default function Login() {
             placeholder="Sua senha"
             secureTextEntry
           />
-          
-          <Button
-            className="mb-4"
-            onPress={handleLogin}
-            disabled={loading}
-          >
+
+          <Button className="mb-4" onPress={handleLogin} disabled={loading}>
             {loading ? <ActivityIndicator size="small" color="white" /> : "Entrar"}
           </Button>
-          
+
           <TouchableOpacity className="mb-6" onPress={() => router.push("/auth/forgot-password")}>
             <Text className="text-primary text-center">Esqueci minha senha</Text>
           </TouchableOpacity>
-          
+
           <View className="flex-row justify-center items-center">
             <Text className="text-muted-foreground">Não tem uma conta? </Text>
             <TouchableOpacity onPress={() => router.push("/auth/register")}>
