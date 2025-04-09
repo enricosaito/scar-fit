@@ -1,6 +1,6 @@
 // app/screens/profile/profile.tsx (updated)
 import React from "react";
-import { Text, View, SafeAreaView, Pressable, Alert, ScrollView } from "react-native";
+import { Text, View, SafeAreaView, Pressable, Alert, ScrollView, ActivityIndicator } from "react-native";
 import { useRouter } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import { useTheme } from "../../context/ThemeContext";
@@ -11,7 +11,7 @@ import { resetUserMacros } from "../../models/user";
 export default function Profile() {
   const router = useRouter();
   const { colors } = useTheme();
-  const { user, signOut, userProfile, refreshProfile } = useAuth();
+  const { user, signOut, userProfile, refreshProfile, loading } = useAuth();
 
   const handleLogout = () => {
     Alert.alert(
@@ -25,7 +25,9 @@ export default function Profile() {
         {
           text: "Sim, sair",
           style: "destructive",
-          onPress: signOut,
+          onPress: async () => {
+            await signOut();
+          },
         },
       ],
       { cancelable: true }
@@ -73,28 +75,42 @@ export default function Profile() {
 
       <ScrollView className="flex-1">
         <View className="p-6 items-center">
-          <View className="w-24 h-24 bg-primary/20 rounded-full items-center justify-center mb-4">
-            <Feather name="user" size={40} color={colors.primary} />
-          </View>
+          {user && !loading ? (
+            <>
+              <View className="w-24 h-24 bg-primary/20 rounded-full items-center justify-center mb-4">
+                <Feather name="user" size={40} color={colors.primary} />
+              </View>
 
-          <Text className="text-2xl font-bold text-foreground mb-1">
-            {user?.user_metadata?.name || userProfile?.full_name || "Usuário"}
-          </Text>
-          <Text className="text-muted-foreground mb-6">{user?.email}</Text>
+              <Text className="text-2xl font-bold text-foreground mb-1">
+                {user?.user_metadata?.name || userProfile?.full_name || "Usuário"}
+              </Text>
+              <Text className="text-muted-foreground mb-6">{user?.email}</Text>
 
-          <Pressable
-            className="w-full bg-primary py-2 px-4 rounded-lg mb-4"
-            onPress={() => router.push("/screens/profile/edit")}
-          >
-            <Text className="text-white text-center font-medium">Editar Perfil</Text>
-          </Pressable>
+              <Pressable
+                className="w-full bg-primary py-2 px-4 rounded-lg mb-4"
+                onPress={() => router.push("/screens/profile/edit")}
+              >
+                <Text className="text-white text-center font-medium">Editar Perfil</Text>
+              </Pressable>
+            </>
+          ) : (
+            // Show a loading placeholder when logging out
+            <View className="w-24 h-24 bg-muted rounded-full items-center justify-center mb-4">
+              <ActivityIndicator size="large" color={colors.primary} />
+            </View>
+          )}
 
           <Pressable
             className="w-full bg-transparent border border-red-500 py-2 px-4 rounded-lg flex-row justify-center items-center"
             onPress={handleLogout}
+            disabled={loading}
           >
-            <Feather name="log-out" size={18} color="#ef4444" className="mr-2" />
-            <Text className="text-red-500 text-center font-medium ml-2">Sair</Text>
+            {loading ? (
+              <ActivityIndicator size="small" color="#ef4444" style={{ marginRight: 8 }} />
+            ) : (
+              <Feather name="log-out" size={18} color="#ef4444" className="mr-2" />
+            )}
+            <Text className="text-red-500 text-center font-medium ml-2">{loading ? "Saindo..." : "Sair"}</Text>
           </Pressable>
         </View>
 
