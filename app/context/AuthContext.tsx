@@ -180,8 +180,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Sign out
   const signOut = async () => {
     setLoading(true);
-    await supabase.auth.signOut();
-    setLoading(false);
+    try {
+      // Set userProfile to null immediately to prevent any flash of unauthenticated content
+      setState((prev) => ({
+        ...prev,
+        userProfile: null,
+      }));
+
+      // Wait a brief moment before signing out (gives time for UI to update)
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      // Perform the actual signout
+      await supabase.auth.signOut();
+    } catch (error) {
+      console.error("Error signing out:", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const value = {
