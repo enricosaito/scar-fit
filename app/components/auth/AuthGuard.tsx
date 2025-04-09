@@ -17,14 +17,17 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
     const inAuthGroup = segments[0] === "auth";
     const inOnboarding = segments[0] === "screens" && segments[1] === "onboarding";
 
+    // Check if user has macros already configured
+    const hasMacros = userProfile?.macros && Object.keys(userProfile.macros).length > 0;
+
     if (!user && !inAuthGroup) {
       // Redirect to login if user is not authenticated and not in auth group
       router.replace("/auth/login");
     } else if (user && inAuthGroup) {
       // Redirect to home if user is authenticated and in auth group
       router.replace("/(tabs)");
-    } else if (user && !userProfile?.macros && !inOnboarding && !inAuthGroup) {
-      // Redirect to onboarding if user is authenticated but doesn't have macros set
+    } else if (user && !hasMacros && !inOnboarding && !inAuthGroup) {
+      // Only redirect to onboarding if user is authenticated but doesn't have macros set
       router.replace("/screens/onboarding");
     }
   }, [user, initialized, segments, userProfile]);
