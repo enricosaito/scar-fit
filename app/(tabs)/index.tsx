@@ -135,7 +135,7 @@ export default function Home() {
                   </Text>
                   <Pressable
                     className="bg-primary py-2 px-4 rounded-lg items-center"
-                    onPress={() => router.push("/(tabs)/calculator")}
+                    onPress={() => router.push("/screens/onboarding")}
                   >
                     <Text className="text-white font-medium">Calcular Metas</Text>
                   </Pressable>
@@ -153,14 +153,6 @@ export default function Home() {
                   <MealList meals={prepareMeals()} />
                 </>
               )}
-
-              {/* Daily Tip */}
-              <View className="bg-accent rounded-xl p-6 mb-4">
-                <Text className="text-lg font-semibold text-accent-foreground mb-2">Registrar uma refeição</Text>
-                <Text className="text-accent-foreground">
-                  Toque no botão azul abaixo com símbolo ( + ) para adicionar uma refeição!
-                </Text>
-              </View>
             </>
           )}
         </View>
