@@ -1,4 +1,4 @@
-// app/profile.tsx (updated with ScrollView)
+// app/screens/profile/profile.tsx (updated)
 import React from "react";
 import { Text, View, SafeAreaView, Pressable, Alert, ScrollView } from "react-native";
 import { useRouter } from "expo-router";
@@ -103,9 +103,15 @@ export default function Profile() {
             <View className="mb-6">
               <View className="flex-row justify-between items-center mb-4">
                 <Text className="text-lg font-bold text-foreground">Suas Metas Nutricionais</Text>
-                <Pressable onPress={handleResetMacros}>
-                  <Text className="text-primary text-sm">Resetar</Text>
-                </Pressable>
+                <View className="flex-row">
+                  {/* Add Recalculate button */}
+                  <Pressable onPress={() => router.push("/screens/onboarding")} className="mr-4">
+                    <Text className="text-primary text-sm">Recalcular</Text>
+                  </Pressable>
+                  <Pressable onPress={handleResetMacros}>
+                    <Text className="text-primary text-sm">Resetar</Text>
+                  </Pressable>
+                </View>
               </View>
               <MacroSummary macros={userProfile.macros} compact={true} />
             </View>
