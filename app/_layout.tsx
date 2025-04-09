@@ -54,7 +54,6 @@ export default function RootLayout() {
     return null; // Still loading fonts
   }
 
-export default function RootLayout() {
   return (
     <ThemeProvider>
       <AuthProvider>

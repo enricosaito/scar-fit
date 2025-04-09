@@ -1,4 +1,4 @@
-// app/(tabs)/_layout.tsx
+// app/(tabs)/_layout.tsx (updated)
 import { Tabs } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import { FontAwesome5 } from "@expo/vector-icons";
@@ -45,12 +45,12 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="calculator"
+        name="workouts"
         options={{
-          title: "Calcular",
+          title: "Treinos",
           tabBarIcon: ({ color }) => (
             <View className="items-center justify-center">
-              <Feather name="sliders" size={24} color={color} />
+              <Feather name="activity" size={24} color={color} />
             </View>
           ),
         }}
