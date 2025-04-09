@@ -1,50 +1,117 @@
-# Welcome to your Expo app 👋
+# ScarFit
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+ScarFit is a comprehensive fitness and nutrition tracking application built with React Native and Expo. The app helps users track their macronutrients, meals, and workouts to achieve their fitness goals.
 
-## Get started
+![ScarFit Screenshot](./assets/images/Screenshot.jpg)
 
-1. Install dependencies
+## Features
 
-   ```bash
+- **Macro Tracking**: Calculate and track daily macronutrient intake (protein, carbs, fat)
+- **Meal Logging**: Log meals with detailed nutrition information
+- **Progress Visualization**: View daily and weekly progress with intuitive charts
+- **User Profiles**: Create and manage user profiles with personalized goals
+- **Dark Mode**: Toggle between light and dark themes
+- **Authentication**: Secure user authentication with Supabase
+
+## Tech Stack
+
+- **Frontend**: React Native, Expo Router, NativeWind (Tailwind CSS for React Native)
+- **Backend**: Supabase (Auth, Database)
+- **State Management**: React Context API
+- **Styling**: NativeWind/TailwindCSS
+- **Icons**: Feather Icons
+- **Navigation**: Expo Router
+
+## Prerequisites
+
+- Node.js >= 14.x
+- Expo CLI
+- Supabase account
+
+## Installation
+
+1. Clone the repository:
+
+   ```
+   git clone https://github.com/yourusername/scar-fit.git
+   cd scar-fit
+   ```
+
+2. Install dependencies:
+
+   ```
    npm install
    ```
 
-2. Start the app
+3. Set up environment variables:
 
-   ```bash
-    npx expo start
+   - Copy `.env.example` to `.env`
+   - Fill in your Supabase URL and anonymous key
+
+4. Start the development server:
+   ```
+   npm start
    ```
 
-In the output, you'll find options to open the app in a
+## Project Structure
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
-
-```bash
-npm run reset-project
+```
+scar-fit/
+├── app/                    # Application source code
+│   ├── (tabs)/             # Main tab navigation screens
+│   ├── auth/               # Authentication screens
+│   ├── components/         # Reusable components
+│   ├── context/            # React Context providers
+│   ├── lib/                # Utilities and configuration
+│   ├── models/             # Data models and API functions
+│   ├── screens/            # Application screens
+│   └── theme/              # Theme configuration
+├── assets/                 # Static assets (images, fonts)
+└── ...config files         # Various configuration files
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+## Main Features Breakdown
 
-## Learn more
+### Authentication
 
-To learn more about developing your project with Expo, look at the following resources:
+- Login, Register, Password Reset functionality
+- Secured with Supabase Auth
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+### Macro Calculator
 
-## Join the community
+- Personalized macro calculation based on:
+  - Age, weight, height, gender
+  - Activity level
+  - Fitness goals (lose weight, maintain, gain muscle)
 
-Join our community of developers creating universal apps.
+### Food Tracking
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+- Search food database
+- Log meals by meal type (breakfast, lunch, dinner, snacks)
+- View daily nutrition summary
+
+### User Profile
+
+- Edit user information
+- Change password
+- View fitness statistics
+
+## Contributing
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## License
+
+This project is licensed under the MIT License.
+
+## Acknowledgements
+
+- [Expo](https://expo.dev/)
+- [React Native](https://reactnative.dev/)
+- [Supabase](https://supabase.io/)
+- [NativeWind](https://www.nativewind.dev/)
+- [Feather Icons](https://feathericons.com/)
