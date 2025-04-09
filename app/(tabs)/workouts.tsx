@@ -52,20 +52,6 @@ export default function Workouts() {
               ))}
             </View>
           </View>
-
-          <View className="bg-primary rounded-xl p-6 mt-4">
-            <Text className="text-xl font-bold text-white mb-2">Dica de Treino</Text>
-            <Text className="text-white opacity-90 mb-4">
-              Treinos de força 2-3 vezes por semana são ideais para complementar seus objetivos nutricionais e acelerar
-              seus resultados.
-            </Text>
-            <Pressable
-              className="bg-white py-2 rounded-lg items-center"
-              onPress={() => router.push("/screens/pro-subscription")}
-            >
-              <Text className="text-primary font-medium">Obter Planos de Treino</Text>
-            </Pressable>
-          </View>
         </View>
       </ScrollView>
     </SafeAreaView>
