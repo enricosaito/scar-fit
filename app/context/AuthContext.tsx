@@ -158,12 +158,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Sign in with email and password
   const signIn = async (email: string, password: string) => {
     setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-    setLoading(false);
-    return { error };
+    try {
+      const { error, data } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (!error && data?.user) {
+        // Immediately fetch user profile after successful login
+        await fetchUserProfile(data.user.id);
+      }
+
+      setLoading(false);
+      return { error };
+    } catch (err) {
+      setLoading(false);
+      return { error: err };
+    }
   };
 
   // Sign out
