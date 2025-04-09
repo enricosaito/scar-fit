@@ -6,6 +6,15 @@ module.exports = {
   presets: [require("nativewind/preset")],
   theme: {
     extend: {
+      fontFamily: {
+        sans: ["Manrope-Regular"], // Base font
+        extralight: ["Manrope-ExtraLight"],
+        light: ["Manrope-Light"],
+        medium: ["Manrope-Medium"],
+        semibold: ["Manrope-SemiBold"],
+        bold: ["Manrope-Bold"],
+        extrabold: ["Manrope-ExtraBold"],
+      },
       colors: {
         // Dark mode colors as default
         background: "#0f172a",

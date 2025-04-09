@@ -1,6 +1,6 @@
-// app/components/NutritionSummary.tsx
+// app/components/tracking/NutritionSummary.tsx
 import React, { useEffect, useState, useRef } from "react";
-import { View, Text, Animated } from "react-native";
+import { View, Text, Animated, Pressable } from "react-native";
 import Svg, { Circle, G } from "react-native-svg";
 import { Feather } from "@expo/vector-icons";
 import { useTheme } from "../../context/ThemeContext";
@@ -76,7 +76,6 @@ export default function NutritionSummary({
     const dayOfMonth = today.getDate();
     const month = months[today.getMonth()];
 
-    // return `${dayOfWeek}, ${dayOfMonth} de ${month}`;
     return "Meu Progresso de Hoje";
   };
 
@@ -149,12 +148,12 @@ export default function NutritionSummary({
   return (
     <View className="bg-card rounded-xl border border-border p-4">
       {/* Today's date with weekday */}
-      <View className="flex-row justify-between items-center mb-4">
+      <Pressable onPress={onToggleDetails} className="flex-row justify-between items-center mb-4">
         <Text className="text-lg font-semibold text-foreground">{formatTodayDate()}</Text>
         {onToggleDetails && (
-          <Feather name={showDetails ? "calendar" : "chevron-down"} size={18} color={colors.mutedForeground} />
+          <Feather name={showDetails ? "chevron-up" : "chevron-down"} size={18} color={colors.mutedForeground} />
         )}
-      </View>
+      </Pressable>
 
       {/* Main layout */}
       <View className="flex-row mb-4">
@@ -169,8 +168,8 @@ export default function NutritionSummary({
           />
         </View>
 
-        {/* Right side: Macros */}
-        <View className="w-3/5 justify-center pl-4">
+        {/* Right side: Macros - with added horizontal spacing */}
+        <View className="w-3/5 justify-center pl-6">
           {/* Protein - compact display */}
           <View className="mb-4">
             <View className="flex-row items-center mb-1">
@@ -218,28 +217,22 @@ export default function NutritionSummary({
           </View>
 
           {showDetails && (
-            /* Carbs and Fats aligned under protein section */
-            <View className="flex-row justify-between mt-3 px-1">
+            /* Carbs and Fats stacked vertically with updated styling */
+            <View className="mt-2 space-y-1">
               {/* Carbs */}
-              <View className="items-center">
-                <View className="flex-row items-center">
-                  <View className="w-2 h-2 rounded-full bg-yellow-500 mr-1" />
-                  <Text className="text-sm text-muted-foreground">
-                    <Text className="text-yellow-500">{Math.round(currentCarbs)}g</Text> / {macros.carbs || 0}g
-                  </Text>
-                </View>
-                <Text className="text-xs text-muted-foreground mt-0.5">Carbos</Text>
+              <View className="flex-row items-center">
+                <View className="w-3 h-3 rounded-full bg-yellow-500 mr-2" />
+                <Text className="text-sm text-muted-foreground">
+                  <Text className="text-white">{Math.round(currentCarbs)}</Text>/{macros.carbs || 0}g carboidratos
+                </Text>
               </View>
 
               {/* Fats */}
-              <View className="items-center">
-                <View className="flex-row items-center">
-                  <View className="w-2 h-2 rounded-full bg-red-500 mr-1" />
-                  <Text className="text-sm text-muted-foreground">
-                    <Text className="text-red-500">{Math.round(currentFat)}g</Text> / {macros.fat || 0}g
-                  </Text>
-                </View>
-                <Text className="text-xs text-muted-foreground mt-0.5">Gorduras</Text>
+              <View className="flex-row items-center">
+                <View className="w-3 h-3 rounded-full bg-red-500 mr-2" />
+                <Text className="text-sm text-muted-foreground">
+                  <Text className="text-white">{Math.round(currentFat)}</Text>/{macros.fat || 0}g gorduras
+                </Text>
               </View>
             </View>
           )}
