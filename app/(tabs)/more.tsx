@@ -1,6 +1,6 @@
 // app/(tabs)/more.tsx (updated)
 import React from "react";
-import { Text, View, SafeAreaView, ScrollView, Pressable, Alert } from "react-native";
+import { Text, View, SafeAreaView, ScrollView, Pressable, Alert, ActivityIndicator } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { useTheme } from "../context/ThemeContext";
 import { useAuth } from "../context/AuthContext";
@@ -110,10 +110,16 @@ export default function More() {
               disabled={loading && item.icon === "log-out"}
             >
               <View className="w-10 h-10 bg-primary/10 rounded-full items-center justify-center mr-4">
-                <Feather name={item.icon} size={20} color={colors.primary} />
+                {loading && item.icon === "log-out" ? (
+                  <ActivityIndicator size="small" color={colors.primary} />
+                ) : (
+                  <Feather name={item.icon} size={20} color={colors.primary} />
+                )}
               </View>
               <View className="flex-1">
-                <Text className="text-base font-medium text-foreground">{item.title}</Text>
+                <Text className="text-base font-medium text-foreground">
+                  {item.icon === "log-out" && loading ? "Saindo..." : item.title}
+                </Text>
                 {item.subtitle && <Text className="text-xs text-muted-foreground">{item.subtitle}</Text>}
               </View>
               <Feather name="chevron-right" size={20} color={colors.mutedForeground} />
