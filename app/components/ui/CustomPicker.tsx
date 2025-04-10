@@ -1,8 +1,9 @@
 // app/components/ui/CustomPicker.tsx
 import React, { useState } from "react";
-import { View, Text, Modal, Pressable, SafeAreaView, Platform } from "react-native";
+import { View, Text, TextInput, Modal, Pressable, SafeAreaView, Platform } from "react-native";
 import { Picker } from "@react-native-picker/picker";
 import { Feather } from "@expo/vector-icons";
+import { Keyboard } from "react-native";
 import { useTheme } from "../../context/ThemeContext";
 import Button from "./Button";
 
@@ -30,6 +31,8 @@ const CustomPicker: React.FC<CustomPickerProps> = ({
   const handleConfirm = () => {
     onValueChange(tempValue);
     setModalVisible(false);
+    Keyboard.dismiss();
+    TextInput.State.blurTextInput(TextInput.State.currentlyFocusedInput());
   };
 
   const handleCancel = () => {
@@ -51,7 +54,14 @@ const CustomPicker: React.FC<CustomPickerProps> = ({
         className={`border ${
           error ? "border-red-500" : "border-border"
         } bg-card rounded-md px-4 py-3 flex-row justify-between items-center`}
-        onPress={() => setModalVisible(true)}
+        onPress={() => {
+          // Dismiss keyboard before showing picker
+          Keyboard.dismiss();
+          // Small delay to ensure keyboard is fully dismissed
+          setTimeout(() => {
+            setModalVisible(true);
+          }, 100);
+        }}
       >
         <Text className={value ? "text-foreground" : "text-muted-foreground"}>{getDisplayText()}</Text>
         <Feather name="chevron-down" size={18} color={colors.mutedForeground} />
