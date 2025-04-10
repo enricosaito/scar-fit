@@ -151,7 +151,7 @@ export default function NutritionSummary({
       <Pressable onPress={onToggleDetails} className="flex-row justify-between items-center mb-4">
         <Text className="text-lg font-semibold text-foreground">{formatTodayDate()}</Text>
         {onToggleDetails && (
-          <Feather name={showDetails ? "chevron-up" : "chevron-down"} size={18} color={colors.mutedForeground} />
+          <Feather name={showDetails ? "calendar" : "chevron-down"} size={18} color={colors.mutedForeground} />
         )}
       </Pressable>
 
@@ -212,7 +212,7 @@ export default function NutritionSummary({
 
             {/* Secondary text - protein consumed vs total, with consumed in purple */}
             <Text className="text-xs text-muted-foreground mt-1.5">
-              <Text className="text-purple-500">{Math.round(currentProtein)}g</Text> / {macros.protein || 0}g consumidos
+              <Text className="text-foreground">{Math.round(currentProtein)}g</Text> / {macros.protein || 0}g consumidos
             </Text>
           </View>
 
@@ -346,11 +346,10 @@ function CalorieCircleWithCaloriesLeft({ current, goal, caloriesAmount, isOverGo
             {Math.round(caloriesAmount)}
           </Text>
           <Text className={`text-xs ${isOverGoal ? "text-blue-300" : "text-white"}`}>
-            {isOverGoal ? "acima" : "restantes"}
+            kcal {isOverGoal ? "acima" : "restantes"}
           </Text>
         </View>
       </View>
-      <Text className="text-muted-foreground mt-2">de {goal} calorias</Text>
     </View>
   );
 }

@@ -1,10 +1,46 @@
-// app/components/MealList.tsx
+// Updated MealList.tsx with labeled macro tags
 import React from "react";
 import { View, Text, Pressable } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { useTheme } from "../../context/ThemeContext";
 import { useRouter } from "expo-router";
 import { FoodPortion } from "../../models/food";
+
+// New MacroTag component with labels
+const MacroTag = ({
+  value,
+  color,
+  label,
+  textColor = "white",
+}: {
+  value: string | number;
+  color: string;
+  label: string;
+  textColor?: string;
+}) => {
+  return (
+    <View
+      className="rounded-md px-2 py-0.5 mr-2 flex-row items-center justify-center"
+      style={{ backgroundColor: color }}
+    >
+      <Text className="text-xs font-medium" style={{ color: textColor }}>
+        {value}g {label}
+      </Text>
+    </View>
+  );
+};
+
+// Calorie Tag component
+const CalorieTag = ({ calories }: { calories: number }) => {
+  return (
+    <View
+      className="rounded-md px-2 py-0.5 mr-2 flex-row items-center justify-center"
+      style={{ backgroundColor: "#3b82f680" }}
+    >
+      <Text className="text-xs font-medium text-white">{calories} kcal</Text>
+    </View>
+  );
+};
 
 interface MealListProps {
   meals: {
@@ -19,6 +55,13 @@ interface MealListProps {
 export default function MealList({ meals }: MealListProps) {
   const { colors } = useTheme();
   const router = useRouter();
+
+  // Macro tag colors - softer, more modern palette
+  const macroColors = {
+    protein: "#9333ea80", // Softer purple with transparency
+    carbs: "#ca8a0480", // Softer amber with transparency
+    fat: "#dc262680", // Softer red with transparency
+  };
 
   const getIconColor = (type: string) => {
     switch (type) {
@@ -112,23 +155,34 @@ export default function MealList({ meals }: MealListProps) {
             {meal.items.slice(0, 3).map((item, idx) => (
               <View key={idx} className="flex-row items-center py-2.5 border-t border-border">
                 <View className="flex-1">
-                  <Text className="text-foreground">{item.food.description}</Text>
-                  <View className="flex-row items-center">
-                    <Text className="text-muted-foreground text-xs">{item.quantity}g</Text>
-                    <View className="flex-row ml-2">
-                      <Text className="text-xs text-purple-500 mr-1.5">
-                        P:{Math.round((item.food.protein_g * item.quantity) / 100)}g
-                      </Text>
-                      <Text className="text-xs text-yellow-500 mr-1.5">
-                        C:{Math.round((item.food.carbs_g * item.quantity) / 100)}g
-                      </Text>
-                      <Text className="text-xs text-red-500">
-                        G:{Math.round((item.food.fat_g * item.quantity) / 100)}g
-                      </Text>
-                    </View>
+                  {/* Rearranged food description with quantity at the beginning */}
+                  <Text className="text-foreground">
+                    <Text className="text-muted-foreground">{item.quantity}g de </Text>
+                    {item.food.description}
+                  </Text>
+
+                  <View className="flex-row items-center flex-wrap mt-1.5">
+                    {/* Calorie tag */}
+                    <CalorieTag calories={Math.round((item.food.kcal * item.quantity) / 100)} />
+
+                    {/* Macro tags with labels */}
+                    <MacroTag
+                      value={Math.round((item.food.protein_g * item.quantity) / 100)}
+                      color={macroColors.protein}
+                      label="prot."
+                    />
+                    <MacroTag
+                      value={Math.round((item.food.carbs_g * item.quantity) / 100)}
+                      color={macroColors.carbs}
+                      label="carb."
+                    />
+                    <MacroTag
+                      value={Math.round((item.food.fat_g * item.quantity) / 100)}
+                      color={macroColors.fat}
+                      label="gord."
+                    />
                   </View>
                 </View>
-                <Text className="text-foreground">{Math.round((item.food.kcal * item.quantity) / 100)} kcal</Text>
               </View>
             ))}
 

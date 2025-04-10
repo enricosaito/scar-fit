@@ -1,6 +1,7 @@
 // app/_layout.tsx
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { ThemeProvider } from "./context/ThemeContext";
 import { AuthProvider } from "./context/AuthContext";
 import { AddMenuProvider } from "./context/AddMenuContext";
@@ -55,28 +56,30 @@ export default function RootLayout() {
   }
 
   return (
-    <ThemeProvider>
-      <AuthProvider>
-        <AddMenuProvider>
-          <AuthGuard>
-            <StatusBar style="light" />
-            <AddMenu />
-            <Stack screenOptions={{ headerShown: false }}>
-              <Stack.Screen name="(tabs)" />
-              <Stack.Screen name="screens/profile/profile" />
-              <Stack.Screen name="screens/profile/edit" />
-              <Stack.Screen name="screens/profile/password" />
-              <Stack.Screen name="screens/notifications" />
-              <Stack.Screen name="screens/tracking" options={{ presentation: "modal" }} />
-              <Stack.Screen name="screens/food-tracker" />
-              <Stack.Screen name="screens/exercise" />
-              <Stack.Screen name="screens/pro-subscription" />
-              <Stack.Screen name="screens/onboarding" />
-              <Stack.Screen name="auth" />
-            </Stack>
-          </AuthGuard>
-        </AddMenuProvider>
-      </AuthProvider>
-    </ThemeProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <ThemeProvider>
+        <AuthProvider>
+          <AddMenuProvider>
+            <AuthGuard>
+              <StatusBar style="light" />
+              <AddMenu />
+              <Stack screenOptions={{ headerShown: false }}>
+                <Stack.Screen name="(tabs)" />
+                <Stack.Screen name="screens/profile/profile" />
+                <Stack.Screen name="screens/profile/edit" />
+                <Stack.Screen name="screens/profile/password" />
+                <Stack.Screen name="screens/notifications" />
+                <Stack.Screen name="screens/tracking" options={{ presentation: "modal" }} />
+                <Stack.Screen name="screens/food-tracker" />
+                <Stack.Screen name="screens/exercise" />
+                <Stack.Screen name="screens/pro-subscription" />
+                <Stack.Screen name="screens/onboarding" />
+                <Stack.Screen name="auth" />
+              </Stack>
+            </AuthGuard>
+          </AddMenuProvider>
+        </AuthProvider>
+      </ThemeProvider>
+    </GestureHandlerRootView>
   );
 }

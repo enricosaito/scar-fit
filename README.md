@@ -1,50 +1,23 @@
-# Welcome to your Expo app 👋
+# ScarFit
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+ScarFit is a comprehensive fitness and nutrition tracking application built with React Native and Expo. The app helps users track their macronutrients, meals, and workouts to achieve their fitness goals.
 
-## Get started
+## Features
 
-1. Install dependencies
+- **Macro Tracking**: Calculate and track daily macronutrient intake (protein, carbs, fat)
+- **Meal Logging**: Log meals with detailed nutrition information
+- **Progress Visualization**: View daily and weekly progress with intuitive charts
+- **User Profiles**: Create and manage user profiles with personalized goals
+- **Dark Mode**: Toggle between light and dark themes
+- **Authentication**: Secure user authentication with Supabase
 
-   ```bash
-   npm install
-   ```
+## Tech Stack
 
-2. Start the app
+- **Frontend**: React Native, Expo Router, NativeWind (Tailwind CSS for React Native)
+- **Backend**: Supabase (Auth, Database)
+- **State Management**: React Context API
+- **Styling**: NativeWind/TailwindCSS
+- **Icons**: Feather Icons
+- **Navigation**: Expo Router
 
-   ```bash
-    npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
-
-```bash
-npm run reset-project
-```
-
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
-
-## Learn more
-
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+![ScarFit Screenshot](./assets/images/Screenshot.jpg)
