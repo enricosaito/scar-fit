@@ -1,4 +1,4 @@
-// app/tracking.tsx (updated)
+// Updated tracking.tsx with consistent macro tag styling
 import React, { useState, useEffect } from "react";
 import {
   Text,
@@ -19,8 +19,49 @@ import { useTheme } from "../context/ThemeContext";
 import { useAuth } from "../context/AuthContext";
 import { Food, FoodPortion, searchFoods } from "../models/food";
 import { DailyLog, getUserDailyLog, addFoodToLog, removeFoodFromLog } from "../models/tracking";
-import MealSection from "../components/tracking/MealSection";
 import Header from "../components/ui/Header";
+
+// New MacroTag component with labels
+const MacroTag = ({ 
+  value, 
+  color, 
+  label,
+  textColor = "white" 
+}: { 
+  value: string | number; 
+  color: string; 
+  label: string;
+  textColor?: string 
+}) => {
+  return (
+    <View 
+      className="rounded-md px-2 py-0.5 mr-2 flex-row items-center justify-center"
+      style={{ backgroundColor: color }}
+    >
+      <Text className="text-xs font-medium" style={{ color: textColor }}>
+        {value}g {label}
+      </Text>
+    </View>
+  );
+};
+
+// Calorie Tag component
+const CalorieTag = ({ 
+  calories
+}: { 
+  calories: number 
+}) => {
+  return (
+    <View 
+      className="rounded-md px-2 py-0.5 mr-2 flex-row items-center justify-center"
+      style={{ backgroundColor: "#3b82f680" }}
+    >
+      <Text className="text-xs font-medium text-white">
+        {calories} kcal
+      </Text>
+    </View>
+  );
+};
 
 type MealType = "breakfast" | "lunch" | "dinner" | "snack";
 
@@ -46,6 +87,13 @@ export default function Tracking() {
   const [addFoodVisible, setAddFoodVisible] = useState(false);
   const [quantity, setQuantity] = useState("100");
   const [selectedMealType, setSelectedMealType] = useState<MealType>("breakfast");
+
+  // Macro tag colors - softer, more modern palette
+  const macroColors = {
+    protein: "#9333ea80", // Softer purple with transparency
+    carbs: "#ca8a0480", // Softer amber with transparency
+    fat: "#dc262680", // Softer red with transparency
+  };
 
   // Check if we're in add mode (coming from the + button)
   const isAddMode = mode === "add";
@@ -265,6 +313,7 @@ export default function Tracking() {
                       items={getMealItems("breakfast")}
                       colors={colors}
                       onRemove={handleRemoveFood}
+                      macroColors={macroColors}
                     />
 
                     {/* Lunch */}
@@ -274,6 +323,7 @@ export default function Tracking() {
                       items={getMealItems("lunch")}
                       colors={colors}
                       onRemove={handleRemoveFood}
+                      macroColors={macroColors}
                     />
 
                     {/* Dinner */}
@@ -283,6 +333,7 @@ export default function Tracking() {
                       items={getMealItems("dinner")}
                       colors={colors}
                       onRemove={handleRemoveFood}
+                      macroColors={macroColors}
                     />
 
                     {/* Snacks */}
@@ -292,6 +343,7 @@ export default function Tracking() {
                       items={getMealItems("snack")}
                       colors={colors}
                       onRemove={handleRemoveFood}
+                      macroColors={macroColors}
                     />
                   </>
                 ) : (
@@ -381,9 +433,22 @@ export default function Tracking() {
                           <Text className="text-primary text-xs">{item.kcal} kcal/100g</Text>
                         </View>
                         <View className="flex-row mt-1">
-                          <Text className="text-xs text-purple-500 mr-2">P: {item.protein_g}g</Text>
-                          <Text className="text-xs text-yellow-500 mr-2">C: {item.carbs_g}g</Text>
-                          <Text className="text-xs text-red-500">G: {item.fat_g}g</Text>
+                          {/* Updated macro tags with labels */}
+                          <MacroTag 
+                            value={item.protein_g} 
+                            color={macroColors.protein}
+                            label="prot." 
+                          />
+                          <MacroTag 
+                            value={item.carbs_g} 
+                            color={macroColors.carbs}
+                            label="carb." 
+                          />
+                          <MacroTag 
+                            value={item.fat_g} 
+                            color={macroColors.fat}
+                            label="gord." 
+                          />
                         </View>
                       </Pressable>
                     )}
@@ -518,31 +583,24 @@ export default function Tracking() {
               <View className="bg-card rounded-xl border border-border p-4 mb-6">
                 <Text className="font-medium text-foreground mb-2">Prévia para {quantity}g</Text>
 
-                <View className="flex-row justify-between">
-                  <View>
-                    <Text className="text-muted-foreground text-xs">Calorias</Text>
-                    <Text className="text-foreground">
-                      {Math.round((selectedFood.kcal * parseFloat(quantity || "0")) / 100)} kcal
-                    </Text>
-                  </View>
-                  <View>
-                    <Text className="text-muted-foreground text-xs">Proteínas</Text>
-                    <Text className="text-purple-500">
-                      {Math.round((selectedFood.protein_g * parseFloat(quantity || "0")) / 100)}g
-                    </Text>
-                  </View>
-                  <View>
-                    <Text className="text-muted-foreground text-xs">Carboidratos</Text>
-                    <Text className="text-yellow-500">
-                      {Math.round((selectedFood.carbs_g * parseFloat(quantity || "0")) / 100)}g
-                    </Text>
-                  </View>
-                  <View>
-                    <Text className="text-muted-foreground text-xs">Gorduras</Text>
-                    <Text className="text-red-500">
-                      {Math.round((selectedFood.fat_g * parseFloat(quantity || "0")) / 100)}g
-                    </Text>
-                  </View>
+                <View className="flex-row flex-wrap">
+                  <CalorieTag calories={Math.round((selectedFood.kcal * parseFloat(quantity || "0")) / 100)} />
+                  
+                  <MacroTag 
+                    value={Math.round((selectedFood.protein_g * parseFloat(quantity || "0")) / 100)}
+                    color={macroColors.protein}
+                    label="prot." 
+                  />
+                  <MacroTag 
+                    value={Math.round((selectedFood.carbs_g * parseFloat(quantity || "0")) / 100)}
+                    color={macroColors.carbs}
+                    label="carb." 
+                  />
+                  <MacroTag 
+                    value={Math.round((selectedFood.fat_g * parseFloat(quantity || "0")) / 100)}
+                    color={macroColors.fat}
+                    label="gord." 
+                  />
                 </View>
               </View>
 
@@ -552,5 +610,81 @@ export default function Tracking() {
         </SafeAreaView>
       </Modal>
     </SafeAreaView>
+  );
+}
+
+// MealSection Component for displaying meal groups with updated macro tags
+interface MealSectionProps {
+  title: string;
+  icon: string;
+  items: FoodPortion[];
+  colors: any;
+  onRemove: (index: number) => void;
+  macroColors: {
+    protein: string;
+    carbs: string;
+    fat: string;
+  };
+}
+
+function MealSection({ title, icon, items, colors, onRemove, macroColors }: MealSectionProps) {
+  if (!items || items.length === 0) return null;
+
+  return (
+    <View className="bg-card rounded-xl border border-border p-4 mb-4">
+      <View className="flex-row items-center mb-3">
+        <View className="w-8 h-8 rounded-full bg-primary/10 items-center justify-center mr-2">
+          <Feather name={icon} size={16} color={colors.primary} />
+        </View>
+        <Text className="text-lg font-medium text-foreground">{title}</Text>
+      </View>
+
+      {items.map((item, index) => (
+        <View key={index} className="py-3 border-t border-border">
+          <View className="flex-row justify-between items-start">
+            <View className="flex-1">
+              {/* Rearranged food description with quantity at beginning */}
+              <Text className="text-foreground font-medium mb-1">
+                <Text className="text-muted-foreground font-normal">{item.quantity}g de </Text>
+                {item.food.description}
+              </Text>
+              
+              {/* Updated macro tags */}
+              <View className="flex-row flex-wrap mt-1.5">
+                <CalorieTag calories={Math.round((item.food.kcal * item.quantity) / 100)} />
+                
+                <MacroTag 
+                  value={Math.round((item.food.protein_g * item.quantity) / 100)} 
+                  color={macroColors.protein}
+                  label="prot." 
+                />
+                <MacroTag 
+                  value={Math.round((item.food.carbs_g * item.quantity) / 100)} 
+                  color={macroColors.carbs}
+                  label="carb." 
+                />
+                <MacroTag 
+                  value={Math.round((item.food.fat_g * item.quantity) / 100)} 
+                  color={macroColors.fat}
+                  label="gord." 
+                />
+              </View>
+            </View>
+            
+            <Pressable
+              className="ml-2 p-2"
+              onPress={() => {
+                Alert.alert("Remover item", "Tem certeza que deseja remover este item?", [
+                  { text: "Cancelar", style: "cancel" },
+                  { text: "Remover", onPress: () => onRemove(index), style: "destructive" },
+                ]);
+              }}
+            >
+              <Feather name="trash-2" size={18} color={colors.mutedForeground} />
+            </Pressable>
+          </View>
+        </View>
+      ))}
+    </View>
   );
 }
