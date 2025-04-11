@@ -1,4 +1,4 @@
-// app/screens/food-tracker.tsx (updated)
+// app/screens/food-tracker.tsx (updated with better styling)
 import React, { useState, useEffect } from "react";
 import {
   Text,
@@ -20,28 +20,7 @@ import { Food, FoodPortion, searchFoods } from "../models/food";
 import { DailyLog, addFoodToLog, getUserDailyLog } from "../models/tracking";
 import Button from "../components/ui/Button";
 
-export default function FoodTracker() {
-  const router = useRouter();
-  const { colors } = useTheme();
-  const { user } = useAuth();
-  
-  // Search state
-  const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState<Food[]>([]);
-  const [searchLoading, setSearchLoading] = useState(false);
-  const [recentSearches, setRecentSearches] = useState<Food[]>([]);
-  
-  // Add food state
-  const [selectedFood, setSelectedFood] = useState<Food | null>(null);
-  const [addFoodVisible, setAddFoodVisible] = useState(false);
-  const [quantity, setQuantity] = useState("100");
-  const [selectedMealType, setSelectedMealType] = useState<"breakfast" | "lunch" | "dinner" | "snack">("breakfast");
-  
-  // Daily log for today (needed for adding food)
-  const [dailyLog, setDailyLog] = useState<DailyLog | null>(null);
-  const [loading, setLoading] = useState(false);
-  
-  // MacroTag Component
+// MacroTag Component
 const MacroTag = ({
   value,
   color,
@@ -77,13 +56,34 @@ const CalorieTag = ({ calories }: { calories: number }) => {
   );
 };
 
-// Macro Colors
-const macroColors = {
-  protein: "#9333ea80", // Softer purple with transparency
-  carbs: "#ca8a0480", // Softer amber with transparency
-  fat: "#dc262680", // Softer red with transparency
-};
-
+export default function FoodTracker() {
+  const router = useRouter();
+  const { colors } = useTheme();
+  const { user } = useAuth();
+  
+  // Search state
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<Food[]>([]);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [recentSearches, setRecentSearches] = useState<Food[]>([]);
+  
+  // Add food state
+  const [selectedFood, setSelectedFood] = useState<Food | null>(null);
+  const [addFoodVisible, setAddFoodVisible] = useState(false);
+  const [quantity, setQuantity] = useState("100");
+  const [selectedMealType, setSelectedMealType] = useState<"breakfast" | "lunch" | "dinner" | "snack">("breakfast");
+  
+  // Daily log for today (needed for adding food)
+  const [dailyLog, setDailyLog] = useState<DailyLog | null>(null);
+  const [loading, setLoading] = useState(false);
+  
+  // Macro tag colors - softer, more modern palette
+  const macroColors = {
+    protein: "#9333ea80", // Softer purple with transparency
+    carbs: "#ca8a0480", // Softer amber with transparency
+    fat: "#dc262680", // Softer red with transparency
+  };
+  
   // Common foods by category
   const commonFoodCategories = [
     {
@@ -149,7 +149,6 @@ const macroColors = {
     loadDailyLog();
     // Could load recent searches from storage here
   }, [user]);
-
 
   // Handle food search
   const handleSearch = async (query: string) => {
@@ -225,6 +224,27 @@ const macroColors = {
     handleSearch(foodName);
   };
 
+  // Render a food item in search results
+  const renderFoodItem = (item: Food) => {
+    return (
+      <Pressable
+        className="bg-card rounded-lg border border-border p-3 mb-3"
+        onPress={() => handleSelectFood(item)}
+      >
+        <Text className="text-foreground font-medium mb-1">{item.description}</Text>
+        <Text className="text-muted-foreground text-xs mb-2">{item.category}</Text>
+        
+        {/* Macro tags row */}
+        <View className="flex-row flex-wrap">
+          <CalorieTag calories={item.kcal} />
+          <MacroTag value={item.protein_g} color={macroColors.protein} label="prot." />
+          <MacroTag value={item.carbs_g} color={macroColors.carbs} label="carb." />
+          <MacroTag value={item.fat_g} color={macroColors.fat} label="gord." />
+        </View>
+      </Pressable>
+    );
+  };
+
   return (
     <SafeAreaView className="flex-1 bg-background">
       {/* Header */}
@@ -260,40 +280,28 @@ const macroColors = {
 
       {/* Main Content */}
       {searchQuery.length >= 2 ? (
-        // Search Results
-        <View className="flex-1">
+        // Search Results with improved styling
+        <View className="flex-1 px-4 py-2">
           {searchLoading ? (
             <View className="py-4 items-center">
               <ActivityIndicator size="large" color={colors.primary} />
             </View>
           ) : (
-            <FlatList
-              data={searchResults}
-              keyExtractor={(item) => item.id.toString()}
-              ListEmptyComponent={() => (
+            <>
+              {searchResults.length > 0 ? (
+                <FlatList
+                  data={searchResults}
+                  keyExtractor={(item) => item.id.toString()}
+                  renderItem={({ item }) => renderFoodItem(item)}
+                  contentContainerStyle={{ paddingBottom: 20 }}
+                />
+              ) : (
                 <View className="items-center py-8">
                   <Feather name="search" size={48} color={colors.mutedForeground} />
                   <Text className="text-muted-foreground mt-2">Nenhum resultado encontrado</Text>
                 </View>
               )}
-              renderItem={({ item }) => (
-                <Pressable
-                  className="bg-card px-4 py-3 border-b border-border"
-                  onPress={() => handleSelectFood(item)}
-                >
-                  <Text className="text-foreground font-medium mb-1">{item.description}</Text>
-                  <View className="flex-row justify-between">
-                    <Text className="text-muted-foreground text-xs">{item.category}</Text>
-                    <Text className="text-primary text-xs">{item.kcal} kcal/100g</Text>
-                  </View>
-                  <View className="flex-row mt-1">
-                    <Text className="text-xs text-purple-500 mr-2">P: {item.protein_g}g</Text>
-                    <Text className="text-xs text-yellow-500 mr-2">C: {item.carbs_g}g</Text>
-                    <Text className="text-xs text-red-500">G: {item.fat_g}g</Text>
-                  </View>
-                </Pressable>
-              )}
-            />
+            </>
           )}
         </View>
       ) : (
@@ -395,173 +403,170 @@ const macroColors = {
         </ScrollView>
       )}
 
-      {/* Add Food Modal */}
-      // Update the Add Food Modal in food-tracker.tsx
-
-/* Add Food Modal - Simplified */
-<Modal
-  visible={addFoodVisible}
-  animationType="slide"
-  transparent={true}
-  onRequestClose={() => setAddFoodVisible(false)}
->
-  <SafeAreaView className="flex-1 bg-background">
-    <View className="flex-row items-center p-4 border-b border-border">
-      <Pressable onPress={() => setAddFoodVisible(false)} className="p-2">
-        <Feather name="x" size={24} color={colors.foreground} />
-      </Pressable>
-      <Text className="text-lg font-medium flex-1 text-center text-foreground mr-8">Adicionar Alimento</Text>
-    </View>
-
-    {selectedFood && (
-      <ScrollView className="p-4">
-        {/* Food details - simplified header */}
-        <View className="bg-card rounded-xl border border-border p-4 mb-6">
-          <Text className="text-xl font-medium text-foreground mb-1">{selectedFood.description}</Text>
-          <Text className="text-muted-foreground mb-2">{selectedFood.category}</Text>
-          
-          {/* Macro tags for per 100g */}
-          <View className="flex-row flex-wrap mt-2">
-            <CalorieTag calories={selectedFood.kcal} />
-            <MacroTag value={selectedFood.protein_g} color={macroColors.protein} label="prot." />
-            <MacroTag value={selectedFood.carbs_g} color={macroColors.carbs} label="carb." />
-            <MacroTag value={selectedFood.fat_g} color={macroColors.fat} label="gord." />
-          </View>
-          <Text className="text-xs text-muted-foreground mt-2">Valores por 100g</Text>
-        </View>
-
-        {/* Quantity selection */}
-        <Text className="font-medium text-foreground mb-2">Quantidade (g)</Text>
-        <View className="flex-row items-center mb-4">
-          <TextInput
-            className="flex-1 border border-border bg-card text-foreground rounded-md px-3 py-2"
-            keyboardType="numeric"
-            value={quantity}
-            onChangeText={setQuantity}
-            placeholder="100"
-            placeholderTextColor={colors.mutedForeground}
-          />
-
-          {/* Quick quantity buttons */}
-          <View className="flex-row ml-2">
-            <Pressable
-              className="bg-card border border-border rounded-md px-3 py-2 mr-1"
-              onPress={() => setQuantity("50")}
-            >
-              <Text className="text-foreground">50g</Text>
+      {/* Add Food Modal - Simplified & Better Styled */}
+      <Modal
+        visible={addFoodVisible}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setAddFoodVisible(false)}
+      >
+        <SafeAreaView className="flex-1 bg-background">
+          <View className="flex-row items-center p-4 border-b border-border">
+            <Pressable onPress={() => setAddFoodVisible(false)} className="p-2">
+              <Feather name="x" size={24} color={colors.foreground} />
             </Pressable>
-            <Pressable
-              className="bg-card border border-border rounded-md px-3 py-2 mr-1"
-              onPress={() => setQuantity("100")}
-            >
-              <Text className="text-foreground">100g</Text>
-            </Pressable>
-            <Pressable
-              className="bg-card border border-border rounded-md px-3 py-2"
-              onPress={() => setQuantity("200")}
-            >
-              <Text className="text-foreground">200g</Text>
-            </Pressable>
+            <Text className="text-lg font-medium flex-1 text-center text-foreground mr-8">Adicionar Alimento</Text>
           </View>
-        </View>
 
-        {/* Meal type selection */}
-        <Text className="font-medium text-foreground mb-2">Refeição</Text>
-        <View className="flex-row mb-3">
-          <Pressable
-            onPress={() => setSelectedMealType("breakfast")}
-            className={`flex-1 py-2 px-3 rounded-md mr-2 ${
-              selectedMealType === "breakfast" ? "bg-primary" : "bg-card border border-border"
-            }`}
-          >
-            <Text
-              className={
-                selectedMealType === "breakfast" ? "text-white text-center" : "text-foreground text-center"
-              }
-            >
-              Café da Manhã
-            </Text>
-          </Pressable>
-          <Pressable
-            onPress={() => setSelectedMealType("lunch")}
-            className={`flex-1 py-2 px-3 rounded-md mr-2 ${
-              selectedMealType === "lunch" ? "bg-primary" : "bg-card border border-border"
-            }`}
-          >
-            <Text
-              className={selectedMealType === "lunch" ? "text-white text-center" : "text-foreground text-center"}
-            >
-              Almoço
-            </Text>
-          </Pressable>
-        </View>
+          {selectedFood && (
+            <ScrollView className="p-4">
+              {/* Food details - simplified header */}
+              <View className="bg-card rounded-xl border border-border p-4 mb-6">
+                <Text className="text-xl font-medium text-foreground mb-1">{selectedFood.description}</Text>
+                <Text className="text-muted-foreground mb-2">{selectedFood.category}</Text>
+                
+                {/* Macro tags for per 100g */}
+                <View className="flex-row flex-wrap mt-2">
+                  <CalorieTag calories={selectedFood.kcal} />
+                  <MacroTag value={selectedFood.protein_g} color={macroColors.protein} label="prot." />
+                  <MacroTag value={selectedFood.carbs_g} color={macroColors.carbs} label="carb." />
+                  <MacroTag value={selectedFood.fat_g} color={macroColors.fat} label="gord." />
+                </View>
+                <Text className="text-xs text-muted-foreground mt-2">Valores por 100g</Text>
+              </View>
 
-        <View className="flex-row mb-6">
-          <Pressable
-            onPress={() => setSelectedMealType("dinner")}
-            className={`flex-1 py-2 px-3 rounded-md mr-2 ${
-              selectedMealType === "dinner" ? "bg-primary" : "bg-card border border-border"
-            }`}
-          >
-            <Text
-              className={selectedMealType === "dinner" ? "text-white text-center" : "text-foreground text-center"}
-            >
-              Jantar
-            </Text>
-          </Pressable>
-          <Pressable
-            onPress={() => setSelectedMealType("snack")}
-            className={`flex-1 py-2 px-3 rounded-md ${
-              selectedMealType === "snack" ? "bg-primary" : "bg-card border border-border"
-            }`}
-          >
-            <Text
-              className={selectedMealType === "snack" ? "text-white text-center" : "text-foreground text-center"}
-            >
-              Lanche
-            </Text>
-          </Pressable>
-        </View>
+              {/* Quantity selection */}
+              <Text className="font-medium text-foreground mb-2">Quantidade (g)</Text>
+              <View className="flex-row items-center mb-4">
+                <TextInput
+                  className="flex-1 border border-border bg-card text-foreground rounded-md px-3 py-2"
+                  keyboardType="numeric"
+                  value={quantity}
+                  onChangeText={setQuantity}
+                  placeholder="100"
+                  placeholderTextColor={colors.mutedForeground}
+                />
 
-        {/* Preview - Simplified with "<quantity>g de <food>" format */}
-        <View className="bg-card rounded-xl border border-border p-4 mb-6">
-          <Text className="font-medium text-foreground mb-2">Você está adicionando:</Text>
-          
-          {/* Display format: "<quantity>g de <food>" */}
-          <Text className="text-foreground text-lg mb-3">
-            <Text className="text-muted-foreground">{quantity}g de </Text>
-            {selectedFood.description}
-          </Text>
-          
-          {/* Macro tags for selected quantity */}
-          <View className="flex-row flex-wrap">
-            <CalorieTag calories={Math.round((selectedFood.kcal * parseFloat(quantity || "0")) / 100)} />
-            
-            <MacroTag 
-              value={Math.round((selectedFood.protein_g * parseFloat(quantity || "0")) / 100)} 
-              color={macroColors.protein} 
-              label="prot." 
-            />
-            
-            <MacroTag 
-              value={Math.round((selectedFood.carbs_g * parseFloat(quantity || "0")) / 100)} 
-              color={macroColors.carbs} 
-              label="carb." 
-            />
-            
-            <MacroTag 
-              value={Math.round((selectedFood.fat_g * parseFloat(quantity || "0")) / 100)} 
-              color={macroColors.fat} 
-              label="gord." 
-            />
-          </View>
-        </View>
+                {/* Quick quantity buttons */}
+                <View className="flex-row ml-2">
+                  <Pressable
+                    className="bg-card border border-border rounded-md px-3 py-2 mr-1"
+                    onPress={() => setQuantity("50")}
+                  >
+                    <Text className="text-foreground">50g</Text>
+                  </Pressable>
+                  <Pressable
+                    className="bg-card border border-border rounded-md px-3 py-2 mr-1"
+                    onPress={() => setQuantity("100")}
+                  >
+                    <Text className="text-foreground">100g</Text>
+                  </Pressable>
+                  <Pressable
+                    className="bg-card border border-border rounded-md px-3 py-2"
+                    onPress={() => setQuantity("200")}
+                  >
+                    <Text className="text-foreground">200g</Text>
+                  </Pressable>
+                </View>
+              </View>
 
-        <Button onPress={handleAddFood}>Adicionar à Refeição</Button>
-      </ScrollView>
-    )}
-  </SafeAreaView>
-</Modal>
+              {/* Meal type selection */}
+              <Text className="font-medium text-foreground mb-2">Refeição</Text>
+              <View className="flex-row mb-3">
+                <Pressable
+                  onPress={() => setSelectedMealType("breakfast")}
+                  className={`flex-1 py-2 px-3 rounded-md mr-2 ${
+                    selectedMealType === "breakfast" ? "bg-primary" : "bg-card border border-border"
+                  }`}
+                >
+                  <Text
+                    className={
+                      selectedMealType === "breakfast" ? "text-white text-center" : "text-foreground text-center"
+                    }
+                  >
+                    Café da Manhã
+                  </Text>
+                </Pressable>
+                <Pressable
+                  onPress={() => setSelectedMealType("lunch")}
+                  className={`flex-1 py-2 px-3 rounded-md mr-2 ${
+                    selectedMealType === "lunch" ? "bg-primary" : "bg-card border border-border"
+                  }`}
+                >
+                  <Text
+                    className={selectedMealType === "lunch" ? "text-white text-center" : "text-foreground text-center"}
+                  >
+                    Almoço
+                  </Text>
+                </Pressable>
+              </View>
+
+              <View className="flex-row mb-6">
+                <Pressable
+                  onPress={() => setSelectedMealType("dinner")}
+                  className={`flex-1 py-2 px-3 rounded-md mr-2 ${
+                    selectedMealType === "dinner" ? "bg-primary" : "bg-card border border-border"
+                  }`}
+                >
+                  <Text
+                    className={selectedMealType === "dinner" ? "text-white text-center" : "text-foreground text-center"}
+                  >
+                    Jantar
+                  </Text>
+                </Pressable>
+                <Pressable
+                  onPress={() => setSelectedMealType("snack")}
+                  className={`flex-1 py-2 px-3 rounded-md ${
+                    selectedMealType === "snack" ? "bg-primary" : "bg-card border border-border"
+                  }`}
+                >
+                  <Text
+                    className={selectedMealType === "snack" ? "text-white text-center" : "text-foreground text-center"}
+                  >
+                    Lanche
+                  </Text>
+                </Pressable>
+              </View>
+
+              {/* Preview - Simplified with "<quantity>g de <food>" format */}
+              <View className="bg-card rounded-xl border border-border p-4 mb-6">
+                <Text className="font-medium text-foreground mb-2">Você está adicionando:</Text>
+                
+                {/* Display format: "<quantity>g de <food>" */}
+                <Text className="text-foreground text-lg mb-3">
+                  <Text className="text-muted-foreground">{quantity}g de </Text>
+                  {selectedFood.description}
+                </Text>
+                
+                {/* Macro tags for selected quantity */}
+                <View className="flex-row flex-wrap">
+                  <CalorieTag calories={Math.round((selectedFood.kcal * parseFloat(quantity || "0")) / 100)} />
+                  
+                  <MacroTag 
+                    value={Math.round((selectedFood.protein_g * parseFloat(quantity || "0")) / 100)} 
+                    color={macroColors.protein} 
+                    label="prot." 
+                  />
+                  
+                  <MacroTag 
+                    value={Math.round((selectedFood.carbs_g * parseFloat(quantity || "0")) / 100)} 
+                    color={macroColors.carbs} 
+                    label="carb." 
+                  />
+                  
+                  <MacroTag 
+                    value={Math.round((selectedFood.fat_g * parseFloat(quantity || "0")) / 100)} 
+                    color={macroColors.fat} 
+                    label="gord." 
+                  />
+                </View>
+              </View>
+
+              <Button onPress={handleAddFood}>Adicionar à Refeição</Button>
+            </ScrollView>
+          )}
+        </SafeAreaView>
+      </Modal>
     </SafeAreaView>
   );
 }
