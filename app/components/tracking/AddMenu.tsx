@@ -1,4 +1,4 @@
-// app/components/tracking/AddMenu.tsx
+// app/components/tracking/AddMenu.tsx (updated)
 import React, { useEffect, useRef } from "react";
 import { View, Text, Pressable, Modal, SafeAreaView, Animated, Dimensions, Platform } from "react-native";
 import { useRouter } from "expo-router";
@@ -79,6 +79,17 @@ export default function AddMenu() {
       icon: "camera",
       title: "Detectar Alimento por Foto",
       subtitle: "Identificar alimento por imagem",
+      action: () => {
+        hideMenu();
+        router.push("/screens/pro-subscription");
+      },
+      pro: true,
+    },
+    {
+      id: "food-audio",
+      icon: "mic",
+      title: "Detectar por Áudio",
+      subtitle: "Descreva o alimento por voz",
       action: () => {
         hideMenu();
         router.push("/screens/pro-subscription");
