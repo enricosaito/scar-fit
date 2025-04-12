@@ -103,3 +103,5 @@ export const signInWithGoogle = async () => {
     };
   }
 };
+
+export default signInWithGoogle;
