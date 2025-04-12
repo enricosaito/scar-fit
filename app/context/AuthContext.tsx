@@ -1,29 +1,33 @@
-// app/context/AuthContext.tsx (updated)
+// app/context/AuthContext.tsx
+
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "../lib/supabase";
 import { createUserProfile, getUserProfile, UserProfile } from "../models/user";
+import { signInWithGoogle } from "../lib/googleAuth";
 
 interface AuthState {
   user: User | null;
   session: Session | null;
   userProfile: UserProfile | null;
   initialized: boolean;
-  onboardingCompleted: boolean; // Add this new state
+  onboardingCompleted: boolean;
 }
 
 interface AuthContextType extends AuthState {
   signUp: (email: string, password: string) => Promise<{ error: any }>;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
+  signInWithGoogle: () => Promise<{ error: any }>; // New method
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
-  setOnboardingCompleted: (completed: boolean) => void; // Add this new method
+  setOnboardingCompleted: (completed: boolean) => void;
   loading: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
+  // State code remains the same...
   const [state, setState] = useState<AuthState>({
     user: null,
     session: null,
@@ -40,7 +44,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setState((prev) => ({
         ...prev,
         userProfile: profile,
-        // Set onboarding as completed if user has macros
         onboardingCompleted: !!(profile?.macros && Object.keys(profile.macros).length > 0),
       }));
     } catch (error) {
@@ -53,11 +56,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setState((prev) => ({ ...prev, onboardingCompleted: completed }));
   };
 
-  // Initialize: Check for existing session
+  // Initialize: Check for existing session - same as before
   useEffect(() => {
     const initialize = async () => {
       try {
-        // Get session from storage if available
         const {
           data: { session },
         } = await supabase.auth.getSession();
@@ -66,12 +68,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setState({
             user: session.user,
             session,
-            userProfile: null, // Will be fetched separately
+            userProfile: null,
             initialized: true,
-            onboardingCompleted: false, // Will be updated after profile fetch
+            onboardingCompleted: false,
           });
 
-          // Fetch user profile for the authenticated user
           fetchUserProfile(session.user.id);
         } else {
           setState({
@@ -97,7 +98,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     initialize();
   }, []);
 
-  // Listen for auth changes
+  // Listen for auth changes - same as before
   useEffect(() => {
     const {
       data: { subscription },
@@ -109,7 +110,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         initialized: true,
       }));
 
-      // Fetch user profile when auth state changes
       if (session?.user) {
         fetchUserProfile(session.user.id);
       } else {
@@ -126,14 +126,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
-  // Refresh user profile data
+  // Refresh user profile data - same as before
   const refreshProfile = async () => {
     if (state.user) {
       await fetchUserProfile(state.user.id);
     }
   };
 
-  // Sign up with email and password
+  // Sign up with email and password - same as before
   const signUp = async (email: string, password: string) => {
     setLoading(true);
     try {
@@ -143,7 +143,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
 
       if (!error && data.user) {
-        // Create user profile in Supabase
         await createUserProfile(data.user.id, email);
       }
 
@@ -155,7 +154,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  // Sign in with email and password
+  // Sign in with email and password - same as before
   const signIn = async (email: string, password: string) => {
     setLoading(true);
     try {
@@ -165,7 +164,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
 
       if (!error && data?.user) {
-        // Immediately fetch user profile after successful login
         await fetchUserProfile(data.user.id);
       }
 
@@ -177,20 +175,72 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  // Sign out
+  // NEW METHOD: Sign in with Google
+  const handleGoogleSignIn = async () => {
+    setLoading(true);
+    try {
+      const { data, error } = await signInWithGoogle();
+
+      if (error) {
+        console.error("Google sign-in error:", error);
+        setLoading(false);
+        return { error };
+      }
+
+      if (data?.session) {
+        console.log("Session obtained:", data.session.user.id);
+
+        try {
+          // Make sure the profile exists
+          let profile = await getUserProfile(data.session.user.id);
+
+          if (!profile) {
+            console.log("Creating new user profile");
+            const email = data.session.user.email || "";
+            await createUserProfile(data.session.user.id, email);
+            profile = await getUserProfile(data.session.user.id);
+          }
+
+          // Update the state with user data
+          setState((prev) => ({
+            ...prev,
+            user: data.session.user,
+            session: data.session,
+            userProfile: profile,
+            initialized: true,
+            onboardingCompleted: !!(profile?.macros && Object.keys(profile.macros).length > 0),
+          }));
+
+          console.log("Auth state updated successfully");
+          setLoading(false);
+          return { error: null };
+        } catch (profileError) {
+          console.error("Error setting up user profile:", profileError);
+          setLoading(false);
+          return { error: profileError };
+        }
+      }
+
+      console.log("No session data found");
+      setLoading(false);
+      return { error: new Error("Falha na autenticação. Tente novamente.") };
+    } catch (err) {
+      console.error("Unexpected error in Google sign-in:", err);
+      setLoading(false);
+      return { error: err };
+    }
+  };
+
+  // Sign out - same as before
   const signOut = async () => {
     setLoading(true);
     try {
-      // Set userProfile to null immediately to prevent any flash of unauthenticated content
       setState((prev) => ({
         ...prev,
         userProfile: null,
       }));
 
-      // Wait a brief moment before signing out (gives time for UI to update)
       await new Promise((resolve) => setTimeout(resolve, 50));
-
-      // Perform the actual signout
       await supabase.auth.signOut();
     } catch (error) {
       console.error("Error signing out:", error);
@@ -203,6 +253,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     ...state,
     signUp,
     signIn,
+    signInWithGoogle: handleGoogleSignIn, // Add the new method
     signOut,
     refreshProfile,
     setOnboardingCompleted,
