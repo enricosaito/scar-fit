@@ -1,7 +1,7 @@
-// Create app/screens/onboarding.tsx
+// Update app/screens/onboarding.tsx
 import React from "react";
-import { Redirect } from "expo-router";
+import OnboardingScreen from "./onboarding/index";
 
-export default function OnboardingRedirect() {
-  return <Redirect href="/screens/onboarding/index" />;
+export default function OnboardingWrapper() {
+  return <OnboardingScreen />;
 }
