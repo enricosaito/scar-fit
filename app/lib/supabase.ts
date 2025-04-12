@@ -1,35 +1,26 @@
-// app/lib/supabase.ts
-
+// Modify app/lib/supabase.ts
 import "react-native-url-polyfill/auto";
 import { createClient } from "@supabase/supabase-js";
-import * as SecureStore from "expo-secure-store";
-import Constants from "expo-constants";
 import { Alert } from "react-native";
+import Constants from "expo-constants";
+import customStorageAdapter from "./secureStorage";
 
 // Get Supabase URL and anon key from Expo constants
 const supabaseUrl = Constants.expoConfig?.extra?.supabaseUrl || "";
 const supabaseAnonKey = Constants.expoConfig?.extra?.supabaseAnonKey || "";
 
-// Custom storage implementation for Supabase using Expo's SecureStore
-const ExpoSecureStoreAdapter = {
-  getItem: (key: string) => {
-    return SecureStore.getItemAsync(key);
-  },
-  setItem: (key: string, value: string) => {
-    return SecureStore.setItemAsync(key, value);
-  },
-  removeItem: (key: string) => {
-    return SecureStore.deleteItemAsync(key);
-  },
-};
+// Validate configuration
+if (!supabaseUrl || !supabaseAnonKey) {
+  console.warn("Missing Supabase credentials. Please check your app.config.js and environment variables.");
+}
 
 // Initialize the Supabase client with additional configuration
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
-    storage: ExpoSecureStoreAdapter,
     autoRefreshToken: true,
     persistSession: true,
     detectSessionInUrl: false,
+    storage: customStorageAdapter,
   },
   db: {
     schema: "public",
