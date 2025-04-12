@@ -1,7 +1,7 @@
-// Modify app/lib/supabase.ts
+// Update app/lib/supabase.ts to include better configuration
 import "react-native-url-polyfill/auto";
 import { createClient } from "@supabase/supabase-js";
-import { Alert } from "react-native";
+import { Alert, Platform } from "react-native";
 import Constants from "expo-constants";
 import customStorageAdapter from "./secureStorage";
 
@@ -19,8 +19,9 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     autoRefreshToken: true,
     persistSession: true,
-    detectSessionInUrl: false,
+    detectSessionInUrl: Platform.OS === "web", // Only detect session in URL on web
     storage: customStorageAdapter,
+    flowType: "pkce", // Use PKCE flow for added security
   },
   db: {
     schema: "public",
@@ -41,8 +42,13 @@ export const handleSupabaseError = (error: Error) => {
 
 // Helper function to check if user is authenticated
 export const isAuthenticated = async () => {
-  const { data } = await supabase.auth.getSession();
-  return !!data.session;
+  try {
+    const { data } = await supabase.auth.getSession();
+    return !!data.session;
+  } catch (error) {
+    console.error("Error checking authentication:", error);
+    return false;
+  }
 };
 
 export default supabase;
