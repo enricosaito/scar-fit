@@ -2,15 +2,19 @@
 import * as WebBrowser from "expo-web-browser";
 import * as AuthSession from "expo-auth-session";
 import { supabase } from "./supabase";
+import { View, Platform } from "react-native";
+import React from "react";
 
-// Clear any existing sessions
+// Ensure the browser is closed after completing authentication
 WebBrowser.maybeCompleteAuthSession();
 
 export const signInWithGoogle = async () => {
   try {
+    // Create the redirect URI
     const redirectUri = AuthSession.makeRedirectUri({
       useProxy: true,
     });
+
     console.log("Using redirect URI:", redirectUri);
 
     // Start the OAuth flow with Supabase
@@ -19,6 +23,8 @@ export const signInWithGoogle = async () => {
       options: {
         redirectTo: redirectUri,
         skipBrowserRedirect: false,
+        // Add scopes for user profile info
+        scopes: "email profile",
       },
     });
 
@@ -33,52 +39,65 @@ export const signInWithGoogle = async () => {
     }
 
     // Open the authentication session
-    const result = await WebBrowser.openAuthSessionAsync(data.url, redirectUri);
+    const result = await WebBrowser.openAuthSessionAsync(data.url, redirectUri, {
+      showInRecents: true,
+      preferEphemeralSession: true, // Use ephemeral session for iOS
+    });
+
     console.log("Auth result:", result);
 
     if (result.type === "success" && result.url) {
-      // Check if the URL contains an access_token in the fragment
-      if (result.url.includes("#access_token=")) {
-        console.log("Found access token in URL fragment");
-        // Extract token information from the URL fragment
-        const fragmentParams = new URLSearchParams(result.url.split("#")[1]);
-        const accessToken = fragmentParams.get("access_token");
-        const refreshToken = fragmentParams.get("refresh_token");
+      // Check if the URL contains a fragment or code parameter
+      if (result.url.includes("#") || result.url.includes("?code=")) {
+        console.log("Found auth data in URL");
 
-        if (accessToken && refreshToken) {
-          console.log("Setting session with tokens from URL");
-          // Set the session with the tokens
-          const { data, error } = await supabase.auth.setSession({
-            access_token: accessToken,
-            refresh_token: refreshToken,
-          });
+        // If we have a fragment, extract token information
+        if (result.url.includes("#access_token=")) {
+          const fragmentParams = new URLSearchParams(result.url.split("#")[1]);
+          const accessToken = fragmentParams.get("access_token");
+          const refreshToken = fragmentParams.get("refresh_token");
 
-          if (error) {
-            console.error("Error setting session:", error);
-            throw error;
+          if (accessToken && refreshToken) {
+            console.log("Setting session with tokens from URL");
+            // Set the session with the tokens
+            const { data, error } = await supabase.auth.setSession({
+              access_token: accessToken,
+              refresh_token: refreshToken,
+            });
+
+            if (error) {
+              console.error("Error setting session:", error);
+              throw error;
+            }
+
+            console.log("Session set successfully with tokens");
+            return { data, error: null };
           }
-
-          console.log("Session set successfully");
-          return { data, error: null };
-        }
-      }
-
-      // If we have a code parameter, exchange it for a session
-      const params = new URLSearchParams(result.url.split("?")[1]);
-      const code = params.get("code");
-
-      if (code) {
-        console.log("Found authorization code, exchanging for session");
-        // Exchange code for session
-        const { data, error } = await supabase.auth.exchangeCodeForSession(code);
-
-        if (error) {
-          console.error("Error exchanging code:", error);
-          throw error;
         }
 
-        console.log("Successfully exchanged code for session");
-        return { data, error: null };
+        // If we have a code parameter, exchange it for a session
+        const params = new URLSearchParams(result.url.split("?")[1]);
+        const code = params.get("code");
+
+        if (code) {
+          console.log("Found authorization code, exchanging for session");
+
+          try {
+            // Exchange code for session
+            const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+
+            if (error) {
+              console.error("Error exchanging code:", error);
+              throw error;
+            }
+
+            console.log("Successfully exchanged code for session");
+            return { data, error: null };
+          } catch (exchangeError) {
+            console.error("Code exchange error:", exchangeError);
+            throw exchangeError;
+          }
+        }
       }
     }
 
@@ -100,10 +119,6 @@ export const signInWithGoogle = async () => {
     };
   }
 };
-
-// Create a dummy component for Expo Router to satisfy the default export requirement
-import React from "react";
-import { View } from "react-native";
 
 // This is a dummy component that will never render - it's just to satisfy Expo Router
 function GoogleAuthComponent() {
