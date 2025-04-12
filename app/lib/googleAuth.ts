@@ -1,4 +1,4 @@
-// app/lib/googleAuth.ts
+// Modify app/lib/googleAuth.ts
 import * as WebBrowser from "expo-web-browser";
 import * as AuthSession from "expo-auth-session";
 import { supabase } from "./supabase";
@@ -11,7 +11,6 @@ export const signInWithGoogle = async () => {
     const redirectUri = AuthSession.makeRedirectUri({
       useProxy: true,
     });
-
     console.log("Using redirect URI:", redirectUri);
 
     // Start the OAuth flow with Supabase
@@ -29,21 +28,18 @@ export const signInWithGoogle = async () => {
     }
 
     console.log("Auth URL:", data?.url);
-
     if (!data?.url) {
       throw new Error("No authorization URL returned from Supabase");
     }
 
     // Open the authentication session
     const result = await WebBrowser.openAuthSessionAsync(data.url, redirectUri);
-
     console.log("Auth result:", result);
 
     if (result.type === "success" && result.url) {
       // Check if the URL contains an access_token in the fragment
       if (result.url.includes("#access_token=")) {
         console.log("Found access token in URL fragment");
-
         // Extract token information from the URL fragment
         const fragmentParams = new URLSearchParams(result.url.split("#")[1]);
         const accessToken = fragmentParams.get("access_token");
@@ -89,6 +85,7 @@ export const signInWithGoogle = async () => {
     // Final check for existing session
     console.log("Checking for existing session");
     const { data: sessionData } = await supabase.auth.getSession();
+
     if (sessionData?.session) {
       console.log("Session found after auth flow");
       return { data: sessionData, error: null };
@@ -104,4 +101,19 @@ export const signInWithGoogle = async () => {
   }
 };
 
-export default signInWithGoogle;
+// Create a dummy component for Expo Router to satisfy the default export requirement
+import React from "react";
+import { View } from "react-native";
+
+// This is a dummy component that will never render - it's just to satisfy Expo Router
+function GoogleAuthComponent() {
+  return React.createElement(View, null);
+}
+
+// Export the authentication service as an object
+export const googleAuthService = {
+  signInWithGoogle,
+};
+
+// Export the component as default for Expo Router
+export default GoogleAuthComponent;
