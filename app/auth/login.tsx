@@ -1,17 +1,27 @@
 // app/auth/login.tsx
 import React, { useState } from "react";
-import { Text, View, SafeAreaView, TouchableOpacity, ActivityIndicator, ScrollView } from "react-native";
+import {
+  Text,
+  View,
+  SafeAreaView,
+  TouchableOpacity,
+  ActivityIndicator,
+  ScrollView,
+  Image,
+  StyleSheet,
+} from "react-native";
 import { useRouter } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
 import Button from "../components/ui/Button";
 import FormField from "../components/ui/FormField";
+import { supabase } from "../lib/supabase";
 
 export default function Login() {
   const router = useRouter();
   const { colors } = useTheme();
-  const { signIn, loading } = useAuth();
+  const { signIn, signInWithGoogle, loading } = useAuth();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -37,6 +47,38 @@ export default function Login() {
     }
   };
 
+  const handleGoogleLogin = async () => {
+    try {
+      setErrorMessage("");
+      console.log("Starting Google login flow...");
+
+      const { error } = await signInWithGoogle();
+
+      if (error) {
+        console.error("Google login error:", error);
+        setErrorMessage(error.message || "Erro ao fazer login com Google. Tente novamente.");
+        return;
+      }
+
+      console.log("Google login successful, checking auth state...");
+
+      // Check if we're actually signed in
+      const { data: sessionData } = await supabase.auth.getSession();
+      console.log("Current session:", sessionData?.session ? "Exists" : "None");
+
+      if (sessionData?.session) {
+        console.log("Session exists, redirecting...");
+        // This ensures navigation happens if the auth state change doesn't trigger
+        router.replace("/(tabs)");
+      } else {
+        console.log("No session found after successful flow");
+        setErrorMessage("Login com Google bem-sucedido, mas a sessão não foi criada. Tente novamente.");
+      }
+    } catch (error: any) {
+      console.error("Unexpected error:", error);
+      setErrorMessage(error.message || "Ocorreu um erro inesperado. Tente novamente.");
+    }
+  };
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
       <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
@@ -80,6 +122,27 @@ export default function Login() {
 
           <TouchableOpacity className="mb-6" onPress={() => router.push("/auth/forgot-password")}>
             <Text className="text-primary text-center">Esqueci minha senha</Text>
+          </TouchableOpacity>
+
+          {/* Social Login Divider */}
+          <View className="flex-row items-center mb-6">
+            <View className="flex-1 h-px bg-border" />
+            <Text className="mx-4 text-muted-foreground">ou continue com</Text>
+            <View className="flex-1 h-px bg-border" />
+          </View>
+
+          {/* Google Sign-in Button */}
+          <TouchableOpacity
+            className="flex-row items-center justify-center bg-card border border-border rounded-lg py-3 mb-6"
+            onPress={handleGoogleLogin}
+            disabled={loading}
+          >
+            <Image
+              source={require("../../assets/images/google-logo.png")}
+              style={{ width: 20, height: 20 }}
+              resizeMode="contain"
+            />
+            <Text className="text-foreground font-medium ml-2">Entrar com Google</Text>
           </TouchableOpacity>
 
           <View className="flex-row justify-center items-center">
