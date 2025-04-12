@@ -1,4 +1,6 @@
-// Create a new file app/lib/secureStorage.ts
+// Let's update the secureStorage.ts file to fix the API calls
+// Update app/lib/secureStorage.ts
+
 import * as SecureStore from "expo-secure-store";
 
 // Check if we're running in a browser environment
@@ -38,7 +40,7 @@ const customStorageAdapter = {
     }
 
     try {
-      // Try with the correct method call
+      // Use the correct method name
       return await SecureStore.getItemAsync(key);
     } catch (error) {
       console.error("Error getting item from secure store:", error);
