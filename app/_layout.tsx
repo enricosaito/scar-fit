@@ -1,4 +1,4 @@
-// app/_layout.tsx
+// app/_layout.tsx (updated)
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
@@ -73,6 +73,7 @@ export default function RootLayout() {
                 <Stack.Screen name="screens/food-tracker" />
                 <Stack.Screen name="screens/exercise" />
                 <Stack.Screen name="screens/pro-subscription" />
+                <Stack.Screen name="screens/onboarding/index" />
                 <Stack.Screen name="screens/onboarding" />
                 <Stack.Screen name="auth" />
               </Stack>
