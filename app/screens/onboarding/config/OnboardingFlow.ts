@@ -1,5 +1,4 @@
-// /app/screens/onboarding/config/onboardingFlow.ts
-
+// Modify app/screens/onboarding/config/OnboardingFlow.ts
 import { ReactNode } from "react";
 import Welcome from "../steps/Welcome";
 import PersonalInfo from "../steps/PersonalInfo";
@@ -60,3 +59,6 @@ export const onboardingSteps: OnboardingStep[] = [
     skipEnabled: false,
   },
 ];
+
+// Add default export
+export default { onboardingSteps };
