@@ -8,14 +8,17 @@ module.exports = {
   scheme: "scarfit",
   userInterfaceStyle: "automatic",
   newArchEnabled: true,
+  owner: "enricolass", // Add your Expo username here
   ios: {
     supportsTablet: true,
+    bundleIdentifier: "com.enricosaito.scarfit",
   },
   android: {
     adaptiveIcon: {
       foregroundImage: "./assets/images/adaptive-icon.png",
       backgroundColor: "#ffffff",
     },
+    package: "com.enricosaito.scarfit",
   },
   web: {
     bundler: "metro",
@@ -39,9 +42,11 @@ module.exports = {
   experiments: {
     typedRoutes: true,
   },
-  // This is where you can include environment-specific or dynamic values
   extra: {
     supabaseUrl: process.env.EXPO_PUBLIC_SUPABASE_URL,
     supabaseAnonKey: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY,
+    eas: {
+      projectId: "scarfit", // Replace with your EAS project ID if you have one
+    },
   },
 };
