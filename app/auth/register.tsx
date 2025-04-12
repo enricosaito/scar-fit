@@ -1,6 +1,6 @@
-// app/auth/register.tsx (updated)
+// app/auth/register.tsx
 import React, { useState } from "react";
-import { Text, View, SafeAreaView, TouchableOpacity, ActivityIndicator, ScrollView } from "react-native";
+import { Text, View, SafeAreaView, TouchableOpacity, ActivityIndicator, ScrollView, Image } from "react-native";
 import { useRouter } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import { useAuth } from "../context/AuthContext";
@@ -11,7 +11,7 @@ import FormField from "../components/ui/FormField";
 export default function Register() {
   const router = useRouter();
   const { colors } = useTheme();
-  const { signUp, signIn, loading } = useAuth(); // <-- Add signIn here
+  const { signUp, signIn, signInWithGoogle, loading } = useAuth();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -81,6 +81,22 @@ export default function Register() {
     }
   };
 
+  const handleGoogleSignUp = async () => {
+    try {
+      setErrorMessage("");
+      const { error } = await signInWithGoogle();
+
+      if (error) {
+        setErrorMessage(error.message || "Erro ao se cadastrar com Google. Tente novamente.");
+      } else {
+        // Redirect to onboarding (or home with AuthGuard handling)
+        router.replace("/screens/onboarding");
+      }
+    } catch (error: any) {
+      setErrorMessage(error.message || "Ocorreu um erro inesperado. Tente novamente.");
+    }
+  };
+
   return (
     <SafeAreaView className="flex-1 bg-background">
       <ScrollView className="flex-1 px-4">
@@ -131,6 +147,27 @@ export default function Register() {
         <Button className="mb-6" onPress={handleRegister} disabled={loading}>
           {loading ? <ActivityIndicator size="small" color="white" /> : "Criar Conta"}
         </Button>
+
+        {/* Social Login Divider */}
+        <View className="flex-row items-center mb-6">
+          <View className="flex-1 h-px bg-border" />
+          <Text className="mx-4 text-muted-foreground">ou continue com</Text>
+          <View className="flex-1 h-px bg-border" />
+        </View>
+
+        {/* Google Sign-up Button */}
+        <TouchableOpacity
+          className="flex-row items-center justify-center bg-card border border-border rounded-lg py-3 mb-6"
+          onPress={handleGoogleSignUp}
+          disabled={loading}
+        >
+          <Image
+            source={require("../../assets/images/google-logo.png")}
+            style={{ width: 20, height: 20 }}
+            resizeMode="contain"
+          />
+          <Text className="text-foreground font-medium ml-2">Continuar com Google</Text>
+        </TouchableOpacity>
 
         <View className="flex-row justify-center items-center">
           <Text className="text-muted-foreground">Já tem uma conta? </Text>
