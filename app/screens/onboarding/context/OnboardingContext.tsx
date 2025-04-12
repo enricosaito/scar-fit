@@ -1,4 +1,4 @@
-// app/screens/onboarding/context/OnboardingContext.tsx
+// Modify app/screens/onboarding/context/OnboardingContext.tsx
 import React, { createContext, useContext } from "react";
 
 // Types
@@ -33,3 +33,6 @@ export const useOnboarding = () => {
   }
   return context;
 };
+
+// Add default export
+export default { OnboardingContext, OnboardingProvider, useOnboarding };
