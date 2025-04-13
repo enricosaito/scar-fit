@@ -1,7 +1,8 @@
-// app/components/auth/AuthGuard.tsx (simplified to keep users on current screen)
+// app/components/auth/AuthGuard.tsx
 import React, { useEffect } from "react";
 import { useRouter, useSegments } from "expo-router";
 import { useAuth } from "../../context/AuthContext";
+import { View, ActivityIndicator, Text } from "react-native";
 
 export default function AuthGuard({ children }: { children: React.ReactNode }) {
   const { user, initialized, userProfile, loading, profileLoading } = useAuth();
