@@ -3,7 +3,7 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "../lib/supabase";
-import { createUserProfile, getUserProfile, UserProfile } from "../models/user";
+import { createUserProfile, getUserProfile, updateUserProfile, UserProfile } from "../models/user";
 import { signInWithGoogle } from "../lib/googleAuth";
 
 interface AuthState {
@@ -206,7 +206,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           if (!profile) {
             console.log("Creating new user profile");
             const email = data.session.user.email || "";
+            const name = data.session.user.user_metadata?.full_name || "";
             await createUserProfile(data.session.user.id, email);
+
+            // Update the profile with the name from Google
+            if (name) {
+              await updateUserProfile(data.session.user.id, { full_name: name });
+            }
+
             profile = await getUserProfile(data.session.user.id);
           }
 
