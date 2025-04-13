@@ -65,6 +65,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const initialize = async () => {
       try {
+        console.log("Initializing auth context...");
         const {
           data: { session },
         } = await supabase.auth.getSession();
@@ -78,8 +79,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             onboardingCompleted: false,
           });
 
+          console.log("Session found during initialization");
           fetchUserProfile(session.user.id);
         } else {
+          console.log("No session found during initialization");
           setState({
             user: null,
             session: null,
