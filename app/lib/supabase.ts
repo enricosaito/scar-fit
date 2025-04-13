@@ -1,7 +1,6 @@
-// Update app/lib/supabase.ts to include better configuration
-import "react-native-url-polyfill/auto";
+// app/lib/supabase.ts
 import { createClient } from "@supabase/supabase-js";
-import { Alert, Platform } from "react-native";
+import { Alert } from "react-native";
 import Constants from "expo-constants";
 import customStorageAdapter from "./secureStorage";
 
@@ -19,15 +18,10 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     autoRefreshToken: true,
     persistSession: true,
-    detectSessionInUrl: Platform.OS === "web", // Only detect session in URL on web
+    detectSessionInUrl: false,
     storage: customStorageAdapter,
-    flowType: "pkce", // Use PKCE flow for added security
-  },
-  db: {
-    schema: "public",
   },
   global: {
-    // Set global headers if needed
     headers: {
       "x-app-version": "1.0.0",
     },
@@ -37,18 +31,16 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
 // Error handler helper
 export const handleSupabaseError = (error: Error) => {
   console.error("Supabase error:", error);
-  Alert.alert("Erro", error.message || "Ocorreu um erro. Por favor, tente novamente.");
+  if (typeof window !== "undefined") {
+    // Only show alerts in browser environment
+    Alert.alert("Erro", error.message || "Ocorreu um erro. Por favor, tente novamente.");
+  }
 };
 
 // Helper function to check if user is authenticated
 export const isAuthenticated = async () => {
-  try {
-    const { data } = await supabase.auth.getSession();
-    return !!data.session;
-  } catch (error) {
-    console.error("Error checking authentication:", error);
-    return false;
-  }
+  const { data } = await supabase.auth.getSession();
+  return !!data.session;
 };
 
 export default supabase;
