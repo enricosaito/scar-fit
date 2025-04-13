@@ -8,7 +8,7 @@ module.exports = {
   scheme: "scarfit",
   userInterfaceStyle: "automatic",
   newArchEnabled: true,
-  owner: "enricolass", // Add your Expo username here
+  owner: "enricolass",
   ios: {
     supportsTablet: true,
     bundleIdentifier: "com.enricosaito.scarfit",
@@ -46,7 +46,7 @@ module.exports = {
     supabaseUrl: process.env.EXPO_PUBLIC_SUPABASE_URL,
     supabaseAnonKey: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY,
     eas: {
-      projectId: "scarfit", // Replace with your EAS project ID if you have one
+      projectId: "scarfit",
     },
   },
 };

@@ -13,14 +13,14 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     // Don't do anything until fully initialized and not in a loading state
     if (!initialized || loading || profileLoading) {
-      console.log(
-        "AuthGuard: Not ready yet. initialized:",
-        initialized,
-        "loading:",
-        loading,
-        "profileLoading:",
-        profileLoading
-      );
+      // console.log(
+      //   "AuthGuard: Not ready yet. initialized:",
+      //   initialized,
+      //   "loading:",
+      //   loading,
+      //   "profileLoading:",
+      //   profileLoading
+      // );
       return;
     }
 
@@ -30,26 +30,26 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
     // Check if user has macros already configured
     const hasMacros = userProfile?.macros && Object.keys(userProfile?.macros || {}).length > 0;
 
-    console.log(
-      "AuthGuard: Evaluating navigation. user:",
-      !!user,
-      "inAuthGroup:",
-      inAuthGroup,
-      "hasMacros:",
-      hasMacros
-    );
+    // console.log(
+    //   "AuthGuard: Evaluating navigation. user:",
+    //   !!user,
+    //   "inAuthGroup:",
+    //   inAuthGroup,
+    //   "hasMacros:",
+    //   hasMacros
+    // );
 
     // Only perform navigation if not already on the correct screen
     if (!user && !inAuthGroup) {
-      console.log("AuthGuard: Redirecting to login");
+      // console.log("AuthGuard: Redirecting to login");
       // Not logged in and not on auth screen - go to login
       router.replace("/auth/login");
     } else if (user && inAuthGroup) {
-      console.log("AuthGuard: Redirecting to home");
+      // console.log("AuthGuard: Redirecting to home");
       // Logged in but on auth screen - go to home
       router.replace("/(tabs)");
     } else if (user && !hasMacros && !inOnboarding && !inAuthGroup) {
-      console.log("AuthGuard: Redirecting to onboarding");
+      // console.log("AuthGuard: Redirecting to onboarding");
       // Logged in, no macros, not on onboarding - go to onboarding
       router.replace("/screens/onboarding");
     }
