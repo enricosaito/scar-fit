@@ -21,7 +21,9 @@ import { supabase } from "../lib/supabase";
 export default function Login() {
   const router = useRouter();
   const { colors } = useTheme();
-  const { signIn, signInWithGoogle, loading } = useAuth();
+  const { signIn, signInWithGoogle } = useAuth();
+
+  const [loading, setLoading] = useState(false);
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -52,11 +54,15 @@ export default function Login() {
       setErrorMessage("");
       console.log("Starting Google login flow...");
 
+      // Show loading state
+      setLoading(true);
+
       const { error } = await signInWithGoogle();
 
       if (error) {
         console.error("Google login error:", error);
         setErrorMessage(error.message || "Erro ao fazer login com Google. Tente novamente.");
+        setLoading(false);
         return;
       }
 
@@ -73,10 +79,12 @@ export default function Login() {
       } else {
         console.log("No session found after successful flow");
         setErrorMessage("Login com Google bem-sucedido, mas a sessão não foi criada. Tente novamente.");
+        setLoading(false);
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error("Unexpected error:", error);
-      setErrorMessage(error.message || "Ocorreu um erro inesperado. Tente novamente.");
+      setErrorMessage("Ocorreu um erro inesperado. Tente novamente.");
+      setLoading(false);
     }
   };
 
