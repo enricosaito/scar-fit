@@ -69,7 +69,7 @@ export default function More() {
       icon: "sliders",
       title: "Calcular Macros",
       route: "/screens/onboarding/index",
-      action: () => router.push("/screens/onboarding/index"),
+      action: () => router.push("/screens/onboarding"),
     },
     { icon: "settings", title: "Configurações", route: "/settings" },
     {
@@ -145,7 +145,7 @@ export default function More() {
                     <View
                       className="ml-2 px-2 py-0.5 rounded-md"
                       style={{
-                        backgroundColor: goldBg, 
+                        backgroundColor: goldBg,
                       }}
                     >
                       <Text className="text-xs font-medium" style={{ color: goldColor }}>
