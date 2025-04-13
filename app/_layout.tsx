@@ -1,4 +1,4 @@
-// app/_layout.tsx (updated)
+// app/_layout.tsx
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
@@ -8,12 +8,11 @@ import { AddMenuProvider } from "./context/AddMenuContext";
 import AuthGuard from "./components/auth/AuthGuard";
 import AddMenu from "./components/tracking/AddMenu";
 import "../global.css";
-
+import * as Linking from "expo-linking";
 // Import font hooks and splash screen
 import { useFonts } from "expo-font";
 import * as SplashScreen from "expo-splash-screen";
 import { useEffect } from "react";
-
 // Import Manrope fonts
 import {
   Manrope_200ExtraLight,
@@ -47,9 +46,23 @@ export default function RootLayout() {
         await SplashScreen.hideAsync();
       }
     };
-
     hideSplash();
   }, [fontsLoaded]);
+
+  // Deep link handling - MOVED BEFORE conditional return
+  useEffect(() => {
+    // Set up deep link handler
+    const linkingSubscription = Linking.addEventListener("url", ({ url }) => {
+      console.log("Deep link detected:", url);
+      // Handle the deep link if needed
+      if (url.includes("auth/callback")) {
+        console.log("Auth callback detected");
+      }
+    });
+    return () => {
+      linkingSubscription.remove();
+    };
+  }, []);
 
   if (!fontsLoaded) {
     return null; // Still loading fonts
