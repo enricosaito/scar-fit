@@ -1,4 +1,4 @@
-// app/(tabs)/more.tsx (updated)
+// Update app/(tabs)/more.tsx
 import React from "react";
 import { Text, View, SafeAreaView, ScrollView, Pressable, Alert, ActivityIndicator } from "react-native";
 import { Feather } from "@expo/vector-icons";
@@ -17,7 +17,8 @@ type FeatherIconName =
   | "log-out"
   | "chevron-right"
   | "activity"
-  | "sliders";
+  | "sliders"
+  | "zap"; // Add zap icon
 
 interface MenuItem {
   icon: FeatherIconName;
@@ -25,12 +26,17 @@ interface MenuItem {
   route: string;
   action?: () => void;
   subtitle?: string;
+  isPro?: boolean;
 }
 
 export default function More() {
   const { colors, theme, toggleTheme } = useTheme();
   const { signOut, user, loading } = useAuth();
   const router = useRouter();
+
+  // Golden colors for premium feel (copied from pro-subscription)
+  const goldColor = "#F7B955"; // Icon color for text and icons
+  const goldBg = "rgba(247, 185, 85, 0.2)"; // Translucent gold background (20% opacity)
 
   const handleLogout = () => {
     Alert.alert(
@@ -53,9 +59,16 @@ export default function More() {
 
   const menuItems: MenuItem[] = [
     {
+      icon: "zap",
+      title: "ScarFit",
+      route: "/screens/pro-subscription",
+      action: () => router.push("/screens/pro-subscription"),
+      isPro: true,
+    },
+    {
       icon: "sliders",
       title: "Calcular Macros",
-      route: "/screens/onboarding",
+      route: "/screens/onboarding/index",
       action: () => router.push("/screens/onboarding"),
     },
     { icon: "settings", title: "Configurações", route: "/settings" },
@@ -68,7 +81,6 @@ export default function More() {
     },
     { icon: "help-circle", title: "Ajuda", route: "/help" },
     { icon: "info", title: "Sobre o app", route: "/about" },
-    { icon: "star", title: "Versão Premium", route: "/screens/pro-subscription" },
     { icon: "share-2", title: "Compartilhar", route: "/share" },
     {
       icon: "log-out",
@@ -105,24 +117,46 @@ export default function More() {
           {menuItems.map((item, index) => (
             <Pressable
               key={index}
-              className="flex-row items-center py-4 border-b border-border"
+              className={`flex-row items-center py-4 border-b border-border ${item.isPro ? "mb-2" : ""}`}
               onPress={item.action || (() => router.push(item.route))}
               disabled={loading && item.icon === "log-out"}
             >
-              <View className="w-10 h-10 bg-primary/10 rounded-full items-center justify-center mr-4">
+              <View
+                className="w-10 h-10 rounded-full items-center justify-center mr-4"
+                style={{
+                  backgroundColor: item.isPro ? `${goldColor}20` : colors.primary + "10",
+                }}
+              >
                 {loading && item.icon === "log-out" ? (
                   <ActivityIndicator size="small" color={colors.primary} />
                 ) : (
-                  <Feather name={item.icon} size={20} color={colors.primary} />
+                  <Feather name={item.icon} size={20} color={item.isPro ? goldColor : colors.primary} />
                 )}
               </View>
               <View className="flex-1">
-                <Text className="text-base font-medium text-foreground">
-                  {item.icon === "log-out" && loading ? "Saindo..." : item.title}
-                </Text>
+                <View className="flex-row items-center">
+                  <Text
+                    className="text-base font-medium text-foreground"
+                    style={item.isPro ? { color: goldColor } : {}}
+                  >
+                    {item.icon === "log-out" && loading ? "Saindo..." : item.title}
+                  </Text>
+                  {item.isPro && (
+                    <View
+                      className="ml-2 px-2 py-0.5 rounded-md"
+                      style={{
+                        backgroundColor: goldBg,
+                      }}
+                    >
+                      <Text className="text-xs font-medium" style={{ color: goldColor }}>
+                        PRO
+                      </Text>
+                    </View>
+                  )}
+                </View>
                 {item.subtitle && <Text className="text-xs text-muted-foreground">{item.subtitle}</Text>}
               </View>
-              <Feather name="chevron-right" size={20} color={colors.mutedForeground} />
+              <Feather name="chevron-right" size={20} color={item.isPro ? goldColor : colors.mutedForeground} />
             </Pressable>
           ))}
 

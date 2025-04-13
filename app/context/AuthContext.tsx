@@ -17,11 +17,12 @@ interface AuthState {
 interface AuthContextType extends AuthState {
   signUp: (email: string, password: string) => Promise<{ error: any }>;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
-  signInWithGoogle: () => Promise<{ error: any }>; // New method
+  signInWithGoogle: () => Promise<{ error: any }>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
   setOnboardingCompleted: (completed: boolean) => void;
   loading: boolean;
+  profileLoading: boolean; // Add this line
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -36,9 +37,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     onboardingCompleted: false,
   });
   const [loading, setLoading] = useState(false);
+  const [profileLoading, setProfileLoading] = useState(false);
 
   // Fetch user profile
   const fetchUserProfile = async (userId: string) => {
+    setProfileLoading(true);
     try {
       const profile = await getUserProfile(userId);
       setState((prev) => ({
@@ -48,6 +51,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }));
     } catch (error) {
       console.error("Error fetching user profile:", error);
+    } finally {
+      setProfileLoading(false);
     }
   };
 
@@ -60,6 +65,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const initialize = async () => {
       try {
+        console.log("Initializing auth context...");
         const {
           data: { session },
         } = await supabase.auth.getSession();
@@ -73,8 +79,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             onboardingCompleted: false,
           });
 
+          console.log("Session found during initialization");
           fetchUserProfile(session.user.id);
         } else {
+          console.log("No session found during initialization");
           setState({
             user: null,
             session: null,
@@ -191,6 +199,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.log("Session obtained:", data.session.user.id);
 
         try {
+          setProfileLoading(true);
           // Make sure the profile exists
           let profile = await getUserProfile(data.session.user.id);
 
@@ -212,10 +221,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           }));
 
           console.log("Auth state updated successfully");
+          setProfileLoading(false);
           setLoading(false);
           return { error: null };
         } catch (profileError) {
           console.error("Error setting up user profile:", profileError);
+          setProfileLoading(false);
           setLoading(false);
           return { error: profileError };
         }
@@ -227,6 +238,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch (err) {
       console.error("Unexpected error in Google sign-in:", err);
       setLoading(false);
+      setProfileLoading(false);
       return { error: err };
     }
   };
@@ -249,15 +261,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  // Return profileLoading in the value
   const value = {
     ...state,
     signUp,
     signIn,
-    signInWithGoogle: handleGoogleSignIn, // Add the new method
+    signInWithGoogle: handleGoogleSignIn,
     signOut,
     refreshProfile,
     setOnboardingCompleted,
     loading,
+    profileLoading,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

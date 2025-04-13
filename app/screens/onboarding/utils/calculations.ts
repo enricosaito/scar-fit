@@ -176,3 +176,11 @@ export const calculateFullMacros = (formData: {
     goalAdjustment,
   };
 };
+
+export default {
+  calculateBMR,
+  getActivityMultiplier,
+  getGoalAdjustment,
+  calculateMacros,
+  calculateFullMacros,
+};

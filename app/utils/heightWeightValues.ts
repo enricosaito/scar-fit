@@ -16,3 +16,6 @@ export const weightValues = Array.from({ length: 111 }, (_, i) => {
     value: weight.toString(),
   };
 });
+
+// Add default export
+export default { heightValues, weightValues };
