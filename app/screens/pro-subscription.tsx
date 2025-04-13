@@ -9,38 +9,38 @@ import Button from "../components/ui/Button";
 export default function ProSubscription() {
   const router = useRouter();
   const { colors } = useTheme();
-  const [selectedPlan, setSelectedPlan] = useState<'annual' | 'monthly'>('annual');
+  const [selectedPlan, setSelectedPlan] = useState<"annual" | "monthly">("annual");
 
   // Golden colors for premium feel
-  const goldColor = "#F7B955"; // Icon color
-  const goldDark = "#E6A845"; // Darker gold for best value tag
+  const goldColor = "#F7B955";
+  const goldBg = "rgba(247, 185, 85, 0.2)";
 
   // Core premium features to highlight
   const features = [
     {
-      icon: "maximize",
-      title: "Adição por Código de Barras",
-      description: "Escaneie códigos para adicionar alimentos instantaneamente",
+      icon: "mic",
+      title: "Transcrição de Áudios",
+      description: "Adicione alimentos usando comandos de voz",
     },
     {
       icon: "camera",
-      title: "Detecção de Fotos",
-      description: "Identifique alimentos automaticamente por fotos",
+      title: "Detecção por Fotografia",
+      description: "Identifique pratos automaticamente por fotos",
     },
     {
-      icon: "mic",
-      title: "Registro por Áudio",
-      description: "Adicione alimentos usando comandos de voz",
+      icon: "maximize",
+      title: "Adição com Código de Barras",
+      description: "Escaneie para adicionar alimentos instantaneamente",
     },
   ];
 
   return (
     <SafeAreaView className="flex-1 bg-background">
       <StatusBar barStyle="light-content" />
-      
+
       {/* Close button with better spacing */}
       <View className="absolute top-12 right-6 z-10">
-        <Pressable 
+        <Pressable
           className="w-10 h-10 bg-card/80 rounded-full items-center justify-center"
           onPress={() => router.back()}
         >
@@ -55,25 +55,35 @@ export default function ProSubscription() {
             Desbloqueie todo o potencial com <Text style={{ color: goldColor }}>ScarFit Pro</Text> ⚡️
           </Text>
         </View>
-
         {/* Premium features section - vertical list with golden icons */}
         <View className="mb-6">
           {features.map((feature, index) => (
             <View key={index} className="flex-row items-center bg-card/60 rounded-xl p-4 mb-3">
-              <View 
+              <View
                 className="w-12 h-12 rounded-full items-center justify-center mr-4"
                 style={{ backgroundColor: `${goldColor}20` }} // Transparent gold background
               >
                 <Feather name={feature.icon} size={20} color={goldColor} />
               </View>
               <View className="flex-1">
-                <Text className="text-foreground font-medium mb-1">{feature.title}</Text>
+                <View className="flex-row items-center justify-between">
+                  <Text className="text-foreground font-medium mb-1">{feature.title}</Text>
+                  <View
+                    className="px-2 py-0.5 rounded-md"
+                    style={{
+                      backgroundColor: goldBg, // Translucent background
+                    }}
+                  >
+                    <Text className="text-xs font-medium" style={{ color: goldColor }}>
+                      PRO
+                    </Text>
+                  </View>
+                </View>
                 <Text className="text-sm text-muted-foreground">{feature.description}</Text>
               </View>
             </View>
           ))}
         </View>
-
         {/* Other benefits - keep blue */}
         <View className="bg-card/40 rounded-xl p-3 mb-6">
           <Text className="text-foreground font-medium mb-2">Mais benefícios:</Text>
@@ -97,40 +107,61 @@ export default function ProSubscription() {
           </View>
         </View>
 
-        {/* Pricing plans - keep blue for buttons */}
-        <Text className="text-lg font-bold text-foreground mb-3 text-center">Escolha Seu Plano</Text>
+        {/* Pricing plans section - refined based on feedback */}
+        <Text className="text-lg font-bold text-foreground mb-6 text-center">
+          Escolha seu plano e comece um teste grátis.
+        </Text>
         <View className="flex-row justify-between mb-8">
-          {/* Monthly Plan */}
-          <Pressable 
-            className={`w-[48%] h-36 border ${selectedPlan === 'monthly' ? 'border-primary bg-primary/5' : 'border-border'} rounded-xl p-4 items-center justify-center`}
-            onPress={() => setSelectedPlan('monthly')}
-          >
-            <Text className="text-lg font-bold text-foreground mb-1">Mensal</Text>
-            <Text className={`text-2xl font-bold ${selectedPlan === 'monthly' ? 'text-primary' : 'text-foreground'}`}>R$14,90</Text>
-            <Text className="text-xs text-muted-foreground text-center">Cobrado mensalmente</Text>
-          </Pressable>
-
-          {/* Annual Plan */}
-          <Pressable 
-            className={`w-[48%] h-36 border ${selectedPlan === 'annual' ? 'border-primary bg-primary/5' : 'border-border'} rounded-xl p-4 items-center justify-center`}
-            onPress={() => setSelectedPlan('annual')}
-          >
-            <View 
-              className="px-2 py-0.5 rounded-full mb-1"
-              style={{ backgroundColor: goldDark }} // Only this tag is gold
-            >
-              <Text className="text-xs text-white font-medium">MELHOR VALOR</Text>
+          {/* Annual Plan (with centered tag above) */}
+          <View className="w-[48%] relative">
+            {/* Best Value Tag - now centered above entire card */}
+            <View className="absolute -top-3 left-0 w-full items-center z-10">
+              <View className="px-3 py-0.5 rounded-full" style={{ backgroundColor: colors.primary }}>
+                <Text className="text-xs font-bold text-black">50% OFF</Text>
+              </View>
             </View>
-            <Text className="text-lg font-bold text-foreground">Anual</Text>
-            <Text className={`text-2xl font-bold ${selectedPlan === 'annual' ? 'text-primary' : 'text-foreground'}`}>R$99,90</Text>
-            <Text className="text-xs text-muted-foreground text-center">R$8,32/mês</Text>
+
+            <Pressable
+              className={`border ${
+                selectedPlan === "annual" ? "border-primary bg-primary/10" : "border-border"
+              } rounded-xl pt-6 pb-4 px-4 items-center justify-center`}
+              style={{
+                shadowColor: selectedPlan === "annual" ? colors.primary : "transparent",
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: selectedPlan === "annual" ? 0.2 : 0,
+                shadowRadius: 4,
+                elevation: selectedPlan === "annual" ? 3 : 0,
+              }}
+              onPress={() => setSelectedPlan("annual")}
+            >
+              <Text className="text-2xl font-extrabold mb-1 text-foreground">ANUAL</Text>
+
+              <Text className="text-lg font-semibold text-muted-foreground">R$99,90/ano</Text>
+            </Pressable>
+          </View>
+
+          {/* Monthly Plan (right) */}
+          <Pressable
+            className={`w-[48%] border ${
+              selectedPlan === "monthly" ? "border-primary bg-primary/10" : "border-border"
+            } rounded-xl pt-6 pb-4 px-4 items-center justify-center`}
+            style={{
+              shadowColor: selectedPlan === "monthly" ? colors.primary : "transparent",
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: selectedPlan === "monthly" ? 0.2 : 0,
+              shadowRadius: 4,
+              elevation: selectedPlan === "monthly" ? 3 : 0,
+            }}
+            onPress={() => setSelectedPlan("monthly")}
+          >
+            <Text className="text-2xl font-extrabold mb-1 text-foreground">MENSAL</Text>
+
+            <Text className="text-lg font-extrabold text-muted-foreground">R$14,90/mês</Text>
           </Pressable>
         </View>
 
         {/* Keep blue button for free trial */}
-        <Button onPress={() => router.back()}>
-          Iniciar Teste Gratuito de 7 Dias
-        </Button>
+        <Button onPress={() => router.back()}>Iniciar availiação gratuita de 7 dias )</Button>
       </View>
     </SafeAreaView>
   );
