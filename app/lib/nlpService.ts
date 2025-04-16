@@ -68,7 +68,7 @@ export async function extractFoodItems(text: string): Promise<ExtractedFoodItem[
         model: "gpt-3.5-turbo",
         messages: [{ role: "user", content: prompt }],
         temperature: 0.2,
-        response_format: { type: "json" },
+        response_format: { type: "json_object" },
       }),
     });
 
