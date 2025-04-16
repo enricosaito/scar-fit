@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { View, Text, Pressable, ActivityIndicator, Alert } from "react-native";
 import { Feather } from "@expo/vector-icons";
-import { Audio } from "expo-av";
+import { Audio, InterruptionModeIOS, InterruptionModeAndroid } from "expo-av";
 import { useTheme } from "../../context/ThemeContext";
 import Button from "../ui/Button";
 
@@ -63,8 +63,8 @@ const VoiceRecorder = ({ onRecordingComplete, onCancel }: VoiceRecorderProps) =>
         allowsRecordingIOS: true,
         playsInSilentModeIOS: true,
         staysActiveInBackground: true,
-        interruptionModeIOS: Audio.INTERRUPTION_MODE_IOS_DO_NOT_MIX,
-        interruptionModeAndroid: Audio.INTERRUPTION_MODE_ANDROID_DO_NOT_MIX,
+        interruptionModeIOS: InterruptionModeIOS.DoNotMix,
+        interruptionModeAndroid: InterruptionModeAndroid.DoNotMix,
       });
 
       const newRecording = new Audio.Recording();
@@ -73,16 +73,16 @@ const VoiceRecorder = ({ onRecordingComplete, onCancel }: VoiceRecorderProps) =>
       await newRecording.prepareToRecordAsync({
         android: {
           extension: ".m4a",
-          outputFormat: Audio.RECORDING_OPTION_ANDROID_OUTPUT_FORMAT_MPEG_4,
-          audioEncoder: Audio.RECORDING_OPTION_ANDROID_AUDIO_ENCODER_AAC,
+          outputFormat: Audio.AndroidOutputFormat.MPEG_4, // Updated
+          audioEncoder: Audio.AndroidAudioEncoder.AAC, // Updated
           sampleRate: 44100,
           numberOfChannels: 1,
           bitRate: 128000,
         },
         ios: {
           extension: ".m4a",
-          outputFormat: Audio.RECORDING_OPTION_IOS_OUTPUT_FORMAT_MPEG4AAC,
-          audioQuality: Audio.RECORDING_OPTION_IOS_AUDIO_QUALITY_HIGH,
+          outputFormat: Audio.IOSOutputFormat.MPEG4AAC, // Updated
+          audioQuality: Audio.IOSAudioQuality.HIGH, // Updated
           sampleRate: 44100,
           numberOfChannels: 1,
           bitRate: 128000,
@@ -120,8 +120,11 @@ const VoiceRecorder = ({ onRecordingComplete, onCancel }: VoiceRecorderProps) =>
       await recording.stopAndUnloadAsync();
 
       await Audio.setAudioModeAsync({
-        allowsRecordingIOS: false,
-        playsInSilentModeIOS: false,
+        allowsRecordingIOS: true,
+        playsInSilentModeIOS: true,
+        staysActiveInBackground: true,
+        interruptionModeIOS: InterruptionModeIOS.DoNotMix,
+        interruptionModeAndroid: InterruptionModeAndroid.DoNotMix,
       });
 
       const uri = recording.getURI();
