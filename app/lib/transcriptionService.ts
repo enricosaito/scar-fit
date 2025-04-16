@@ -1,4 +1,4 @@
-// app/lib/transcriptionService.ts (updated)
+// app/lib/transcriptionService.ts (updated for WAV)
 import * as FileSystem from "expo-file-system";
 import Constants from "expo-constants";
 
@@ -37,7 +37,7 @@ export const transcribeAudio = async (audioUri: string): Promise<TranscriptionRe
     formData.append("file", {
       uri: audioUri,
       name: `recording.${fileType}`,
-      type: `audio/${fileType}`,
+      type: `audio/wav`, // Always use WAV type here
     } as any);
 
     formData.append("model", "whisper-1");
