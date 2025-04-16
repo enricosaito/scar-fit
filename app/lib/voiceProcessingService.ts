@@ -1,4 +1,4 @@
-// app/lib/voiceProcessingService.ts
+// app/lib/voiceProcessingService.ts (updated)
 import { transcribeAudio } from "./transcriptionService";
 import { extractFoodItems, matchWithDatabaseFoods } from "./nlpService";
 
@@ -19,13 +19,13 @@ export interface FoodItem {
 export { transcribeAudio };
 
 // Extract food information from transcribed text
-export { extractFoodItems };
+export { extractFoodItems as extractFoodInformation };
 
 // Match extracted food items with database foods
 export { matchWithDatabaseFoods };
 
 export default {
   transcribeAudio,
-  extractFoodItems,
+  extractFoodInformation: extractFoodItems,
   matchWithDatabaseFoods,
 };
