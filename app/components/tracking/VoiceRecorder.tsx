@@ -1,6 +1,6 @@
-// app/components/tracking/VoiceRecorder.tsx (using WAV format)
+// app/components/tracking/VoiceRecorder.tsx (simplified)
 import React, { useState, useEffect } from "react";
-import { View, Text, Pressable, ActivityIndicator, Alert, Platform } from "react-native";
+import { View, Text, Pressable, ActivityIndicator, Alert } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { Audio } from "expo-av";
 import { useTheme } from "../../context/ThemeContext";
@@ -22,24 +22,11 @@ const VoiceRecorder = ({ onRecordingComplete, onCancel }: VoiceRecorderProps) =>
   useEffect(() => {
     const getPermissions = async () => {
       try {
-        console.log("Requesting audio recording permissions...");
         const { status } = await Audio.requestPermissionsAsync();
-        console.log("Permission status:", status);
         setPermissionStatus(status === "granted");
-
-        if (status === "granted") {
-          console.log("Setting audio mode...");
-          await Audio.setAudioModeAsync({
-            allowsRecordingIOS: true,
-            playsInSilentModeIOS: true,
-            shouldDuckAndroid: true,
-            playThroughEarpieceAndroid: false,
-          });
-        }
       } catch (error) {
         console.error("Error getting audio permissions:", error);
         setPermissionStatus(false);
-        Alert.alert("Erro", "Não foi possível acessar o microfone. Verifique as permissões do aplicativo.");
       }
     };
 
@@ -71,45 +58,18 @@ const VoiceRecorder = ({ onRecordingComplete, onCancel }: VoiceRecorderProps) =>
     try {
       console.log("Starting recording...");
 
-      // Simplify audio mode to minimize configuration issues
+      // Use minimal audio mode settings
       await Audio.setAudioModeAsync({
         allowsRecordingIOS: true,
         playsInSilentModeIOS: true,
       });
 
-      // Create recording object
-      console.log("Creating recording object...");
       const newRecording = new Audio.Recording();
 
-      // Use WAV format which is more widely supported
-      console.log("Preparing to record in WAV format...");
-      await newRecording.prepareToRecordAsync({
-        isMeteringEnabled: true,
-        android: {
-          extension: ".wav",
-          outputFormat: 1, // Use raw value for WAV
-          audioEncoder: 2, // PCM
-          sampleRate: 44100,
-          numberOfChannels: 1,
-        },
-        ios: {
-          extension: ".wav",
-          sampleRate: 44100,
-          numberOfChannels: 1,
-          audioQuality: "high",
-          outputFormat: "linearPCM",
-          linearPCMBitDepth: 16,
-          linearPCMIsBigEndian: false,
-          linearPCMIsFloat: false,
-        },
-        web: {
-          mimeType: "audio/wav",
-        },
-      });
+      // Use the preset instead of custom options
+      await newRecording.prepareToRecordAsync(Audio.RecordingOptionsPresets.LOW_QUALITY);
 
-      console.log("Starting async recording...");
       await newRecording.startAsync();
-      console.log("Recording started successfully");
 
       setRecording(newRecording);
       setIsRecording(true);
