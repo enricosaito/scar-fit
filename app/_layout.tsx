@@ -76,6 +76,7 @@ export default function RootLayout() {
             <AuthGuard>
               <StatusBar style="light" />
               <AddMenu />
+              // Update in app/_layout.tsx in the Stack.Screen section
               <Stack screenOptions={{ headerShown: false }}>
                 <Stack.Screen name="(tabs)" />
                 <Stack.Screen name="screens/profile/profile" />
@@ -88,6 +89,7 @@ export default function RootLayout() {
                 <Stack.Screen name="screens/pro-subscription" />
                 <Stack.Screen name="screens/onboarding/index" />
                 <Stack.Screen name="screens/voice-food-logger" />
+                <Stack.Screen name="screens/admin/debug" />
                 <Stack.Screen name="auth" />
               </Stack>
             </AuthGuard>
