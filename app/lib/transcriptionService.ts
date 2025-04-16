@@ -1,4 +1,4 @@
-// app/lib/transcriptionService.ts (updated for WAV)
+// app/lib/transcriptionService.ts (updated for m4a)
 import * as FileSystem from "expo-file-system";
 import Constants from "expo-constants";
 
@@ -31,13 +31,10 @@ export const transcribeAudio = async (audioUri: string): Promise<TranscriptionRe
     const formData = new FormData();
 
     // Create a file object from the URI
-    const fileUriParts = audioUri.split(".");
-    const fileType = fileUriParts[fileUriParts.length - 1];
-
     formData.append("file", {
       uri: audioUri,
-      name: `recording.${fileType}`,
-      type: `audio/wav`, // Always use WAV type here
+      name: "recording.m4a",
+      type: "audio/m4a",
     } as any);
 
     formData.append("model", "whisper-1");
