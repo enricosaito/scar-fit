@@ -1,4 +1,4 @@
-// app/components/tracking/VoiceRecorder.tsx (simplified)
+// app/components/tracking/VoiceRecorder.tsx (updated)
 import React, { useState, useEffect } from "react";
 import { View, Text, Pressable, ActivityIndicator, Alert } from "react-native";
 import { Feather } from "@expo/vector-icons";
@@ -58,16 +58,43 @@ const VoiceRecorder = ({ onRecordingComplete, onCancel }: VoiceRecorderProps) =>
     try {
       console.log("Starting recording...");
 
-      // Use minimal audio mode settings
+      // Set audio mode
       await Audio.setAudioModeAsync({
         allowsRecordingIOS: true,
         playsInSilentModeIOS: true,
+        staysActiveInBackground: true,
+        interruptionModeIOS: Audio.INTERRUPTION_MODE_IOS_DO_NOT_MIX,
+        interruptionModeAndroid: Audio.INTERRUPTION_MODE_ANDROID_DO_NOT_MIX,
       });
 
       const newRecording = new Audio.Recording();
 
-      // Use the preset instead of custom options
-      await newRecording.prepareToRecordAsync(Audio.RecordingOptionsPresets.LOW_QUALITY);
+      // Prepare recording with high quality settings
+      await newRecording.prepareToRecordAsync({
+        android: {
+          extension: ".m4a",
+          outputFormat: Audio.RECORDING_OPTION_ANDROID_OUTPUT_FORMAT_MPEG_4,
+          audioEncoder: Audio.RECORDING_OPTION_ANDROID_AUDIO_ENCODER_AAC,
+          sampleRate: 44100,
+          numberOfChannels: 1,
+          bitRate: 128000,
+        },
+        ios: {
+          extension: ".m4a",
+          outputFormat: Audio.RECORDING_OPTION_IOS_OUTPUT_FORMAT_MPEG4AAC,
+          audioQuality: Audio.RECORDING_OPTION_IOS_AUDIO_QUALITY_HIGH,
+          sampleRate: 44100,
+          numberOfChannels: 1,
+          bitRate: 128000,
+          linearPCMBitDepth: 16,
+          linearPCMIsBigEndian: false,
+          linearPCMIsFloat: false,
+        },
+        web: {
+          mimeType: "audio/webm",
+          bitsPerSecond: 128000,
+        },
+      });
 
       await newRecording.startAsync();
 
@@ -91,6 +118,12 @@ const VoiceRecorder = ({ onRecordingComplete, onCancel }: VoiceRecorderProps) =>
     try {
       console.log("Stopping recording...");
       await recording.stopAndUnloadAsync();
+
+      await Audio.setAudioModeAsync({
+        allowsRecordingIOS: false,
+        playsInSilentModeIOS: false,
+      });
+
       const uri = recording.getURI();
 
       if (uri) {
