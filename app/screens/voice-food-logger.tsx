@@ -1,4 +1,4 @@
-// app/screens/voice-food-logger.tsx
+// app/screens/voice-food-logger.tsx (updated)
 import React, { useState, useEffect } from "react";
 import {
   View,
@@ -17,9 +17,8 @@ import { useTheme } from "../context/ThemeContext";
 import { useAuth } from "../context/AuthContext";
 import VoiceRecorder from "../components/tracking/VoiceRecorder";
 import Button from "../components/ui/Button";
-import { transcribeAudio, extractFoodInformation, matchWithDatabaseFoods } from "../lib/voiceProcessingService";
+import { transcribeAudio, extractFoodItems, matchWithDatabaseFoods } from "../lib/voiceProcessingService";
 import { addFoodToLog } from "../models/tracking";
-import { getFoodById } from "../models/food";
 
 export default function VoiceFoodLogger() {
   const { colors } = useTheme();
@@ -55,7 +54,7 @@ export default function VoiceFoodLogger() {
     setError(null);
 
     try {
-      // 1. Transcribe audio
+      // 1. Transcribe audio using OpenAI Whisper API
       const transcriptionResult = await transcribeAudio(uri);
 
       if (!transcriptionResult.success) {
@@ -64,8 +63,8 @@ export default function VoiceFoodLogger() {
 
       setTranscription(transcriptionResult.text);
 
-      // 2. Extract food information from transcription
-      const foodItems = extractFoodInformation(transcriptionResult.text);
+      // 2. Extract food information from transcription using OpenAI GPT
+      const foodItems = await extractFoodItems(transcriptionResult.text);
 
       if (foodItems.length === 0) {
         throw new Error("Não foi possível identificar alimentos na transcrição");
@@ -78,18 +77,7 @@ export default function VoiceFoodLogger() {
         throw new Error("Não foi possível encontrar os alimentos em nosso banco de dados");
       }
 
-      // 4. Get full food details
-      const itemsWithDetails = await Promise.all(
-        matchedItems.map(async (item) => {
-          const food = await getFoodById(item.foodId);
-          return {
-            ...item,
-            food,
-          };
-        })
-      );
-
-      setExtractedItems(itemsWithDetails.filter((item) => item.food !== null));
+      setExtractedItems(matchedItems);
       setStep("reviewing");
     } catch (error) {
       console.error("Error processing audio:", error);
