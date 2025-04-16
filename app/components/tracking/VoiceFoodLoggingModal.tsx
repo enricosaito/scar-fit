@@ -1,4 +1,4 @@
-// app/components/tracking/VoiceFoodLoggingModal.tsx
+// app/components/tracking/VoiceFoodLoggingModal.tsx (updated with better debugging)
 import React, { useState } from "react";
 import { View, Text, Modal, SafeAreaView, Pressable, ActivityIndicator, ScrollView, Alert } from "react-native";
 import { useRouter } from "expo-router";
@@ -27,6 +27,7 @@ const VoiceFoodLoggingModal = ({ isVisible, onClose }: VoiceFoodLoggingModalProp
   const [extractedItems, setExtractedItems] = useState<any[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [debug, setDebug] = useState<string | null>(null);
 
   const handleRecordingComplete = (uri: string) => {
     setAudioUri(uri);
@@ -37,30 +38,44 @@ const VoiceFoodLoggingModal = ({ isVisible, onClose }: VoiceFoodLoggingModalProp
   const processAudio = async (uri: string) => {
     setIsProcessing(true);
     setError(null);
+    setDebug(null);
 
     try {
       // 1. Transcribe audio
+      console.log("Starting transcription...");
       const transcriptionResult = await transcribeAudio(uri);
+      console.log("Transcription result:", transcriptionResult);
 
       if (!transcriptionResult.success) {
         throw new Error(transcriptionResult.error || "Falha na transcrição de áudio");
       }
 
       setTranscription(transcriptionResult.text);
+      setDebug(`Transcrição bem-sucedida: "${transcriptionResult.text}"`);
 
       // 2. Extract food information from transcription
-      const foodItems = extractFoodInformation(transcriptionResult.text);
+      console.log("Extracting food information...");
+      const foodItems = await extractFoodInformation(transcriptionResult.text);
+      console.log("Extracted food items:", foodItems);
 
       if (foodItems.length === 0) {
-        throw new Error("Não foi possível identificar alimentos na transcrição");
+        throw new Error(
+          "Não foi possível identificar alimentos na transcrição. Por favor, tente novamente com mais detalhes."
+        );
       }
 
+      setDebug((prev) => `${prev}\nAlimentos extraídos: ${JSON.stringify(foodItems)}`);
+
       // 3. Match with database foods
+      console.log("Matching with database...");
       const matchedItems = await matchWithDatabaseFoods(foodItems);
+      console.log("Matched items:", matchedItems);
 
       if (matchedItems.length === 0) {
         throw new Error("Não foi possível encontrar os alimentos em nosso banco de dados");
       }
+
+      setDebug((prev) => `${prev}\nAlimentos encontrados na base: ${matchedItems.length}`);
 
       // 4. Get full food details
       const itemsWithDetails = await Promise.all(
@@ -120,11 +135,67 @@ const VoiceFoodLoggingModal = ({ isVisible, onClose }: VoiceFoodLoggingModalProp
     setTranscription("");
     setExtractedItems([]);
     setError(null);
+    setDebug(null);
     onClose();
   };
 
+  // Function to try again with manual text input
+  const tryAgainWithText = () => {
+    if (!transcription) return;
+
+    setStep("processing");
+    setIsProcessing(true);
+    setError(null);
+
+    // Process the transcription text directly
+    const processTranscription = async () => {
+      try {
+        const foodItems = await extractFoodInformation(transcription);
+        console.log("Extracted food items from text:", foodItems);
+
+        if (foodItems.length === 0) {
+          throw new Error("Não foi possível identificar alimentos no texto. Por favor, tente ser mais específico.");
+        }
+
+        const matchedItems = await matchWithDatabaseFoods(foodItems);
+
+        if (matchedItems.length === 0) {
+          throw new Error("Não foi possível encontrar os alimentos em nosso banco de dados");
+        }
+
+        // Get full food details
+        const itemsWithDetails = await Promise.all(
+          matchedItems.map(async (item) => {
+            const food = await getFoodById(item.foodId);
+            return {
+              ...item,
+              food,
+            };
+          })
+        );
+
+        setExtractedItems(itemsWithDetails.filter((item) => item.food !== null));
+        setStep("reviewing");
+      } catch (error) {
+        console.error("Error processing text:", error);
+        setError(error instanceof Error ? error.message : "Erro desconhecido ao processar texto");
+        setStep("recording");
+      } finally {
+        setIsProcessing(false);
+      }
+    };
+
+    processTranscription();
+  };
+
   return (
-    <Modal visible={isVisible} animationType="slide" transparent={false} onRequestClose={resetAndClose}>
+    <Modal
+      visible={isVisible}
+      transparent={false}
+      animationType="slide"
+      onRequestClose={resetAndClose}
+      statusBarTranslucent={true}
+    >
       <SafeAreaView className="flex-1 bg-background">
         {/* Header */}
         <View className="flex-row items-center py-3 px-4 border-b border-border">
@@ -148,12 +219,29 @@ const VoiceFoodLoggingModal = ({ isVisible, onClose }: VoiceFoodLoggingModalProp
             <View className="flex-1 justify-center items-center">
               <ActivityIndicator size="large" color={colors.primary} />
               <Text className="text-foreground mt-4 text-center">Processando o áudio...</Text>
+              {transcription && <Text className="text-muted-foreground mt-2 text-center">"{transcription}"</Text>}
             </View>
           )}
 
           {error && (
             <View className="mt-4 p-4 bg-red-500/10 border border-red-500/30 rounded-lg">
               <Text className="text-red-500">{error}</Text>
+              {transcription && (
+                <View className="mt-4">
+                  <Text className="text-foreground font-medium mb-2">Transcrição detectada:</Text>
+                  <Text className="text-muted-foreground">"{transcription}"</Text>
+
+                  <Button className="mt-4" onPress={tryAgainWithText}>
+                    Tentar novamente com este texto
+                  </Button>
+                </View>
+              )}
+            </View>
+          )}
+
+          {debug && __DEV__ && (
+            <View className="mt-2 p-2 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+              <Text className="text-xs text-blue-500">Debug: {debug}</Text>
             </View>
           )}
 
