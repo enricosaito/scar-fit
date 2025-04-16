@@ -1,6 +1,6 @@
-// app/components/tracking/VoiceRecorder.tsx (updated)
+// app/components/tracking/VoiceRecorder.tsx (fixed)
 import React, { useState, useEffect } from "react";
-import { View, Text, Pressable, ActivityIndicator, Alert } from "react-native";
+import { View, Text, Pressable, ActivityIndicator, Alert, Platform } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { Audio } from "expo-av";
 import { useTheme } from "../../context/ThemeContext";
@@ -22,15 +22,19 @@ const VoiceRecorder = ({ onRecordingComplete, onCancel }: VoiceRecorderProps) =>
   useEffect(() => {
     const getPermissions = async () => {
       try {
+        console.log("Requesting audio recording permissions...");
         const { status } = await Audio.requestPermissionsAsync();
+        console.log("Permission status:", status);
         setPermissionStatus(status === "granted");
 
         if (status === "granted") {
+          console.log("Setting audio mode...");
           await Audio.setAudioModeAsync({
             allowsRecordingIOS: true,
             playsInSilentModeIOS: true,
             shouldDuckAndroid: true,
             playThroughEarpieceAndroid: false,
+            staysActiveInBackground: true, // Keep the audio session active
           });
         }
       } catch (error) {
@@ -66,31 +70,43 @@ const VoiceRecorder = ({ onRecordingComplete, onCancel }: VoiceRecorderProps) =>
 
   const startRecording = async () => {
     try {
-      // Important: Configure Audio recording settings
-      await Audio.setAudioModeAsync({
-        allowsRecordingIOS: true,
-        playsInSilentModeIOS: true,
-        shouldDuckAndroid: true,
-        playThroughEarpieceAndroid: false,
-      });
+      console.log("Starting recording...");
 
-      const recording = new Audio.Recording();
+      // For iOS, make sure to set up the audio session explicitly
+      if (Platform.OS === "ios") {
+        console.log("Configuring iOS audio session...");
+        await Audio.setAudioModeAsync({
+          allowsRecordingIOS: true,
+          playsInSilentModeIOS: true,
+          staysActiveInBackground: true,
+          interruptionModeIOS: 1, // Use numerical value instead of constant
+          shouldDuckAndroid: true,
+          interruptionModeAndroid: 1, // Use numerical value instead of constant
+          playThroughEarpieceAndroid: false,
+        });
+      }
 
-      // Use specific settings that match Whisper API requirements
-      await recording.prepareToRecordAsync({
-        isMeteringEnabled: true,
+      // Create and prepare the recording object
+      console.log("Creating recording object...");
+      const newRecording = new Audio.Recording();
+
+      // Use simpler recording options without referencing constants
+      console.log("Preparing to record...");
+
+      // Common options for both platforms
+      const recordingOptions = {
         android: {
-          extension: ".mp3",
-          outputFormat: Audio.AndroidOutputFormat.MPEG_4,
-          audioEncoder: Audio.AndroidAudioEncoder.AAC,
+          extension: ".m4a",
+          outputFormat: 2, // MPEG_4
+          audioEncoder: 3, // AAC
           sampleRate: 44100,
           numberOfChannels: 1,
           bitRate: 128000,
         },
         ios: {
-          extension: ".mp3",
-          outputFormat: Audio.IOSOutputFormat.MPEG4AAC,
-          audioQuality: Audio.IOSAudioQuality.MEDIUM,
+          extension: ".m4a",
+          outputFormat: "aac", // Use string value instead of constant
+          audioQuality: "high", // Use string value instead of constant
           sampleRate: 44100,
           numberOfChannels: 1,
           bitRate: 128000,
@@ -102,11 +118,15 @@ const VoiceRecorder = ({ onRecordingComplete, onCancel }: VoiceRecorderProps) =>
           mimeType: "audio/mp3",
           bitsPerSecond: 128000,
         },
-      });
+      };
 
-      await recording.startAsync();
+      await newRecording.prepareToRecordAsync(recordingOptions);
 
-      setRecording(recording);
+      console.log("Starting async recording...");
+      await newRecording.startAsync();
+      console.log("Recording started successfully");
+
+      setRecording(newRecording);
       setIsRecording(true);
       setRecordingDuration(0);
     } catch (error) {
@@ -121,11 +141,12 @@ const VoiceRecorder = ({ onRecordingComplete, onCancel }: VoiceRecorderProps) =>
     setIsRecording(false);
 
     try {
+      console.log("Stopping recording...");
       await recording.stopAndUnloadAsync();
       const uri = recording.getURI();
 
       if (uri) {
-        console.log("Recording URI:", uri);
+        console.log("Recording completed. URI:", uri);
         onRecordingComplete(uri);
       } else {
         throw new Error("URI não disponível após gravação");
