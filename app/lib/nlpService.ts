@@ -68,7 +68,7 @@ export async function extractFoodItems(text: string): Promise<ExtractedFoodItem[
         model: "gpt-3.5-turbo",
         messages: [{ role: "user", content: prompt }],
         temperature: 0.2,
-        response_format: { type: "json_object" },
+        response_format: { type: "json" },
       }),
     });
 
@@ -218,8 +218,6 @@ function fallbackExtractFoodItems(text: string): ExtractedFoodItem[] {
   return items;
 }
 
-// app/lib/nlpService.ts (updated matchWithDatabaseFoods function)
-
 export async function matchWithDatabaseFoods(extractedItems: ExtractedFoodItem[]): Promise<any[]> {
   try {
     const matchedItems = [];
@@ -356,7 +354,4 @@ export async function matchWithDatabaseFoods(extractedItems: ExtractedFoodItem[]
   }
 }
 
-export default {
-  extractFoodItems,
-  matchWithDatabaseFoods,
-};
+export default { extractFoodItems, matchWithDatabaseFoods };

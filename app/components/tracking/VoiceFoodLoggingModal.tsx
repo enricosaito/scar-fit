@@ -7,7 +7,7 @@ import { useTheme } from "../../context/ThemeContext";
 import { useAuth } from "../../context/AuthContext";
 import VoiceRecorder from "./VoiceRecorder";
 import Button from "../ui/Button";
-import { transcribeAudio, extractFoodInformation, matchWithDatabaseFoods } from "../../lib/voiceProcessingService";
+import { transcribeAudio, extractFoodItems, matchWithDatabaseFoods } from "../../lib/voiceProcessingService";
 import { addFoodToLog } from "../../models/tracking";
 import { getFoodById } from "../../models/food";
 
@@ -55,7 +55,7 @@ const VoiceFoodLoggingModal = ({ isVisible, onClose }: VoiceFoodLoggingModalProp
 
       // 2. Extract food information from transcription
       console.log("Extracting food information...");
-      const foodItems = await extractFoodInformation(transcriptionResult.text);
+      const foodItems = await extractFoodItems(transcriptionResult.text);
       console.log("Extracted food items:", foodItems);
 
       if (foodItems.length === 0) {
@@ -150,7 +150,7 @@ const VoiceFoodLoggingModal = ({ isVisible, onClose }: VoiceFoodLoggingModalProp
     // Process the transcription text directly
     const processTranscription = async () => {
       try {
-        const foodItems = await extractFoodInformation(transcription);
+        const foodItems = await extractFoodItems(transcription);
         console.log("Extracted food items from text:", foodItems);
 
         if (foodItems.length === 0) {

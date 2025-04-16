@@ -19,7 +19,7 @@ export interface FoodItem {
 export { transcribeAudio };
 
 // Extract food information from transcribed text
-export { extractFoodItems as extractFoodInformation };
+export { extractFoodItems };
 
 // Match extracted food items with database foods
 export { matchWithDatabaseFoods };
