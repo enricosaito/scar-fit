@@ -1,4 +1,4 @@
-// app/lib/transcriptionService.ts
+// app/lib/transcriptionService.ts (updated)
 import * as FileSystem from "expo-file-system";
 import Constants from "expo-constants";
 
@@ -25,15 +25,26 @@ export const transcribeAudio = async (audioUri: string): Promise<TranscriptionRe
       throw new Error("Audio file does not exist");
     }
 
+    console.log("Audio file info:", fileInfo);
+
     // Create form data with the audio file
     const formData = new FormData();
+
+    // Create a file object from the URI
+    const fileUriParts = audioUri.split(".");
+    const fileType = fileUriParts[fileUriParts.length - 1];
+
     formData.append("file", {
       uri: audioUri,
-      name: "recording.m4a",
-      type: "audio/m4a",
+      name: `recording.${fileType}`,
+      type: `audio/${fileType}`,
     } as any);
+
     formData.append("model", "whisper-1");
     formData.append("language", "pt"); // Portuguese language
+    formData.append("response_format", "json");
+
+    console.log("Sending request to OpenAI API...");
 
     // Make the API request
     const response = await fetch(OPENAI_API_URL, {
@@ -44,7 +55,10 @@ export const transcribeAudio = async (audioUri: string): Promise<TranscriptionRe
       body: formData,
     });
 
+    console.log("Response status:", response.status);
+
     const data = await response.json();
+    console.log("API response:", data);
 
     if (!response.ok) {
       throw new Error(data.error?.message || "Failed to transcribe audio");
