@@ -1,4 +1,4 @@
-// app.config.js
+// app.config.js (updated)
 module.exports = {
   name: "scar-fit",
   slug: "scar-fit",
@@ -12,6 +12,9 @@ module.exports = {
   ios: {
     supportsTablet: true,
     bundleIdentifier: "com.enricosaito.scarfit",
+    infoPlist: {
+      NSMicrophoneUsageDescription: "Este aplicativo usa o microfone para a função de registro de alimentos por voz.",
+    },
   },
   android: {
     adaptiveIcon: {
@@ -19,6 +22,7 @@ module.exports = {
       backgroundColor: "#ffffff",
     },
     package: "com.enricosaito.scarfit",
+    permissions: ["RECORD_AUDIO"],
   },
   web: {
     bundler: "metro",
@@ -38,6 +42,7 @@ module.exports = {
     ],
     "expo-secure-store",
     "expo-font",
+    "expo-av",
   ],
   experiments: {
     typedRoutes: true,
