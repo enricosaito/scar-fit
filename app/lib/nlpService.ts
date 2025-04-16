@@ -218,38 +218,137 @@ function fallbackExtractFoodItems(text: string): ExtractedFoodItem[] {
   return items;
 }
 
+// app/lib/nlpService.ts (updated matchWithDatabaseFoods function)
+
 export async function matchWithDatabaseFoods(extractedItems: ExtractedFoodItem[]): Promise<any[]> {
   try {
     const matchedItems = [];
+    console.log("Starting food matching with database for items:", extractedItems);
 
     for (const item of extractedItems) {
-      // Search for matching foods in the database using full-text search
-      const { data, error } = await supabase
-        .from("foods")
-        .select("*")
-        .textSearch("description", item.name, {
-          type: "websearch",
-          config: "portuguese",
-        })
-        .limit(1);
+      console.log(`Trying to match food: "${item.name}"`);
+      let matchFound = false;
 
-      if (error) {
-        console.error("Error searching for food:", error);
-        continue;
+      // Strategy 1: Exact match with description
+      if (!matchFound) {
+        const { data: exactMatches, error } = await supabase
+          .from("foods")
+          .select("*")
+          .ilike("description", item.name)
+          .limit(1);
+
+        if (error) {
+          console.error("Error in exact match search:", error);
+        } else if (exactMatches && exactMatches.length > 0) {
+          console.log("Found exact match:", exactMatches[0].description);
+          matchedItems.push({
+            foodId: exactMatches[0].id,
+            food: exactMatches[0],
+            quantity: item.quantity || 100,
+            mealType: item.mealType || "snack",
+          });
+          matchFound = true;
+        }
       }
 
-      if (data && data.length > 0) {
-        // Found a match
+      // Strategy 2: Full-text search with websearch
+      if (!matchFound) {
+        const { data: textSearchMatches, error } = await supabase
+          .from("foods")
+          .select("*")
+          .textSearch("description", item.name, {
+            type: "websearch",
+            config: "portuguese",
+          })
+          .limit(1);
+
+        if (error) {
+          console.error("Error in websearch text search:", error);
+        } else if (textSearchMatches && textSearchMatches.length > 0) {
+          console.log("Found websearch match:", textSearchMatches[0].description);
+          matchedItems.push({
+            foodId: textSearchMatches[0].id,
+            food: textSearchMatches[0],
+            quantity: item.quantity || 100,
+            mealType: item.mealType || "snack",
+          });
+          matchFound = true;
+        }
+      }
+
+      // Strategy 3: Partial match with ILIKE
+      if (!matchFound) {
+        const { data: partialMatches, error } = await supabase
+          .from("foods")
+          .select("*")
+          .ilike("description", `%${item.name}%`)
+          .limit(1);
+
+        if (error) {
+          console.error("Error in partial match search:", error);
+        } else if (partialMatches && partialMatches.length > 0) {
+          console.log("Found partial match:", partialMatches[0].description);
+          matchedItems.push({
+            foodId: partialMatches[0].id,
+            food: partialMatches[0],
+            quantity: item.quantity || 100,
+            mealType: item.mealType || "snack",
+          });
+          matchFound = true;
+        }
+      }
+
+      // Strategy 4: Try with individual words for common foods
+      if (!matchFound) {
+        const words = item.name.split(/\s+/).filter((word) => word.length > 3);
+        for (const word of words) {
+          const { data: wordMatches, error } = await supabase
+            .from("foods")
+            .select("*")
+            .ilike("description", `%${word}%`)
+            .limit(1);
+
+          if (error) {
+            console.error(`Error in word match search for "${word}":`, error);
+          } else if (wordMatches && wordMatches.length > 0) {
+            console.log(`Found word match for "${word}":`, wordMatches[0].description);
+            matchedItems.push({
+              foodId: wordMatches[0].id,
+              food: wordMatches[0],
+              quantity: item.quantity || 100,
+              mealType: item.mealType || "snack",
+            });
+            matchFound = true;
+            break;
+          }
+        }
+      }
+
+      // If no match found after all strategies, try with a mock food (if in development)
+      if (!matchFound && __DEV__) {
+        console.log("No match found in database, using mock food");
+
+        // Fallback with a generic food item for testing
+        const mockFood = {
+          id: 999999,
+          description: `${item.name} (Genérico)`,
+          category: "Genérico",
+          kcal: 100,
+          protein_g: 5,
+          carbs_g: 10,
+          fat_g: 5,
+        };
+
         matchedItems.push({
-          foodId: data[0].id,
-          food: data[0],
-          quantity: item.quantity || 100, // Default to 100g if no quantity
-          mealType: item.mealType || "snack", // Default to snack if no meal type
+          foodId: mockFood.id,
+          food: mockFood,
+          quantity: item.quantity || 100,
+          mealType: item.mealType || "snack",
         });
       }
     }
 
-    console.log("Matched items with database:", matchedItems);
+    console.log("Final matched items with database:", matchedItems);
     return matchedItems;
   } catch (error) {
     console.error("Error matching foods with database:", error);
