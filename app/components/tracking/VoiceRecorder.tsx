@@ -1,4 +1,4 @@
-// app/components/tracking/VoiceRecorder.tsx (fixed)
+// app/components/tracking/VoiceRecorder.tsx (using WAV format)
 import React, { useState, useEffect } from "react";
 import { View, Text, Pressable, ActivityIndicator, Alert, Platform } from "react-native";
 import { Feather } from "@expo/vector-icons";
@@ -34,7 +34,6 @@ const VoiceRecorder = ({ onRecordingComplete, onCancel }: VoiceRecorderProps) =>
             playsInSilentModeIOS: true,
             shouldDuckAndroid: true,
             playThroughEarpieceAndroid: false,
-            staysActiveInBackground: true, // Keep the audio session active
           });
         }
       } catch (error) {
@@ -72,55 +71,41 @@ const VoiceRecorder = ({ onRecordingComplete, onCancel }: VoiceRecorderProps) =>
     try {
       console.log("Starting recording...");
 
-      // For iOS, make sure to set up the audio session explicitly
-      if (Platform.OS === "ios") {
-        console.log("Configuring iOS audio session...");
-        await Audio.setAudioModeAsync({
-          allowsRecordingIOS: true,
-          playsInSilentModeIOS: true,
-          staysActiveInBackground: true,
-          interruptionModeIOS: 1, // Use numerical value instead of constant
-          shouldDuckAndroid: true,
-          interruptionModeAndroid: 1, // Use numerical value instead of constant
-          playThroughEarpieceAndroid: false,
-        });
-      }
+      // Simplify audio mode to minimize configuration issues
+      await Audio.setAudioModeAsync({
+        allowsRecordingIOS: true,
+        playsInSilentModeIOS: true,
+      });
 
-      // Create and prepare the recording object
+      // Create recording object
       console.log("Creating recording object...");
       const newRecording = new Audio.Recording();
 
-      // Use simpler recording options without referencing constants
-      console.log("Preparing to record...");
-
-      // Common options for both platforms
-      const recordingOptions = {
+      // Use WAV format which is more widely supported
+      console.log("Preparing to record in WAV format...");
+      await newRecording.prepareToRecordAsync({
+        isMeteringEnabled: true,
         android: {
-          extension: ".m4a",
-          outputFormat: 2, // MPEG_4
-          audioEncoder: 3, // AAC
+          extension: ".wav",
+          outputFormat: 1, // Use raw value for WAV
+          audioEncoder: 2, // PCM
           sampleRate: 44100,
           numberOfChannels: 1,
-          bitRate: 128000,
         },
         ios: {
-          extension: ".m4a",
-          outputFormat: "aac", // Use string value instead of constant
-          audioQuality: "high", // Use string value instead of constant
+          extension: ".wav",
           sampleRate: 44100,
           numberOfChannels: 1,
-          bitRate: 128000,
+          audioQuality: "high",
+          outputFormat: "linearPCM",
           linearPCMBitDepth: 16,
           linearPCMIsBigEndian: false,
           linearPCMIsFloat: false,
         },
         web: {
-          mimeType: "audio/mp3",
-          bitsPerSecond: 128000,
+          mimeType: "audio/wav",
         },
-      };
-
-      await newRecording.prepareToRecordAsync(recordingOptions);
+      });
 
       console.log("Starting async recording...");
       await newRecording.startAsync();
@@ -131,7 +116,10 @@ const VoiceRecorder = ({ onRecordingComplete, onCancel }: VoiceRecorderProps) =>
       setRecordingDuration(0);
     } catch (error) {
       console.error("Failed to start recording", error);
-      Alert.alert("Erro", "Não foi possível iniciar a gravação. Por favor, tente novamente.");
+      Alert.alert(
+        "Erro",
+        `Não foi possível iniciar a gravação: ${error instanceof Error ? error.message : "Erro desconhecido"}`
+      );
     }
   };
 
