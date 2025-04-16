@@ -14,6 +14,7 @@ module.exports = {
     bundleIdentifier: "com.enricosaito.scarfit",
     infoPlist: {
       NSMicrophoneUsageDescription: "Este aplicativo usa o microfone para a função de registro de alimentos por voz.",
+      UIBackgroundModes: ["audio"],
     },
   },
   android: {
