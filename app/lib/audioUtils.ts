@@ -1,4 +1,4 @@
-// app/lib/audioUtils.ts
+// app/lib/audioUtils.ts (fixed)
 import * as FileSystem from "expo-file-system";
 import { Audio } from "expo-av";
 
@@ -30,12 +30,12 @@ export const convertToMP3 = async (inputUri: string): Promise<string> => {
     await recording.prepareToRecordAsync({
       android: {
         extension: ".mp3",
-        outputFormat: Audio.AndroidOutputFormat.MPEG_4,
-        audioEncoder: Audio.AndroidAudioEncoder.AAC,
+        outputFormat: 2, // MPEG_4
+        audioEncoder: 3, // AAC
       },
       ios: {
         extension: ".mp3",
-        outputFormat: Audio.IOSOutputFormat.MPEG4AAC,
+        outputFormat: "aac", // Use string instead of constant
       },
     });
 
