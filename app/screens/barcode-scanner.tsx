@@ -1,9 +1,8 @@
 // app/screens/barcode-scanner.tsx
 import React, { useState, useEffect } from "react";
-import { Text, View, SafeAreaView, ActivityIndicator, Alert, Pressable, StyleSheet } from "react-native";
+import { Text, View, SafeAreaView, Pressable, StyleSheet, ActivityIndicator, Alert } from "react-native";
 import { useRouter } from "expo-router";
 import { Feather } from "@expo/vector-icons";
-import { Camera } from "expo-camera";
 import { BarCodeScanner } from "expo-barcode-scanner";
 import { useTheme } from "../context/ThemeContext";
 import Button from "../components/ui/Button";
@@ -14,45 +13,28 @@ export default function BarcodeScannerScreen() {
 
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const [scanned, setScanned] = useState(false);
-  const [scanning, setScanning] = useState(true);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    (async () => {
-      const { status } = await Camera.requestCameraPermissionsAsync();
+    const getBarCodeScannerPermissions = async () => {
+      const { status } = await BarCodeScanner.requestPermissionsAsync();
       setHasPermission(status === "granted");
-    })();
+    };
+
+    getBarCodeScannerPermissions();
   }, []);
 
-  const handleBarCodeScanned = async ({ type, data }: { type: string; data: string }) => {
-    if (!scanning) return;
-
+  const handleBarCodeScanned = ({ type, data }) => {
     setScanned(true);
-    setScanning(false);
     setLoading(true);
-    setError(null);
 
-    try {
-      // We'll implement the API call in the next step
+    // Navigate to product screen with the barcode
+    setTimeout(() => {
       router.push({
         pathname: "/screens/barcode-product",
         params: { barcode: data },
       });
-    } catch (err) {
-      console.error("Error scanning barcode:", err);
-      setError("Ocorreu um erro ao processar o código de barras. Tente novamente.");
-      setLoading(false);
-      setScanned(false);
-      setScanning(true);
-    }
-  };
-
-  const handleScanAgain = () => {
-    setScanned(false);
-    setScanning(true);
-    setLoading(false);
-    setError(null);
+    }, 500);
   };
 
   if (hasPermission === null) {
@@ -96,14 +78,10 @@ export default function BarcodeScannerScreen() {
       </View>
 
       <View className="flex-1">
-        {!scanned && (
-          <Camera
-            style={{ flex: 1 }}
-            type={Camera.Constants.Type.back}
-            barCodeScannerSettings={{
-              barCodeTypes: [BarCodeScanner.Constants.BarCodeType.ean13, BarCodeScanner.Constants.BarCodeType.ean8],
-            }}
-            onBarCodeScanned={handleBarCodeScanned}
+        {!scanned ? (
+          <BarCodeScanner
+            onBarCodeScanned={scanned ? undefined : handleBarCodeScanned}
+            style={StyleSheet.absoluteFillObject}
           >
             <View className="flex-1 justify-center items-center">
               {/* Scanner overlay */}
@@ -114,22 +92,11 @@ export default function BarcodeScannerScreen() {
                 </Text>
               </View>
             </View>
-          </Camera>
-        )}
-
-        {scanned && loading && (
+          </BarCodeScanner>
+        ) : (
           <View className="flex-1 justify-center items-center bg-background p-6">
             <ActivityIndicator size="large" color={colors.primary} />
             <Text className="text-foreground mt-4 text-center">Buscando informações do produto...</Text>
-          </View>
-        )}
-
-        {error && (
-          <View className="flex-1 justify-center items-center bg-background p-6">
-            <Feather name="alert-circle" size={60} color={colors.mutedForeground} />
-            <Text className="text-foreground text-lg font-medium mt-4 mb-2 text-center">Ops! Algo deu errado</Text>
-            <Text className="text-muted-foreground text-center mb-6">{error}</Text>
-            <Button onPress={handleScanAgain}>Tentar Novamente</Button>
           </View>
         )}
       </View>
