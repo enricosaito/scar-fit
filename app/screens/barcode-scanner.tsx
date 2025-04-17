@@ -1,30 +1,35 @@
 // app/screens/barcode-scanner.tsx
-import React, { useState, useEffect } from "react";
-import { Text, View, SafeAreaView, Pressable, StyleSheet, ActivityIndicator, Alert } from "react-native";
+import React, { useState, useEffect, useRef } from "react";
+import { Text, View, SafeAreaView, Pressable, StyleSheet, ActivityIndicator, Dimensions } from "react-native";
 import { useRouter } from "expo-router";
 import { Feather } from "@expo/vector-icons";
-import { BarCodeScanner } from "expo-barcode-scanner";
+import { Camera, CameraType, BarCodeScanningResult } from "expo-camera";
 import { useTheme } from "../context/ThemeContext";
 import Button from "../components/ui/Button";
 
 export default function BarcodeScannerScreen() {
   const router = useRouter();
   const { colors } = useTheme();
+  const cameraRef = useRef(null);
 
-  const [hasPermission, setHasPermission] = useState<boolean | null>(null);
+  const [hasPermission, setHasPermission] = useState(null);
   const [scanned, setScanned] = useState(false);
   const [loading, setLoading] = useState(false);
+  const windowWidth = Dimensions.get("window").width;
 
   useEffect(() => {
-    const getBarCodeScannerPermissions = async () => {
-      const { status } = await BarCodeScanner.requestPermissionsAsync();
+    const getCameraPermissions = async () => {
+      const { status } = await Camera.requestCameraPermissionsAsync();
       setHasPermission(status === "granted");
     };
 
-    getBarCodeScannerPermissions();
+    getCameraPermissions();
   }, []);
 
-  const handleBarCodeScanned = ({ type, data }) => {
+  const handleBarCodeScanned = (scanningResult: BarCodeScanningResult) => {
+    if (scanned) return;
+
+    const { type, data } = scanningResult;
     setScanned(true);
     setLoading(true);
 
@@ -79,9 +84,14 @@ export default function BarcodeScannerScreen() {
 
       <View className="flex-1">
         {!scanned ? (
-          <BarCodeScanner
-            onBarCodeScanned={scanned ? undefined : handleBarCodeScanned}
+          <Camera
+            ref={cameraRef}
             style={StyleSheet.absoluteFillObject}
+            type={CameraType.back}
+            barCodeScannerSettings={{
+              barCodeTypes: ["ean13", "ean8"],
+            }}
+            onBarCodeScanned={handleBarCodeScanned}
           >
             <View className="flex-1 justify-center items-center">
               {/* Scanner overlay */}
@@ -92,7 +102,7 @@ export default function BarcodeScannerScreen() {
                 </Text>
               </View>
             </View>
-          </BarCodeScanner>
+          </Camera>
         ) : (
           <View className="flex-1 justify-center items-center bg-background p-6">
             <ActivityIndicator size="large" color={colors.primary} />
