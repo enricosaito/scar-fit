@@ -1,9 +1,9 @@
 // app/screens/barcode-scanner.tsx
 import React, { useState, useEffect, useRef } from "react";
-import { Text, View, SafeAreaView, Pressable, StyleSheet, ActivityIndicator, Dimensions } from "react-native";
+import { Text, View, SafeAreaView, Pressable, StyleSheet, ActivityIndicator } from "react-native";
 import { useRouter } from "expo-router";
 import { Feather } from "@expo/vector-icons";
-import { Camera, CameraType, BarCodeScanningResult } from "expo-camera";
+import { Camera } from "expo-camera";
 import { useTheme } from "../context/ThemeContext";
 import Button from "../components/ui/Button";
 
@@ -15,7 +15,6 @@ export default function BarcodeScannerScreen() {
   const [hasPermission, setHasPermission] = useState(null);
   const [scanned, setScanned] = useState(false);
   const [loading, setLoading] = useState(false);
-  const windowWidth = Dimensions.get("window").width;
 
   useEffect(() => {
     const getCameraPermissions = async () => {
@@ -26,10 +25,9 @@ export default function BarcodeScannerScreen() {
     getCameraPermissions();
   }, []);
 
-  const handleBarCodeScanned = (scanningResult: BarCodeScanningResult) => {
+  const handleBarCodeScanned = ({ type, data }) => {
     if (scanned) return;
 
-    const { type, data } = scanningResult;
     setScanned(true);
     setLoading(true);
 
@@ -87,11 +85,10 @@ export default function BarcodeScannerScreen() {
           <Camera
             ref={cameraRef}
             style={StyleSheet.absoluteFillObject}
-            type={CameraType.back}
             barCodeScannerSettings={{
               barCodeTypes: ["ean13", "ean8"],
             }}
-            onBarCodeScanned={handleBarCodeScanned}
+            onBarCodeScanned={scanned ? undefined : handleBarCodeScanned}
           >
             <View className="flex-1 justify-center items-center">
               {/* Scanner overlay */}
