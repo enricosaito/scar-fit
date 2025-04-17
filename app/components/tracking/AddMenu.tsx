@@ -86,9 +86,9 @@ export default function AddMenu() {
       subtitle: "Adicionar alimento por código de barras",
       action: () => {
         hideMenu();
-        router.push("/screens/pro-subscription");
+        router.push("/screens/barcode-scanner");
       },
-      pro: true,
+      pro: false,
     },
     {
       id: "food-photo",
