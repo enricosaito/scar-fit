@@ -89,6 +89,8 @@ export default function RootLayout() {
                 <Stack.Screen name="screens/pro-subscription" />
                 <Stack.Screen name="screens/onboarding/index" />
                 <Stack.Screen name="screens/voice-food-logger" />
+                <Stack.Screen name="screens/barcode-scanner" />
+                <Stack.Screen name="screens/barcode-product" />
                 <Stack.Screen name="auth" />
               </Stack>
             </AuthGuard>
