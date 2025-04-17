@@ -1,46 +1,34 @@
 // app/screens/barcode-scanner.tsx
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState } from "react";
 import { Text, View, SafeAreaView, Pressable, StyleSheet, ActivityIndicator } from "react-native";
 import { useRouter } from "expo-router";
 import { Feather } from "@expo/vector-icons";
-import { Camera } from "expo-camera";
+import { CameraView, useCameraPermissions, CameraType, BarcodeScanningResult } from "expo-camera";
+
 import { useTheme } from "../context/ThemeContext";
 import Button from "../components/ui/Button";
 
-export default function BarcodeScannerScreen() {
+const BarcodeScanner = () => {
   const router = useRouter();
   const { colors } = useTheme();
-  const cameraRef = useRef(null);
 
-  const [hasPermission, setHasPermission] = useState(null);
+  const [permission, requestPermission] = useCameraPermissions();
+  const [facing] = useState<CameraType>("back");
   const [scanned, setScanned] = useState(false);
-  const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    const getCameraPermissions = async () => {
-      const { status } = await Camera.requestCameraPermissionsAsync();
-      setHasPermission(status === "granted");
-    };
-
-    getCameraPermissions();
-  }, []);
-
-  const handleBarCodeScanned = ({ type, data }) => {
+  const handleBarCodeScanned = ({ data }: BarcodeScanningResult) => {
     if (scanned) return;
 
     setScanned(true);
-    setLoading(true);
 
-    // Navigate to product screen with the barcode
-    setTimeout(() => {
-      router.push({
-        pathname: "/screens/barcode-product",
-        params: { barcode: data },
-      });
-    }, 500);
+    router.push({
+      pathname: "/screens/barcode-product",
+      params: { barcode: data },
+    });
   };
 
-  if (hasPermission === null) {
+  // Permission loading state
+  if (!permission) {
     return (
       <SafeAreaView className="flex-1 bg-background items-center justify-center">
         <ActivityIndicator size="large" color={colors.primary} />
@@ -49,7 +37,8 @@ export default function BarcodeScannerScreen() {
     );
   }
 
-  if (hasPermission === false) {
+  // Permission denied state
+  if (!permission.granted) {
     return (
       <SafeAreaView className="flex-1 bg-background">
         <View className="flex-row items-center p-4 border-b border-border">
@@ -65,7 +54,7 @@ export default function BarcodeScannerScreen() {
           <Text className="text-muted-foreground text-center mb-6">
             Para escanear códigos de barras, é necessário permitir o acesso à câmera do dispositivo nas configurações.
           </Text>
-          <Button onPress={() => router.back()}>Voltar</Button>
+          <Button onPress={requestPermission}>Permitir Acesso</Button>
         </View>
       </SafeAreaView>
     );
@@ -73,6 +62,7 @@ export default function BarcodeScannerScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-background">
+      {/* Header */}
       <View className="flex-row items-center p-4 border-b border-border">
         <Pressable onPress={() => router.back()} className="p-2">
           <Feather name="arrow-left" size={24} color={colors.foreground} />
@@ -80,35 +70,47 @@ export default function BarcodeScannerScreen() {
         <Text className="text-lg font-medium flex-1 text-center text-foreground mr-8">Scanner de Código</Text>
       </View>
 
+      {/* Camera Scanner */}
       <View className="flex-1">
-        {!scanned ? (
-          <Camera
-            ref={cameraRef}
-            style={StyleSheet.absoluteFillObject}
-            barCodeScannerSettings={{
-              barCodeTypes: ["ean13", "ean8"],
-            }}
-            onBarCodeScanned={scanned ? undefined : handleBarCodeScanned}
-          >
-            <View className="flex-1 justify-center items-center">
-              {/* Scanner overlay */}
-              <View className="w-72 h-72 border-2 border-white rounded-lg opacity-80 justify-center items-center">
-                <Feather name="maximize" size={100} color="rgba(255, 255, 255, 0.5)" />
-                <Text className="text-white mt-2 font-medium text-center">
-                  Posicione o código de barras dentro da área
-                </Text>
-              </View>
+        <CameraView
+          style={StyleSheet.absoluteFillObject}
+          facing={facing}
+          barcodeScannerSettings={{
+            barcodeTypes: ["ean13", "ean8"],
+          }}
+          onBarcodeScanned={scanned ? undefined : handleBarCodeScanned}
+        >
+          <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+            <View
+              style={{
+                width: 280,
+                height: 280,
+                borderWidth: 2,
+                borderColor: "white",
+                borderRadius: 10,
+                opacity: 0.8,
+                justifyContent: "center",
+                alignItems: "center",
+              }}
+            >
+              <Feather name="maximize" size={100} color="rgba(255, 255, 255, 0.5)" />
+              <Text style={{ color: "white", marginTop: 8, fontWeight: "500", textAlign: "center" }}>
+                Posicione o código de barras dentro da área
+              </Text>
             </View>
-          </Camera>
-        ) : (
-          <View className="flex-1 justify-center items-center bg-background p-6">
+          </View>
+        </CameraView>
+
+        {/* Loading Overlay */}
+        {scanned && (
+          <View className="absolute top-0 left-0 right-0 bottom-0 bg-background/75 items-center justify-center">
             <ActivityIndicator size="large" color={colors.primary} />
             <Text className="text-foreground mt-4 text-center">Buscando informações do produto...</Text>
           </View>
         )}
       </View>
 
-      {/* Bottom controls */}
+      {/* Bottom Controls */}
       <View className="p-6 bg-card border-t border-border">
         <Text className="text-muted-foreground text-center mb-4">
           Escaneie o código de barras de um alimento para adicionar automaticamente ao seu diário.
@@ -119,4 +121,6 @@ export default function BarcodeScannerScreen() {
       </View>
     </SafeAreaView>
   );
-}
+};
+
+export default BarcodeScanner;
