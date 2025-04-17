@@ -71,7 +71,8 @@ export default function More() {
       route: "/screens/onboarding/index",
       action: () => router.push("/screens/onboarding"),
     },
-    { icon: "settings", title: "Configurações", route: "/settings" },
+
+    { icon: "settings", title: "Configurações", route: "/screens/settings" },
     {
       icon: "moon",
       title: "Tema",
