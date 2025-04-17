@@ -14,6 +14,7 @@ module.exports = {
     bundleIdentifier: "com.enricosaito.scarfit",
     infoPlist: {
       NSMicrophoneUsageDescription: "Este aplicativo usa o microfone para a função de registro de alimentos por voz.",
+      NSCameraUsageDescription: "Este aplicativo usa a câmera para escanear códigos de barras de alimentos.",
       UIBackgroundModes: ["audio"],
     },
   },
@@ -23,7 +24,7 @@ module.exports = {
       backgroundColor: "#ffffff",
     },
     package: "com.enricosaito.scarfit",
-    permissions: ["RECORD_AUDIO"],
+    permissions: ["RECORD_AUDIO", "CAMERA"],
   },
   web: {
     bundler: "metro",
