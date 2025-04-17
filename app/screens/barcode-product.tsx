@@ -50,7 +50,7 @@ export default function BarcodeProductScreen() {
   const { barcode } = useLocalSearchParams();
   const { colors } = useTheme();
   const { user } = useAuth();
-  
+
   const [loading, setLoading] = useState(true);
   const [product, setProduct] = useState<Product | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -93,7 +93,7 @@ export default function BarcodeProductScreen() {
 
     try {
       setAddingToLog(true);
-      
+
       // Convert OpenFoodFacts product to our app's Food format
       const food: Food = {
         id: parseInt(barcode as string) || 0,
@@ -121,11 +121,9 @@ export default function BarcodeProductScreen() {
         date: today,
       });
 
-      Alert.alert(
-        "Adicionado com Sucesso",
-        `${food.description} foi adicionado ao seu diário.`,
-        [{ text: "OK", onPress: () => router.replace("/(tabs)") }]
-      );
+      Alert.alert("Adicionado com Sucesso", `${food.description} foi adicionado ao seu diário.`, [
+        { text: "OK", onPress: () => router.replace("/(tabs)") },
+      ]);
     } catch (err) {
       console.error("Error adding food to log:", err);
       Alert.alert("Erro", "Ocorreu um erro ao adicionar o alimento ao diário.");
@@ -157,7 +155,9 @@ export default function BarcodeProductScreen() {
           <Feather name="alert-circle" size={60} color={colors.mutedForeground} />
           <Text className="text-foreground text-lg font-medium mt-4 mb-2 text-center">Produto não encontrado</Text>
           <Text className="text-muted-foreground text-center mb-6">{error}</Text>
-          <Button className="mb-4" onPress={handleScanAgain}>Escanear Novamente</Button>
+          <Button className="mb-4" onPress={handleScanAgain}>
+            Escanear Novamente
+          </Button>
           <Button variant="outline" onPress={() => router.push("/screens/food-tracker")}>
             Buscar Manualmente
           </Button>
@@ -168,18 +168,16 @@ export default function BarcodeProductScreen() {
           <View className="bg-card rounded-lg border border-border p-4 mb-6">
             <View className="flex-row mb-4">
               {product.image_url ? (
-                <Image
-                  source={{ uri: product.image_url }}
-                  className="w-24 h-24 rounded-md mr-4"
-                  resizeMode="contain"
-                />
+                <Image source={{ uri: product.image_url }} className="w-24 h-24 rounded-md mr-4" resizeMode="contain" />
               ) : (
                 <View className="w-24 h-24 bg-muted rounded-md mr-4 items-center justify-center">
                   <Feather name="image" size={24} color={colors.mutedForeground} />
                 </View>
               )}
               <View className="flex-1">
-                <Text className="text-xl font-semibold text-foreground">{product.product_name || "Produto Desconhecido"}</Text>
+                <Text className="text-xl font-semibold text-foreground">
+                  {product.product_name || "Produto Desconhecido"}
+                </Text>
                 <Text className="text-muted-foreground mb-2">{product.brands || "Marca desconhecida"}</Text>
                 <Text className="text-xs text-muted-foreground">{barcode}</Text>
               </View>
@@ -190,21 +188,9 @@ export default function BarcodeProductScreen() {
               <Text className="text-foreground font-medium mb-2">Informação Nutricional (por 100g)</Text>
               <View className="flex-row flex-wrap">
                 <CalorieTag calories={product.nutriments.energy_kcal || 0} />
-                <MacroTag
-                  value={product.nutriments.proteins || 0}
-                  color={macroColors.protein}
-                  label="prot."
-                />
-                <MacroTag
-                  value={product.nutriments.carbohydrates || 0}
-                  color={macroColors.carbs}
-                  label="carb."
-                />
-                <MacroTag
-                  value={product.nutriments.fat || 0}
-                  color={macroColors.fat}
-                  label="gord."
-                />
+                <MacroTag value={product.nutriments.proteins || 0} color={macroColors.protein} label="prot." />
+                <MacroTag value={product.nutriments.carbohydrates || 0} color={macroColors.carbs} label="carb." />
+                <MacroTag value={product.nutriments.fat || 0} color={macroColors.fat} label="gord." />
               </View>
             </View>
           </View>
@@ -212,7 +198,7 @@ export default function BarcodeProductScreen() {
           {/* Add to diary form */}
           <View className="bg-card rounded-lg border border-border p-4 mb-6">
             <Text className="text-foreground font-medium mb-4">Adicionar ao Diário</Text>
-            
+
             {/* Quantity */}
             <View className="mb-4">
               <Text className="text-foreground text-sm mb-2">Quantidade (g)</Text>
@@ -234,27 +220,18 @@ export default function BarcodeProductScreen() {
                 </Pressable>
               </View>
               <View className="flex-row justify-center mt-2">
-                <Pressable
-                  className="bg-muted mx-1 px-3 py-1 rounded-md"
-                  onPress={() => setQuantity("50")}
-                >
+                <Pressable className="bg-muted mx-1 px-3 py-1 rounded-md" onPress={() => setQuantity("50")}>
                   <Text className="text-foreground">50g</Text>
                 </Pressable>
-                <Pressable
-                  className="bg-muted mx-1 px-3 py-1 rounded-md"
-                  onPress={() => setQuantity("100")}
-                >
+                <Pressable className="bg-muted mx-1 px-3 py-1 rounded-md" onPress={() => setQuantity("100")}>
                   <Text className="text-foreground">100g</Text>
                 </Pressable>
-                <Pressable
-                  className="bg-muted mx-1 px-3 py-1 rounded-md"
-                  onPress={() => setQuantity("200")}
-                >
+                <Pressable className="bg-muted mx-1 px-3 py-1 rounded-md" onPress={() => setQuantity("200")}>
                   <Text className="text-foreground">200g</Text>
                 </Pressable>
               </View>
             </View>
-            
+
             {/* Meal type */}
             <Text className="text-foreground text-sm mb-2">Refeição</Text>
             <View className="flex-row mb-3">
@@ -274,9 +251,7 @@ export default function BarcodeProductScreen() {
               </Pressable>
               <Pressable
                 onPress={() => setSelectedMealType("lunch")}
-                className={`flex-1 py-2 px-3 rounded-md ${
-                  selectedMealType === "lunch" ? "bg-primary" : "bg-muted"
-                }`}
+                className={`flex-1 py-2 px-3 rounded-md ${selectedMealType === "lunch" ? "bg-primary" : "bg-muted"}`}
               >
                 <Text
                   className={selectedMealType === "lunch" ? "text-white text-center" : "text-foreground text-center"}
@@ -300,5 +275,23 @@ export default function BarcodeProductScreen() {
               </Pressable>
               <Pressable
                 onPress={() => setSelectedMealType("snack")}
-                className={`flex-1 py-2 px-3 rounded-md ${
-                  selectedMealType ==
+                className={`flex-1 py-2 px-3 rounded-md ${selectedMealType === "snack" ? "bg-primary" : "bg-muted"}`}
+              >
+                <Text
+                  className={selectedMealType === "snack" ? "text-white text-center" : "text-foreground text-center"}
+                >
+                  Lanche
+                </Text>
+              </Pressable>
+            </View>
+
+            {/* Add button */}
+            <Button onPress={handleAddToLog} disabled={addingToLog}>
+              {addingToLog ? <ActivityIndicator size="small" color="white" /> : "Adicionar ao Diário"}
+            </Button>
+          </View>
+        </ScrollView>
+      ) : null}
+    </SafeAreaView>
+  );
+}
