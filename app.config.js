@@ -45,7 +45,6 @@ module.exports = {
     "expo-secure-store",
     "expo-font",
     "expo-av",
-    "expo-barcode-scanner",
   ],
   experiments: {
     typedRoutes: true,
