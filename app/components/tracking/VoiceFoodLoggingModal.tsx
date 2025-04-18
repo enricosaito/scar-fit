@@ -120,7 +120,11 @@ const VoiceFoodLoggingModal = ({ isVisible, onClose }: VoiceFoodLoggingModalProp
         }
       }
 
-      Alert.alert("Sucesso!", "Alimentos adicionados com sucesso ao seu diário.", [{ text: "OK", onPress: onClose }]);
+      // Remove the Alert and directly close the modal and navigate back
+      onClose();
+
+      // Navigate directly to main dashboard instead of showing an alert
+      router.replace("/(tabs)");
     } catch (error) {
       console.error("Error saving items:", error);
       Alert.alert("Erro", "Ocorreu um erro ao salvar os alimentos. Por favor, tente novamente.", [{ text: "OK" }]);
