@@ -1,6 +1,17 @@
 // app/components/tracking/AddMenu.tsx
-import React, { useEffect, useRef } from "react";
-import { View, Text, Pressable, Modal, Animated, Dimensions, Platform } from "react-native";
+import React, { useEffect, useRef, useState } from "react";
+import {
+  View,
+  Text,
+  Pressable,
+  Modal,
+  Animated,
+  Dimensions,
+  Platform,
+  AccessibilityInfo,
+  Easing,
+  PanResponder,
+} from "react-native";
 import { useRouter } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import { useTheme } from "../../context/ThemeContext";
@@ -11,46 +22,39 @@ export default function AddMenu() {
   const { colors } = useTheme();
   const { isMenuVisible, hideMenu } = useAddMenu();
 
-  // Get device height to ensure full rendering
   const { height: screenHeight } = Dimensions.get("window");
 
-  // Animation values
   const backdropOpacity = useRef(new Animated.Value(0)).current;
   const menuTranslateY = useRef(new Animated.Value(screenHeight)).current;
 
-  useEffect(() => {
-    if (isMenuVisible) {
-      // Animate in
-      Animated.parallel([
-        Animated.timing(backdropOpacity, {
-          toValue: 0.7,
-          duration: 300,
-          useNativeDriver: true,
-        }),
-        Animated.spring(menuTranslateY, {
-          toValue: 0,
-          friction: 8,
-          tension: 80,
-          useNativeDriver: true,
-        }),
-      ]).start();
-    } else {
-      // Animate out
-      Animated.parallel([
-        Animated.timing(backdropOpacity, {
-          toValue: 0,
-          duration: 200,
-          useNativeDriver: true,
-        }),
-        Animated.timing(menuTranslateY, {
-          toValue: screenHeight,
-          duration: 250,
-          useNativeDriver: true,
-        }),
-      ]).start();
-    }
-  }, [isMenuVisible, screenHeight]);
+  const [localVisible, setLocalVisible] = useState(false);
+  const goldColor = "#F7B955";
 
+  const panResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: (_, gestureState) => gestureState.dy > 0,
+      onPanResponderMove: (_, gestureState) => {
+        if (gestureState.dy > 0) {
+          menuTranslateY.setValue(gestureState.dy);
+        }
+      },
+      onPanResponderRelease: (_, gestureState) => {
+        if (gestureState.dy > 100 || (gestureState.vy > 0.5 && gestureState.dy > 50)) {
+          hideMenu();
+        } else {
+          Animated.timing(menuTranslateY, {
+            toValue: 0,
+            duration: 200,
+            easing: Easing.out(Easing.cubic),
+            useNativeDriver: true,
+          }).start();
+        }
+      },
+    })
+  ).current;
+
+  // Updated menu items with new icons and colors
   const menuItems = [
     {
       id: "food-search",
@@ -61,6 +65,20 @@ export default function AddMenu() {
         router.push("/screens/food-tracker");
       },
       color: colors.primary,
+      isPro: false,
+      order: 1,
+    },
+    {
+      id: "barcode-scan",
+      icon: "maximize",
+      title: "Escanear Código",
+      action: () => {
+        hideMenu();
+        router.push("/screens/barcode-scanner");
+      },
+      color: "#ef4444",
+      isPro: false,
+      order: 2,
     },
     {
       id: "food-voice",
@@ -70,7 +88,9 @@ export default function AddMenu() {
         hideMenu();
         router.push("/screens/voice-food-logger");
       },
-      color: "#8b5cf6", // Purple
+      color: goldColor,
+      isPro: true,
+      order: 3,
     },
     {
       id: "food-photo",
@@ -80,30 +100,71 @@ export default function AddMenu() {
         hideMenu();
         router.push("/screens/pro-subscription");
       },
-      color: "#f59e0b", // Amber
-    },
-    {
-      id: "exercise",
-      icon: "activity",
-      title: "Adicionar Exercício",
-      action: () => {
-        hideMenu();
-        router.push("/screens/exercise");
-      },
-      color: "#ef4444", // Red
+      color: goldColor,
+      isPro: true,
+      order: 4,
     },
   ];
 
-  // Add extra padding for iOS devices with notch/dynamic island
+  // Sort items by order
+  const sortedMenuItems = [...menuItems].sort((a, b) => a.order - b.order);
+
+  useEffect(() => {
+    if (isMenuVisible) {
+      // Prepare animation values before showing
+      menuTranslateY.setValue(screenHeight);
+      backdropOpacity.setValue(0);
+      setLocalVisible(true);
+
+      requestAnimationFrame(() => {
+        Animated.parallel([
+          Animated.timing(backdropOpacity, {
+            toValue: 0.7,
+            duration: 300,
+            easing: Easing.out(Easing.cubic),
+            useNativeDriver: true,
+          }),
+          Animated.timing(menuTranslateY, {
+            toValue: 0,
+            duration: 350,
+            easing: Easing.out(Easing.cubic),
+            useNativeDriver: true,
+          }),
+        ]).start();
+      });
+    } else {
+      // Animate out and hide modal after
+      Animated.parallel([
+        Animated.timing(backdropOpacity, {
+          toValue: 0,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+        Animated.timing(menuTranslateY, {
+          toValue: screenHeight,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+      ]).start(() => {
+        setLocalVisible(false);
+      });
+    }
+  }, [isMenuVisible]);
+
   const bottomSafeArea = Platform.OS === "ios" ? 34 : 0;
 
   return (
     <Modal
-      visible={isMenuVisible}
+      visible={localVisible}
       transparent={true}
       animationType="none"
       onRequestClose={hideMenu}
       statusBarTranslucent={true}
+      onShow={() => {
+        if (Platform.OS === "ios") {
+          AccessibilityInfo.announceForAccessibility("Menu de adição aberto");
+        }
+      }}
     >
       <View className="flex-1" style={{ backgroundColor: "transparent" }}>
         {/* Backdrop */}
@@ -133,46 +194,69 @@ export default function AddMenu() {
               shadowRadius: 10,
               elevation: 10,
               transform: [{ translateY: menuTranslateY }],
-              maxHeight: screenHeight * 0.85, // Limiting max height
+              maxHeight: screenHeight * 0.8,
             }}
+            {...panResponder.panHandlers}
           >
-            {/* Handle Indicator */}
-            <View className="items-center pt-3 pb-2">
-              <View className="w-12 h-1 rounded-full bg-border" />
-            </View>
-
+            <View className="pb-2 pt-5" />
             <View className="px-4 pb-8" style={{ paddingBottom: 8 + bottomSafeArea }}>
               <Text className="text-2xl font-bold text-foreground mb-6">Adicionar</Text>
 
-              {/* Card-style Grid Layout */}
               <View className="flex-row flex-wrap justify-between">
-                {menuItems.map((item) => (
-                  <Pressable
-                    key={item.id}
-                    className="w-[48%] bg-card mb-4 rounded-xl border border-border overflow-hidden"
-                    style={{
-                      shadowColor: item.color,
-                      shadowOffset: { width: 0, height: 2 },
-                      shadowOpacity: 0.1,
-                      shadowRadius: 8,
-                      elevation: 3,
-                    }}
-                    onPress={item.action}
-                  >
-                    <View className="p-4 items-center">
-                      <View
-                        className="w-16 h-16 rounded-full items-center justify-center mb-3"
-                        style={{ backgroundColor: `${item.color}20` }}
-                      >
-                        <Feather name={item.icon} size={28} color={item.color} />
+                {sortedMenuItems.map((item) => (
+                  <View key={item.id} style={{ width: "48%" }}>
+                    <Pressable
+                      className="bg-card mb-4 rounded-xl border border-border overflow-hidden"
+                      style={{
+                        shadowColor: item.color,
+                        shadowOffset: { width: 0, height: 2 },
+                        shadowOpacity: 0.1,
+                        shadowRadius: 8,
+                        elevation: 3,
+                      }}
+                      onPress={item.action}
+                      accessible={true}
+                      accessibilityLabel={item.title}
+                      accessibilityHint={`Toque para ${item.title.toLowerCase()}`}
+                      android_ripple={{ color: `${item.color}20` }}
+                    >
+                      <View className="p-4 items-center">
+                        {/* PRO badge for premium features */}
+                        {item.isPro && (
+                          <View
+                            className="absolute top-2 right-2 px-2 py-0.5 rounded-md z-10"
+                            style={{ backgroundColor: `${goldColor}20` }}
+                          >
+                            <Text className="text-xs font-bold" style={{ color: goldColor }}>
+                              PRO
+                            </Text>
+                          </View>
+                        )}
+
+                        <View
+                          className="w-16 h-16 rounded-full items-center justify-center mb-3"
+                          style={{
+                            backgroundColor: `${item.color}20`,
+                            borderWidth: 0,
+                          }}
+                        >
+                          <Feather name={item.icon} size={28} color={item.color} />
+                        </View>
+
+                        <Text className="text-foreground text-center font-medium">{item.title}</Text>
                       </View>
-                      <Text className="text-foreground text-center font-medium">{item.title}</Text>
-                    </View>
-                  </Pressable>
+                    </Pressable>
+                  </View>
                 ))}
               </View>
 
-              <Pressable className="bg-card p-4 items-center rounded-xl border border-border mt-4" onPress={hideMenu}>
+              <Pressable
+                className="bg-card p-4 items-center rounded-xl border border-border mt-4"
+                onPress={hideMenu}
+                accessible={true}
+                accessibilityLabel="Cancelar"
+                accessibilityHint="Toque para fechar o menu"
+              >
                 <Text className="text-primary font-medium">Cancelar</Text>
               </Pressable>
             </View>
