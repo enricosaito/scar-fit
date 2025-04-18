@@ -70,7 +70,7 @@ const Goal = ({ onNext, onBack }: GoalStepProps) => {
                 style={{ backgroundColor: formData.goal === goal.id ? `${colors.primary}20` : goal.bgColor }}
               >
                 <Feather
-                  name={goal.icon}
+                  name={goal.icon as keyof typeof Feather.glyphMap}
                   size={22}
                   color={
                     formData.goal === goal.id

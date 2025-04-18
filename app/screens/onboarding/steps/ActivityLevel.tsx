@@ -82,7 +82,7 @@ const ActivityLevel = ({ onNext, onBack }: ActivityLevelStepProps) => {
                 }}
               >
                 <Feather
-                  name={level.icon}
+                  name={level.icon as keyof typeof Feather.glyphMap}
                   size={18}
                   color={formData.activityLevel === level.id ? colors.primary : colors.mutedForeground}
                 />

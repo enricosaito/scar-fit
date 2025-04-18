@@ -18,7 +18,7 @@ export default function EmptyState({ icon = "inbox", title, description, buttonT
   return (
     <View className="bg-card rounded-xl border border-border p-6 items-center shadow-sm">
       <View className="w-16 h-16 bg-muted rounded-full items-center justify-center mb-4">
-        <Feather name={icon} size={24} color={colors.mutedForeground} />
+        <Feather name={icon as keyof typeof Feather.glyphMap} size={24} color={colors.mutedForeground} />
       </View>
 
       <Text className="text-lg font-medium mb-2 text-center text-foreground">{title}</Text>
