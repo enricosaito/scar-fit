@@ -69,6 +69,17 @@ export default function AddMenu() {
       pro: false,
     },
     {
+      id: "food-barcode",
+      icon: "maximize",
+      title: "Escanear Código de Barras",
+      subtitle: "Adicionar produtos rapidamente",
+      action: () => {
+        hideMenu();
+        router.push("/screens/barcode-scanner");
+      },
+      pro: false,
+    },
+    {
       id: "food-voice",
       icon: "mic",
       title: "Detectar por Áudio",
@@ -78,17 +89,6 @@ export default function AddMenu() {
         router.push("/screens/voice-food-logger");
       },
       pro: true,
-    },
-    {
-      id: "food-barcode",
-      icon: "maximize",
-      title: "Escanear Código de Barras",
-      subtitle: "Adicionar alimento por código de barras",
-      action: () => {
-        hideMenu();
-        router.push("/screens/barcode-scanner");
-      },
-      pro: false,
     },
     {
       id: "food-photo",

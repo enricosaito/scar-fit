@@ -121,9 +121,8 @@ export default function BarcodeProductScreen() {
         date: today,
       });
 
-      Alert.alert("Adicionado com Sucesso", `${food.description} foi adicionado ao seu diário.`, [
-        { text: "OK", onPress: () => router.replace("/(tabs)") },
-      ]);
+      // Remove success alert and navigate directly to main dashboard
+      router.replace("/(tabs)");
     } catch (err) {
       console.error("Error adding food to log:", err);
       Alert.alert("Erro", "Ocorreu um erro ao adicionar o alimento ao diário.");
