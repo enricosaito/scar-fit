@@ -1,6 +1,6 @@
 // app/context/AuthContext.tsx
 
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState, useEffect, useMemo } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "../lib/supabase";
 import { createUserProfile, getUserProfile, updateUserProfile, UserProfile } from "../models/user";
@@ -14,33 +14,35 @@ interface AuthState {
   onboardingCompleted: boolean;
 }
 
+type AuthResult = { error: Error | null };
+
 interface AuthContextType extends AuthState {
-  signUp: (email: string, password: string) => Promise<{ error: any }>;
-  signIn: (email: string, password: string) => Promise<{ error: any }>;
-  signInWithGoogle: () => Promise<{ error: any }>;
+  signUp: (email: string, password: string) => Promise<AuthResult>;
+  signIn: (email: string, password: string) => Promise<AuthResult>;
+  signInWithGoogle: () => Promise<AuthResult>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
   setOnboardingCompleted: (completed: boolean) => void;
   loading: boolean;
-  profileLoading: boolean; // Add this line
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+const initialAuthState: AuthState = {
+  user: null,
+  session: null,
+  userProfile: null,
+  initialized: false,
+  onboardingCompleted: false,
+};
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  // State code remains the same...
-  const [state, setState] = useState<AuthState>({
-    user: null,
-    session: null,
-    userProfile: null,
-    initialized: false,
-    onboardingCompleted: false,
-  });
-  const [loading, setLoading] = useState(false);
+  const [state, setState] = useState<AuthState>(initialAuthState);
+  const [authLoading, setAuthLoading] = useState(false);
   const [profileLoading, setProfileLoading] = useState(false);
 
-  // Fetch user profile
-  const fetchUserProfile = async (userId: string) => {
+  const fetchUserProfile = async (userId: string | null) => {
+    if (!userId) return;
     setProfileLoading(true);
     try {
       const profile = await getUserProfile(userId);
@@ -56,21 +58,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  // Set onboarding completed status
   const setOnboardingCompleted = (completed: boolean) => {
     setState((prev) => ({ ...prev, onboardingCompleted: completed }));
   };
 
-  // Initialize: Check for existing session - same as before
   useEffect(() => {
     const initialize = async () => {
       try {
-        console.log("Initializing auth context...");
-        const {
-          data: { session },
-        } = await supabase.auth.getSession();
-
-        if (session) {
+        const { data } = await supabase.auth.getSession();
+        if (data?.session) {
+          const { session } = data;
           setState({
             user: session.user,
             session,
@@ -78,213 +75,144 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             initialized: true,
             onboardingCompleted: false,
           });
-
-          console.log("Session found during initialization");
           fetchUserProfile(session.user.id);
         } else {
-          console.log("No session found during initialization");
-          setState({
-            user: null,
-            session: null,
-            userProfile: null,
-            initialized: true,
-            onboardingCompleted: false,
-          });
+          setState({ ...initialAuthState, initialized: true });
         }
       } catch (error) {
         console.error("Error initializing auth:", error);
-        setState({
-          user: null,
-          session: null,
-          userProfile: null,
-          initialized: true,
-          onboardingCompleted: false,
-        });
+        setState({ ...initialAuthState, initialized: true });
       }
     };
-
     initialize();
   }, []);
 
-  // Listen for auth changes - same as before
   useEffect(() => {
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
+    } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setState((prev) => ({
         ...prev,
         user: session?.user || null,
-        session,
+        session: session || null,
         initialized: true,
       }));
-
       if (session?.user) {
         fetchUserProfile(session.user.id);
       } else {
-        setState((prev) => ({
-          ...prev,
-          userProfile: null,
-          onboardingCompleted: false,
-        }));
+        setState((prev) => ({ ...prev, userProfile: null, onboardingCompleted: false }));
       }
     });
-
-    return () => {
-      subscription.unsubscribe();
-    };
+    return () => subscription.unsubscribe();
   }, []);
 
-  // Refresh user profile data - same as before
   const refreshProfile = async () => {
-    if (state.user) {
-      await fetchUserProfile(state.user.id);
-    }
+    if (state.user) await fetchUserProfile(state.user.id);
   };
 
-  // Sign up with email and password - same as before
-  const signUp = async (email: string, password: string) => {
-    setLoading(true);
+  const signUp = async (email: string, password: string): Promise<AuthResult> => {
+    setAuthLoading(true);
     try {
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-      });
-
-      if (!error && data.user) {
-        await createUserProfile(data.user.id, email);
-      }
-
-      setLoading(false);
-      return { error };
-    } catch (err) {
-      setLoading(false);
+      const { data, error } = await supabase.auth.signUp({ email, password });
+      if (!error && data.user) await createUserProfile(data.user.id, email);
+      return { error: error || null };
+    } catch (err: any) {
       return { error: err };
+    } finally {
+      setAuthLoading(false);
     }
   };
 
-  // Sign in with email and password - same as before
-  const signIn = async (email: string, password: string) => {
-    setLoading(true);
+  const signIn = async (email: string, password: string): Promise<AuthResult> => {
+    setAuthLoading(true);
     try {
-      const { error, data } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (!error && data?.user) {
-        await fetchUserProfile(data.user.id);
-      }
-
-      setLoading(false);
-      return { error };
-    } catch (err) {
-      setLoading(false);
+      const { error, data } = await supabase.auth.signInWithPassword({ email, password });
+      if (!error && data?.user) await fetchUserProfile(data.user.id);
+      return { error: error || null };
+    } catch (err: any) {
       return { error: err };
+    } finally {
+      setAuthLoading(false);
     }
   };
 
-  // NEW METHOD: Sign in with Google
-  const handleGoogleSignIn = async () => {
-    setLoading(true);
+  const handleGoogleSignIn = async (): Promise<AuthResult> => {
+    setAuthLoading(true);
     try {
       const { data, error } = await signInWithGoogle();
-
       if (error) {
-        console.error("Google sign-in error:", error);
-        setLoading(false);
-        return { error };
+        const err =
+          error instanceof Error
+            ? error
+            : new Error(
+                typeof error === "object" && error !== null && "message" in error
+                  ? (error as any).message
+                  : "Erro desconhecido"
+              );
+        return { error: err };
+      }
+      if (!data?.session) {
+        return { error: new Error("Falha na autenticação. Tente novamente.") };
       }
 
-      if (data?.session) {
-        console.log("Session obtained:", data.session.user.id);
+      const { session } = data;
+      const user = session.user;
+      let profile = await getUserProfile(user.id);
 
-        try {
-          setProfileLoading(true);
-          // Make sure the profile exists
-          let profile = await getUserProfile(data.session.user.id);
-
-          if (!profile) {
-            console.log("Creating new user profile");
-            const email = data.session.user.email || "";
-            const name = data.session.user.user_metadata?.full_name || "";
-            await createUserProfile(data.session.user.id, email);
-
-            // Update the profile with the name from Google
-            if (name) {
-              await updateUserProfile(data.session.user.id, { full_name: name });
-            }
-
-            profile = await getUserProfile(data.session.user.id);
-          }
-
-          // Update the state with user data
-          setState((prev) => ({
-            ...prev,
-            user: data.session.user,
-            session: data.session,
-            userProfile: profile,
-            initialized: true,
-            onboardingCompleted: !!(profile?.macros && Object.keys(profile.macros).length > 0),
-          }));
-
-          console.log("Auth state updated successfully");
-          setProfileLoading(false);
-          setLoading(false);
-          return { error: null };
-        } catch (profileError) {
-          console.error("Error setting up user profile:", profileError);
-          setProfileLoading(false);
-          setLoading(false);
-          return { error: profileError };
-        }
+      if (!profile) {
+        await createUserProfile(user.id, user.email || "");
+        const fullName = user.user_metadata?.full_name || "";
+        if (fullName) await updateUserProfile(user.id, { full_name: fullName });
+        profile = await getUserProfile(user.id);
       }
 
-      console.log("No session data found");
-      setLoading(false);
-      return { error: new Error("Falha na autenticação. Tente novamente.") };
-    } catch (err) {
-      console.error("Unexpected error in Google sign-in:", err);
-      setLoading(false);
+      setState((prev) => ({
+        ...prev,
+        user,
+        session,
+        userProfile: profile,
+        initialized: true,
+        onboardingCompleted: !!(profile?.macros && Object.keys(profile.macros).length > 0),
+      }));
+
+      return { error: null };
+    } catch (err: any) {
+      return { error: err instanceof Error ? err : new Error("Erro inesperado") };
+    } finally {
+      setAuthLoading(false);
       setProfileLoading(false);
-      return { error: err };
     }
   };
 
-  // Sign out - same as before
   const signOut = async () => {
-    setLoading(true);
+    setAuthLoading(true);
     try {
-      setState((prev) => ({
-        ...prev,
-        userProfile: null,
-      }));
-
-      await new Promise((resolve) => setTimeout(resolve, 50));
       await supabase.auth.signOut();
+      setState(initialAuthState);
     } catch (error) {
       console.error("Error signing out:", error);
     } finally {
-      setLoading(false);
+      setAuthLoading(false);
     }
   };
 
-  // Return profileLoading in the value
-  const value = {
-    ...state,
-    signUp,
-    signIn,
-    signInWithGoogle: handleGoogleSignIn,
-    signOut,
-    refreshProfile,
-    setOnboardingCompleted,
-    loading,
-    profileLoading,
-  };
+  const value = useMemo(
+    () => ({
+      ...state,
+      signUp,
+      signIn,
+      signInWithGoogle: handleGoogleSignIn,
+      signOut,
+      refreshProfile,
+      setOnboardingCompleted,
+      loading: authLoading || profileLoading,
+    }),
+    [state, authLoading, profileLoading]
+  );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
-// Hook to use Auth context
 export function useAuth() {
   const context = useContext(AuthContext);
   if (context === undefined) {
