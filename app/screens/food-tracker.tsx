@@ -60,30 +60,30 @@ export default function FoodTracker() {
   const router = useRouter();
   const { colors } = useTheme();
   const { user } = useAuth();
-  
+
   // Search state
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<Food[]>([]);
   const [searchLoading, setSearchLoading] = useState(false);
   const [recentSearches, setRecentSearches] = useState<Food[]>([]);
-  
+
   // Add food state
   const [selectedFood, setSelectedFood] = useState<Food | null>(null);
   const [addFoodVisible, setAddFoodVisible] = useState(false);
   const [quantity, setQuantity] = useState("100");
   const [selectedMealType, setSelectedMealType] = useState<"breakfast" | "lunch" | "dinner" | "snack">("breakfast");
-  
+
   // Daily log for today (needed for adding food)
   const [dailyLog, setDailyLog] = useState<DailyLog | null>(null);
   const [loading, setLoading] = useState(false);
-  
+
   // Macro tag colors - softer, more modern palette
   const macroColors = {
     protein: "#9333ea80", // Softer purple with transparency
     carbs: "#ca8a0480", // Softer amber with transparency
     fat: "#dc262680", // Softer red with transparency
   };
-  
+
   // Common foods by category
   const commonFoodCategories = [
     {
@@ -205,13 +205,11 @@ export default function FoodTracker() {
       setAddFoodVisible(false);
       setSelectedFood(null);
       setQuantity("100");
-      
+
       // Show success message
-      Alert.alert(
-        "Alimento Adicionado", 
-        `${selectedFood.description} foi adicionado ao seu diário com sucesso!`,
-        [{ text: "OK" }]
-      );
+      Alert.alert("Alimento Adicionado", `${selectedFood.description} foi adicionado ao seu diário com sucesso!`, [
+        { text: "OK" },
+      ]);
     } catch (error) {
       console.error("Error adding food:", error);
       Alert.alert("Erro", "Ocorreu um erro ao adicionar o alimento.");
@@ -227,13 +225,10 @@ export default function FoodTracker() {
   // Render a food item in search results
   const renderFoodItem = (item: Food) => {
     return (
-      <Pressable
-        className="bg-card rounded-lg border border-border p-3 mb-3"
-        onPress={() => handleSelectFood(item)}
-      >
+      <Pressable className="bg-card rounded-lg border border-border p-3 mb-3" onPress={() => handleSelectFood(item)}>
         <Text className="text-foreground font-medium mb-1">{item.description}</Text>
         <Text className="text-muted-foreground text-xs mb-2">{item.category}</Text>
-        
+
         {/* Macro tags row */}
         <View className="flex-row flex-wrap">
           <CalorieTag calories={item.kcal} />
@@ -268,10 +263,12 @@ export default function FoodTracker() {
             autoFocus={false}
           />
           {searchQuery.length > 0 && (
-            <Pressable onPress={() => {
-              setSearchQuery("");
-              setSearchResults([]);
-            }}>
+            <Pressable
+              onPress={() => {
+                setSearchQuery("");
+                setSearchResults([]);
+              }}
+            >
               <Feather name="x" size={20} color={colors.mutedForeground} />
             </Pressable>
           )}
@@ -318,7 +315,9 @@ export default function FoodTracker() {
                     className="bg-card rounded-lg border border-border p-3 mr-3 min-w-[150px]"
                     onPress={() => handleSelectFood(food)}
                   >
-                    <Text className="text-foreground font-medium mb-1" numberOfLines={1}>{food.description}</Text>
+                    <Text className="text-foreground font-medium mb-1" numberOfLines={1}>
+                      {food.description}
+                    </Text>
                     <Text className="text-primary text-xs">{food.kcal} kcal/100g</Text>
                   </Pressable>
                 ))}
@@ -331,11 +330,11 @@ export default function FoodTracker() {
             <View key={index} className="mb-6">
               <View className="flex-row items-center mb-3">
                 <View className="w-8 h-8 rounded-full bg-primary/10 items-center justify-center mr-2">
-                  <Feather name={category.icon} size={18} color={colors.primary} />
+                  <Feather name={category.icon as keyof typeof Feather.glyphMap} size={18} color={colors.primary} />
                 </View>
                 <Text className="text-lg font-bold text-foreground">{category.name}</Text>
               </View>
-              
+
               <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                 {category.foods.map((food) => (
                   <Pressable
@@ -424,7 +423,7 @@ export default function FoodTracker() {
               <View className="bg-card rounded-xl border border-border p-4 mb-6">
                 <Text className="text-xl font-medium text-foreground mb-1">{selectedFood.description}</Text>
                 <Text className="text-muted-foreground mb-2">{selectedFood.category}</Text>
-                
+
                 {/* Macro tags for per 100g */}
                 <View className="flex-row flex-wrap mt-2">
                   <CalorieTag calories={selectedFood.kcal} />
@@ -531,33 +530,33 @@ export default function FoodTracker() {
               {/* Preview - Simplified with "<quantity>g de <food>" format */}
               <View className="bg-card rounded-xl border border-border p-4 mb-6">
                 <Text className="font-medium text-foreground mb-2">Você está adicionando:</Text>
-                
+
                 {/* Display format: "<quantity>g de <food>" */}
                 <Text className="text-foreground text-lg mb-3">
                   <Text className="text-muted-foreground">{quantity}g de </Text>
                   {selectedFood.description}
                 </Text>
-                
+
                 {/* Macro tags for selected quantity */}
                 <View className="flex-row flex-wrap">
                   <CalorieTag calories={Math.round((selectedFood.kcal * parseFloat(quantity || "0")) / 100)} />
-                  
-                  <MacroTag 
-                    value={Math.round((selectedFood.protein_g * parseFloat(quantity || "0")) / 100)} 
-                    color={macroColors.protein} 
-                    label="prot." 
+
+                  <MacroTag
+                    value={Math.round((selectedFood.protein_g * parseFloat(quantity || "0")) / 100)}
+                    color={macroColors.protein}
+                    label="prot."
                   />
-                  
-                  <MacroTag 
-                    value={Math.round((selectedFood.carbs_g * parseFloat(quantity || "0")) / 100)} 
-                    color={macroColors.carbs} 
-                    label="carb." 
+
+                  <MacroTag
+                    value={Math.round((selectedFood.carbs_g * parseFloat(quantity || "0")) / 100)}
+                    color={macroColors.carbs}
+                    label="carb."
                   />
-                  
-                  <MacroTag 
-                    value={Math.round((selectedFood.fat_g * parseFloat(quantity || "0")) / 100)} 
-                    color={macroColors.fat} 
-                    label="gord." 
+
+                  <MacroTag
+                    value={Math.round((selectedFood.fat_g * parseFloat(quantity || "0")) / 100)}
+                    color={macroColors.fat}
+                    label="gord."
                   />
                 </View>
               </View>

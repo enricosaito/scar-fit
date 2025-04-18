@@ -22,19 +22,19 @@ import { DailyLog, getUserDailyLog, addFoodToLog, removeFoodFromLog } from "../m
 import Header from "../components/ui/Header";
 
 // New MacroTag component with labels
-const MacroTag = ({ 
-  value, 
-  color, 
+const MacroTag = ({
+  value,
+  color,
   label,
-  textColor = "white" 
-}: { 
-  value: string | number; 
-  color: string; 
+  textColor = "white",
+}: {
+  value: string | number;
+  color: string;
   label: string;
-  textColor?: string 
+  textColor?: string;
 }) => {
   return (
-    <View 
+    <View
       className="rounded-md px-2 py-0.5 mr-2 flex-row items-center justify-center"
       style={{ backgroundColor: color }}
     >
@@ -46,19 +46,13 @@ const MacroTag = ({
 };
 
 // Calorie Tag component
-const CalorieTag = ({ 
-  calories
-}: { 
-  calories: number 
-}) => {
+const CalorieTag = ({ calories }: { calories: number }) => {
   return (
-    <View 
+    <View
       className="rounded-md px-2 py-0.5 mr-2 flex-row items-center justify-center"
       style={{ backgroundColor: "#3b82f680" }}
     >
-      <Text className="text-xs font-medium text-white">
-        {calories} kcal
-      </Text>
+      <Text className="text-xs font-medium text-white">{calories} kcal</Text>
     </View>
   );
 };
@@ -434,21 +428,9 @@ export default function Tracking() {
                         </View>
                         <View className="flex-row mt-1">
                           {/* Updated macro tags with labels */}
-                          <MacroTag 
-                            value={item.protein_g} 
-                            color={macroColors.protein}
-                            label="prot." 
-                          />
-                          <MacroTag 
-                            value={item.carbs_g} 
-                            color={macroColors.carbs}
-                            label="carb." 
-                          />
-                          <MacroTag 
-                            value={item.fat_g} 
-                            color={macroColors.fat}
-                            label="gord." 
-                          />
+                          <MacroTag value={item.protein_g} color={macroColors.protein} label="prot." />
+                          <MacroTag value={item.carbs_g} color={macroColors.carbs} label="carb." />
+                          <MacroTag value={item.fat_g} color={macroColors.fat} label="gord." />
                         </View>
                       </Pressable>
                     )}
@@ -585,21 +567,21 @@ export default function Tracking() {
 
                 <View className="flex-row flex-wrap">
                   <CalorieTag calories={Math.round((selectedFood.kcal * parseFloat(quantity || "0")) / 100)} />
-                  
-                  <MacroTag 
+
+                  <MacroTag
                     value={Math.round((selectedFood.protein_g * parseFloat(quantity || "0")) / 100)}
                     color={macroColors.protein}
-                    label="prot." 
+                    label="prot."
                   />
-                  <MacroTag 
+                  <MacroTag
                     value={Math.round((selectedFood.carbs_g * parseFloat(quantity || "0")) / 100)}
                     color={macroColors.carbs}
-                    label="carb." 
+                    label="carb."
                   />
-                  <MacroTag 
+                  <MacroTag
                     value={Math.round((selectedFood.fat_g * parseFloat(quantity || "0")) / 100)}
                     color={macroColors.fat}
-                    label="gord." 
+                    label="gord."
                   />
                 </View>
               </View>
@@ -634,7 +616,7 @@ function MealSection({ title, icon, items, colors, onRemove, macroColors }: Meal
     <View className="bg-card rounded-xl border border-border p-4 mb-4">
       <View className="flex-row items-center mb-3">
         <View className="w-8 h-8 rounded-full bg-primary/10 items-center justify-center mr-2">
-          <Feather name={icon} size={16} color={colors.primary} />
+          <Feather name={icon as keyof typeof Feather.glyphMap} size={16} color={colors.primary} />
         </View>
         <Text className="text-lg font-medium text-foreground">{title}</Text>
       </View>
@@ -648,29 +630,29 @@ function MealSection({ title, icon, items, colors, onRemove, macroColors }: Meal
                 <Text className="text-muted-foreground font-normal">{item.quantity}g de </Text>
                 {item.food.description}
               </Text>
-              
+
               {/* Updated macro tags */}
               <View className="flex-row flex-wrap mt-1.5">
                 <CalorieTag calories={Math.round((item.food.kcal * item.quantity) / 100)} />
-                
-                <MacroTag 
-                  value={Math.round((item.food.protein_g * item.quantity) / 100)} 
+
+                <MacroTag
+                  value={Math.round((item.food.protein_g * item.quantity) / 100)}
                   color={macroColors.protein}
-                  label="prot." 
+                  label="prot."
                 />
-                <MacroTag 
-                  value={Math.round((item.food.carbs_g * item.quantity) / 100)} 
+                <MacroTag
+                  value={Math.round((item.food.carbs_g * item.quantity) / 100)}
                   color={macroColors.carbs}
-                  label="carb." 
+                  label="carb."
                 />
-                <MacroTag 
-                  value={Math.round((item.food.fat_g * item.quantity) / 100)} 
+                <MacroTag
+                  value={Math.round((item.food.fat_g * item.quantity) / 100)}
                   color={macroColors.fat}
-                  label="gord." 
+                  label="gord."
                 />
               </View>
             </View>
-            
+
             <Pressable
               className="ml-2 p-2"
               onPress={() => {

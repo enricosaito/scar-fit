@@ -249,10 +249,22 @@ export default function AddMenu() {
                             const color = item.color;
                             switch (item.iconFamily) {
                               case "Feather":
-                                return <Feather name={item.icon} size={size} color={color} />;
+                                return (
+                                  <Feather
+                                    name={item.icon as keyof typeof Feather.glyphMap}
+                                    size={size}
+                                    color={color}
+                                  />
+                                );
                               case "MaterialCommunityIcons":
                               default:
-                                return <MaterialCommunityIcons name={item.icon} size={size} color={color} />;
+                                return (
+                                  <MaterialCommunityIcons
+                                    name={item.icon as keyof typeof MaterialCommunityIcons.glyphMap}
+                                    size={size}
+                                    color={color}
+                                  />
+                                );
                             }
                           })()}
                         </View>

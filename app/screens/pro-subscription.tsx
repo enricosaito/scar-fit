@@ -63,7 +63,7 @@ export default function ProSubscription() {
                 className="w-12 h-12 rounded-full items-center justify-center mr-4"
                 style={{ backgroundColor: `${goldColor}20` }} // Transparent gold background
               >
-                <Feather name={feature.icon} size={20} color={goldColor} />
+                <Feather name={feature.icon as keyof typeof Feather.glyphMap} size={20} color={goldColor} />
               </View>
               <View className="flex-1">
                 <View className="flex-row items-center justify-between">

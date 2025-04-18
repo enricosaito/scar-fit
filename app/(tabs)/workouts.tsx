@@ -45,7 +45,7 @@ export default function Workouts() {
                   onPress={() => router.push("/screens/exercise")}
                 >
                   <View className="w-12 h-12 rounded-full bg-primary/10 items-center justify-center mb-2">
-                    <Feather name={category.icon} size={24} color={colors.primary} />
+                    <Feather name={category.icon as keyof typeof Feather.glyphMap} size={24} color={colors.primary} />
                   </View>
                   <Text className="text-foreground font-medium">{category.title}</Text>
                 </Pressable>
