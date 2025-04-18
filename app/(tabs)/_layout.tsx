@@ -5,10 +5,18 @@ import { FontAwesome5 } from "@expo/vector-icons";
 import { Pressable, View } from "react-native";
 import { useTheme } from "../context/ThemeContext";
 import { useAddMenu } from "../context/AddMenuContext";
+import * as Haptics from "expo-haptics";
 
 export default function TabLayout() {
   const { colors } = useTheme();
   const { showMenu } = useAddMenu();
+
+  const handleAddPress = () => {
+    // First trigger haptic feedback
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    // Then show the menu
+    showMenu();
+  };
 
   return (
     <Tabs
@@ -61,8 +69,8 @@ export default function TabLayout() {
           tabPress: (e) => {
             // Prevent default tab navigation behavior
             e.preventDefault();
-            // Show the menu instead
-            showMenu();
+            // Call the handler function
+            handleAddPress();
           },
         })}
         options={{
@@ -70,12 +78,7 @@ export default function TabLayout() {
           tabBarButton: (props) => (
             <Pressable
               {...props}
-              onPress={(e) => {
-                // Prevent navigation
-                e.preventDefault();
-                // Show the menu
-                showMenu();
-              }}
+              onPress={handleAddPress} // Use the same handler function
               className="h-full justify-center items-center"
             >
               <View
