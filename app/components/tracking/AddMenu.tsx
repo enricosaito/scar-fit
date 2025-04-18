@@ -13,7 +13,7 @@ import {
   PanResponder,
 } from "react-native";
 import { useRouter } from "expo-router";
-import { Feather } from "@expo/vector-icons";
+import { Feather, MaterialCommunityIcons, FontAwesome } from "@expo/vector-icons";
 import { useTheme } from "../../context/ThemeContext";
 import { useAddMenu } from "../../context/AddMenuContext";
 
@@ -59,6 +59,7 @@ export default function AddMenu() {
     {
       id: "food-search",
       icon: "search",
+      iconFamily: "Feather",
       title: "Adicionar Alimento",
       action: () => {
         hideMenu();
@@ -70,7 +71,8 @@ export default function AddMenu() {
     },
     {
       id: "barcode-scan",
-      icon: "maximize",
+      icon: "barcode-scan",
+      iconFamily: "MaterialIcons",
       title: "Escanear Código",
       action: () => {
         hideMenu();
@@ -83,6 +85,7 @@ export default function AddMenu() {
     {
       id: "food-voice",
       icon: "mic",
+      iconFamily: "Feather",
       title: "Detectar por Áudio",
       action: () => {
         hideMenu();
@@ -95,6 +98,7 @@ export default function AddMenu() {
     {
       id: "food-photo",
       icon: "camera",
+      iconFamily: "Feather",
       title: "Detectar por Foto",
       action: () => {
         hideMenu();
@@ -240,7 +244,17 @@ export default function AddMenu() {
                             borderWidth: 0,
                           }}
                         >
-                          <Feather name={item.icon} size={28} color={item.color} />
+                          {(() => {
+                            const size = 28;
+                            const color = item.color;
+                            switch (item.iconFamily) {
+                              case "Feather":
+                                return <Feather name={item.icon} size={size} color={color} />;
+                              case "MaterialCommunityIcons":
+                              default:
+                                return <MaterialCommunityIcons name={item.icon} size={size} color={color} />;
+                            }
+                          })()}
                         </View>
 
                         <Text className="text-foreground text-center font-medium">{item.title}</Text>
