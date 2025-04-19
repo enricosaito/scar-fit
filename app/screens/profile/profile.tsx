@@ -1,4 +1,4 @@
-// app/screens/profile/profile.tsx
+// app/screens/profile/profile.tsx (updated without MacroSummary)
 import React from "react";
 import { Text, View, SafeAreaView, Pressable, Alert, ScrollView, ActivityIndicator } from "react-native";
 import { useRouter } from "expo-router";
@@ -6,6 +6,7 @@ import { Feather } from "@expo/vector-icons";
 import { useTheme } from "../../context/ThemeContext";
 import { useAuth } from "../../context/AuthContext";
 import { resetUserMacros } from "../../models/user";
+import { Goal, ActivityLevel } from "../../screens/onboarding/context/OnboardingContext";
 
 export default function Profile() {
   const router = useRouter();
@@ -64,9 +65,9 @@ export default function Profile() {
   };
 
   // Format user's goal to display in Portuguese
-  const formatGoal = (goal) => {
+  const formatGoal = (goal: Goal | undefined): string => {
     if (!goal) return "";
-    const goals = {
+    const goals: Record<Goal, string> = {
       lose: "Perder Peso",
       maintain: "Manter Peso",
       gain: "Ganhar Massa",
@@ -75,9 +76,9 @@ export default function Profile() {
   };
 
   // Format activity level to display in Portuguese
-  const formatActivityLevel = (level) => {
+  const formatActivityLevel = (level: ActivityLevel | undefined): string => {
     if (!level) return "";
-    const levels = {
+    const levels: Record<ActivityLevel, string> = {
       sedentary: "Sedentário",
       light: "Levemente Ativo",
       moderate: "Moderadamente Ativo",
@@ -167,7 +168,8 @@ export default function Profile() {
                     <Text className="text-2xl font-bold text-foreground">{userProfile.macros.calories}</Text>
                   </View>
                   <Text className="text-xs text-muted-foreground mt-1">
-                    {formatGoal(userProfile.macros.goal)} • {formatActivityLevel(userProfile.macros.activityLevel)}
+                    {formatGoal(userProfile.macros.goal as Goal)} •{" "}
+                    {formatActivityLevel(userProfile.macros.activityLevel as ActivityLevel)}
                   </Text>
                 </View>
 
