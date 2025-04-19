@@ -132,7 +132,7 @@ export default function MealList({ meals }: MealListProps) {
                 className="w-12 h-12 rounded-full items-center justify-center mr-3"
                 style={{ backgroundColor: `${getIconColor(meal.type)}20` }}
               >
-                <Feather name={meal.icon} size={20} color={getIconColor(meal.type)} />
+                <Feather name={meal.icon as keyof typeof Feather.glyphMap} size={20} color={getIconColor(meal.type)} />
               </View>
               <View className="flex-1">
                 <Text className="text-foreground font-medium text-base">{meal.title}</Text>

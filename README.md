@@ -1,5 +1,7 @@
 # ScarFit
 
+<img src="./assets/images/ScarFitIcon.png" alt="ScarFit Icon" width="200" />
+
 ScarFit is a comprehensive fitness and nutrition tracking application built with React Native and Expo. The app helps users track their macronutrients, meals, and workouts to achieve their fitness goals.
 
 ## Features
@@ -20,4 +22,4 @@ ScarFit is a comprehensive fitness and nutrition tracking application built with
 - **Icons**: Feather Icons
 - **Navigation**: Expo Router
 
-![ScarFit Screenshot](./assets/images/Screenshot.jpg)
+<img src="./assets/images/Screenshot.jpg" alt="ScarFit Screenshot" width="600" />

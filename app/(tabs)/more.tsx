@@ -119,7 +119,7 @@ export default function More() {
             <Pressable
               key={index}
               className={`flex-row items-center py-4 border-b border-border ${item.isPro ? "mb-2" : ""}`}
-              onPress={item.action || (() => router.push(item.route))}
+              onPress={item.action || (() => router.push(item.route as any))}
               disabled={loading && item.icon === "log-out"}
             >
               <View

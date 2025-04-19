@@ -19,6 +19,14 @@ interface NutritionSummaryProps {
   onToggleDetails?: () => void;
 }
 
+interface CalorieCircleProps {
+  current: number;
+  goal: number;
+  caloriesAmount: number;
+  isOverGoal: boolean;
+  unfilledColor: string;
+}
+
 export default function NutritionSummary({
   macros,
   current = {},
@@ -150,7 +158,7 @@ export default function NutritionSummary({
       {/* Today's date with weekday */}
       <Pressable onPress={onToggleDetails} className="flex-row justify-between items-center mb-4">
         <Text className="text-lg font-semibold text-foreground">{formatTodayDate()}</Text>
-        {onToggleDetails && (
+        {onToggleDetails !== (() => {}) && (
           <Feather name={showDetails ? "calendar" : "chevron-down"} size={18} color={colors.mutedForeground} />
         )}
       </Pressable>
@@ -243,10 +251,16 @@ export default function NutritionSummary({
 }
 
 // Enhanced component for the calorie circle with "calories left" display and animation
-function CalorieCircleWithCaloriesLeft({ current, goal, caloriesAmount, isOverGoal, unfilledColor }) {
+function CalorieCircleWithCaloriesLeft({
+  current,
+  goal,
+  caloriesAmount,
+  isOverGoal,
+  unfilledColor,
+}: CalorieCircleProps) {
   const { colors } = useTheme();
   const [animatedProgress, setAnimatedProgress] = useState(0);
-  const animationRef = useRef(null);
+  const animationRef = useRef<NodeJS.Timeout | null>(null);
 
   // Calculate percentage
   const percentage = goal > 0 ? Math.min(120, (current / goal) * 100) : 0;
@@ -289,6 +303,7 @@ function CalorieCircleWithCaloriesLeft({ current, goal, caloriesAmount, isOverGo
     return () => {
       if (animationRef.current) {
         clearTimeout(animationRef.current);
+        animationRef.current = null;
       }
     };
   }, [percentage]);

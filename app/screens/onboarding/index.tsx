@@ -8,7 +8,7 @@ import { onboardingSteps } from "./config/OnboardingFlow";
 import ProgressIndicator from "./components/ProgressIndicator";
 import StepNavigation from "./components/StepNavigation";
 import { useTheme } from "../../context/ThemeContext";
-import { OnboardingProvider } from "./context/OnboardingContext";
+import { OnboardingProvider, Gender, ActivityLevel, Goal, OnboardingFormData } from "./context/OnboardingContext";
 import { Keyboard } from "react-native";
 
 export default function OnboardingScreen() {
@@ -16,7 +16,7 @@ export default function OnboardingScreen() {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<OnboardingFormData>({
     gender: "male",
     age: "",
     weight: "",
@@ -24,16 +24,12 @@ export default function OnboardingScreen() {
     activityLevel: "moderate",
     goal: "maintain",
   });
-  // Add this function inside your component
+
   const dismissKeyboardBeforeTransition = () => {
     Keyboard.dismiss();
-    // Small delay before navigation
-    setTimeout(() => {
-      // Your navigation code
-    }, 100);
+    setTimeout(() => {}, 100);
   };
 
-  // Animation opacity value
   const backgroundOpacity = useSharedValue(0);
   const backgroundStyle = useAnimatedStyle(() => {
     return {
@@ -41,7 +37,6 @@ export default function OnboardingScreen() {
     };
   });
 
-  // Set background animation on mount
   useEffect(() => {
     backgroundOpacity.value = withTiming(1, { duration: 1000 });
   }, []);
@@ -49,7 +44,7 @@ export default function OnboardingScreen() {
   const currentStep = onboardingSteps[currentStepIndex];
   const StepComponent = currentStep.component;
 
-  const updateFormData = (key, value) => {
+  const updateFormData = (key: keyof OnboardingFormData, value: string | Gender | ActivityLevel | Goal) => {
     setFormData((prev) => ({ ...prev, [key]: value }));
   };
 
@@ -76,8 +71,6 @@ export default function OnboardingScreen() {
   };
 
   const completeOnboarding = () => {
-    // Save user data here if needed
-    // Then navigate to main app
     router.replace("/(tabs)");
   };
 
@@ -86,13 +79,10 @@ export default function OnboardingScreen() {
       <SafeAreaView className="flex-1 bg-background" style={{ paddingTop: insets.top }}>
         <StatusBar barStyle="light-content" />
 
-        {/* Animated Background (could be gradient or image) */}
         <Animated.View className="absolute top-0 left-0 right-0 bottom-0 bg-background" style={backgroundStyle} />
 
-        {/* Progress Indicator */}
         <ProgressIndicator totalSteps={onboardingSteps.length} currentStep={currentStepIndex} />
 
-        {/* Step Content with Smooth Transitions */}
         <Animated.View
           className="flex-1 px-6"
           entering={FadeIn.duration(600)}
@@ -102,7 +92,6 @@ export default function OnboardingScreen() {
           <StepComponent onNext={handleNext} onBack={handleBack} formData={formData} updateFormData={updateFormData} />
         </Animated.View>
 
-        {/* Navigation Controls */}
         <StepNavigation
           currentStep={currentStepIndex}
           totalSteps={onboardingSteps.length}

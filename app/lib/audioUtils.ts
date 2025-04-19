@@ -35,7 +35,15 @@ export const convertToMP3 = async (inputUri: string): Promise<string> => {
       },
       ios: {
         extension: ".mp3",
-        outputFormat: "aac", // Use string instead of constant
+        outputFormat: "aac",
+        audioQuality: Audio.IOSAudioQuality.HIGH,
+        sampleRate: 44100,
+        numberOfChannels: 2,
+        bitRate: 128000,
+      },
+      web: {
+        mimeType: "audio/webm",
+        bitsPerSecond: 128000,
       },
     });
 

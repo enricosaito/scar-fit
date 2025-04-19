@@ -13,7 +13,6 @@ import Animated, {
 } from "react-native-reanimated";
 import { Feather } from "@expo/vector-icons";
 import { useTheme } from "../../../context/ThemeContext";
-import LottieView from "lottie-react-native";
 
 interface WelcomeStepProps {
   onNext: () => void;

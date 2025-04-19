@@ -71,24 +71,16 @@ export default function ExercisePage() {
           />
         </View>
 
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          className="mb-4"
-        >
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-4">
           <Pressable
             className={`mr-2 px-3 py-2 rounded-full flex-row items-center ${
               selectedCategory === null ? "bg-primary" : "bg-card border border-border"
             }`}
             onPress={() => setSelectedCategory(null)}
           >
-            <Text
-              className={selectedCategory === null ? "text-white" : "text-foreground"}
-            >
-              Todos
-            </Text>
+            <Text className={selectedCategory === null ? "text-white" : "text-foreground"}>Todos</Text>
           </Pressable>
-          
+
           {categories.map((category) => (
             <Pressable
               key={category.id}
@@ -98,14 +90,12 @@ export default function ExercisePage() {
               onPress={() => setSelectedCategory(category.id as ExerciseCategory)}
             >
               <Feather
-                name={category.icon}
+                name={category.icon as keyof typeof Feather.glyphMap}
                 size={16}
                 color={selectedCategory === category.id ? "white" : colors.foreground}
                 style={{ marginRight: 4 }}
               />
-              <Text
-                className={selectedCategory === category.id ? "text-white" : "text-foreground"}
-              >
+              <Text className={selectedCategory === category.id ? "text-white" : "text-foreground"}>
                 {category.name}
               </Text>
             </Pressable>
@@ -115,7 +105,7 @@ export default function ExercisePage() {
 
       <ScrollView className="flex-1 px-4">
         <Text className="text-lg font-bold text-foreground mb-3">Exercícios Populares</Text>
-        
+
         {filteredExercises.length > 0 ? (
           filteredExercises.map((exercise) => (
             <Pressable
@@ -128,7 +118,7 @@ export default function ExercisePage() {
               }}
             >
               <View className="w-12 h-12 rounded-full bg-primary/10 items-center justify-center mr-3">
-                <Feather name={exercise.icon} size={20} color={colors.primary} />
+                <Feather name={exercise.icon as keyof typeof Feather.glyphMap} size={20} color={colors.primary} />
               </View>
               <View className="flex-1">
                 <Text className="text-foreground font-medium">{exercise.name}</Text>
@@ -149,7 +139,8 @@ export default function ExercisePage() {
         <View className="bg-accent rounded-xl p-6 my-4">
           <Text className="text-lg font-semibold text-accent-foreground mb-2">Registre Seus Exercícios</Text>
           <Text className="text-accent-foreground">
-            Acompanhar suas atividades físicas junto com sua alimentação ajuda a manter um balanço energético ideal para seus objetivos.
+            Acompanhar suas atividades físicas junto com sua alimentação ajuda a manter um balanço energético ideal para
+            seus objetivos.
           </Text>
         </View>
       </ScrollView>

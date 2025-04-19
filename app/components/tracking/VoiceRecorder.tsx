@@ -1,4 +1,4 @@
-// app/components/tracking/VoiceRecorder.tsx (updated)
+// app/components/tracking/VoiceRecorder.tsx
 import React, { useState, useEffect } from "react";
 import { View, Text, Pressable, ActivityIndicator, Alert } from "react-native";
 import { Feather } from "@expo/vector-icons";
@@ -18,7 +18,6 @@ const VoiceRecorder = ({ onRecordingComplete, onCancel }: VoiceRecorderProps) =>
   const [recordingDuration, setRecordingDuration] = useState(0);
   const [permissionStatus, setPermissionStatus] = useState<boolean | null>(null);
 
-  // Request permissions and set up Audio
   useEffect(() => {
     const getPermissions = async () => {
       try {
@@ -33,32 +32,20 @@ const VoiceRecorder = ({ onRecordingComplete, onCancel }: VoiceRecorderProps) =>
     getPermissions();
 
     return () => {
-      if (recording) {
-        stopRecording();
-      }
+      if (recording) stopRecording();
     };
   }, []);
 
-  // Timer for recording duration
   useEffect(() => {
     let interval: NodeJS.Timeout;
-
     if (isRecording) {
-      interval = setInterval(() => {
-        setRecordingDuration((prev) => prev + 1);
-      }, 1000);
+      interval = setInterval(() => setRecordingDuration((prev) => prev + 1), 1000);
     }
-
-    return () => {
-      if (interval) clearInterval(interval);
-    };
+    return () => clearInterval(interval);
   }, [isRecording]);
 
   const startRecording = async () => {
     try {
-      console.log("Starting recording...");
-
-      // Set audio mode
       await Audio.setAudioModeAsync({
         allowsRecordingIOS: true,
         playsInSilentModeIOS: true,
@@ -68,27 +55,22 @@ const VoiceRecorder = ({ onRecordingComplete, onCancel }: VoiceRecorderProps) =>
       });
 
       const newRecording = new Audio.Recording();
-
-      // Prepare recording with high quality settings
       await newRecording.prepareToRecordAsync({
         android: {
           extension: ".m4a",
-          outputFormat: Audio.AndroidOutputFormat.MPEG_4, // Updated
-          audioEncoder: Audio.AndroidAudioEncoder.AAC, // Updated
+          outputFormat: Audio.AndroidOutputFormat.MPEG_4,
+          audioEncoder: Audio.AndroidAudioEncoder.AAC,
           sampleRate: 44100,
           numberOfChannels: 1,
           bitRate: 128000,
         },
         ios: {
           extension: ".m4a",
-          outputFormat: Audio.IOSOutputFormat.MPEG4AAC, // Updated
-          audioQuality: Audio.IOSAudioQuality.HIGH, // Updated
+          outputFormat: Audio.IOSOutputFormat.MPEG4AAC,
+          audioQuality: Audio.IOSAudioQuality.HIGH,
           sampleRate: 44100,
           numberOfChannels: 1,
           bitRate: 128000,
-          linearPCMBitDepth: 16,
-          linearPCMIsBigEndian: false,
-          linearPCMIsFloat: false,
         },
         web: {
           mimeType: "audio/webm",
@@ -97,7 +79,6 @@ const VoiceRecorder = ({ onRecordingComplete, onCancel }: VoiceRecorderProps) =>
       });
 
       await newRecording.startAsync();
-
       setRecording(newRecording);
       setIsRecording(true);
       setRecordingDuration(0);
@@ -112,25 +93,11 @@ const VoiceRecorder = ({ onRecordingComplete, onCancel }: VoiceRecorderProps) =>
 
   const stopRecording = async () => {
     if (!recording) return;
-
     setIsRecording(false);
-
     try {
-      console.log("Stopping recording...");
       await recording.stopAndUnloadAsync();
-
-      await Audio.setAudioModeAsync({
-        allowsRecordingIOS: true,
-        playsInSilentModeIOS: true,
-        staysActiveInBackground: true,
-        interruptionModeIOS: InterruptionModeIOS.DoNotMix,
-        interruptionModeAndroid: InterruptionModeAndroid.DoNotMix,
-      });
-
       const uri = recording.getURI();
-
       if (uri) {
-        console.log("Recording completed. URI:", uri);
         onRecordingComplete(uri);
       } else {
         throw new Error("URI não disponível após gravação");
@@ -138,12 +105,24 @@ const VoiceRecorder = ({ onRecordingComplete, onCancel }: VoiceRecorderProps) =>
     } catch (error) {
       console.error("Failed to stop recording", error);
       Alert.alert("Erro", "Não foi possível finalizar a gravação. Por favor, tente novamente.");
+    } finally {
+      setRecording(null);
     }
-
-    setRecording(null);
   };
 
-  // Format seconds to MM:SS
+  const handleCancel = async () => {
+    if (isRecording) {
+      try {
+        await recording?.stopAndUnloadAsync();
+      } catch (e) {
+        console.warn("Erro ao cancelar gravação:", e);
+      }
+      setRecording(null);
+      setIsRecording(false);
+    }
+    onCancel();
+  };
+
   const formatTime = (seconds: number): string => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
@@ -166,7 +145,7 @@ const VoiceRecorder = ({ onRecordingComplete, onCancel }: VoiceRecorderProps) =>
         <Text className="text-foreground mt-2 text-center">
           Permissão para usar o microfone negada. Por favor, habilite nas configurações do seu dispositivo.
         </Text>
-        <Button className="mt-4" onPress={onCancel}>
+        <Button className="mt-4" onPress={handleCancel}>
           Voltar
         </Button>
       </View>
@@ -174,35 +153,73 @@ const VoiceRecorder = ({ onRecordingComplete, onCancel }: VoiceRecorderProps) =>
   }
 
   return (
-    <View className="items-center justify-center py-6">
-      {isRecording ? (
-        <>
-          <View className="w-20 h-20 rounded-full bg-red-500 items-center justify-center mb-4">
-            <View className="w-12 h-12 rounded-full bg-red-700"></View>
-          </View>
-          <Text className="text-xl font-semibold text-foreground mb-2">{formatTime(recordingDuration)}</Text>
-          <Text className="text-muted-foreground mb-6">Gravando...</Text>
-          <Button onPress={stopRecording} className="px-6">
-            Parar
-          </Button>
-        </>
-      ) : (
-        <>
-          <Pressable
-            onPress={startRecording}
-            className="w-20 h-20 rounded-full bg-primary/20 items-center justify-center mb-4"
-          >
-            <Feather name="mic" size={36} color={colors.primary} />
-          </Pressable>
-          <Text className="text-lg font-medium text-foreground mb-2">Toque para começar a gravar</Text>
-          <Text className="text-muted-foreground mb-6 text-center px-4">
-            Descreva o que você comeu. Por exemplo: "Um prato de arroz com frango grelhado no almoço"
-          </Text>
-          <Button variant="outline" onPress={onCancel} className="px-6">
-            Cancelar
-          </Button>
-        </>
-      )}
+    <View className="flex-1 justify-between">
+      {/* Top Instructions */}
+      <View className="items-center justify-center px-6 pt-6">
+        <Text className="text-xl font-bold text-foreground mb-4">Detectar por Áudio</Text>
+        {isRecording ? (
+          <>
+            <Text className="text-3xl font-semibold text-foreground mb-2">{formatTime(recordingDuration)}</Text>
+            <Text className="text-red-500 font-medium mb-6">Gravando...</Text>
+          </>
+        ) : (
+          <>
+            <Text className="text-base text-foreground mb-4">Descreva o que você comeu. Por exemplo:</Text>
+            <View className="bg-card p-4 rounded-xl border border-border mb-6 w-full">
+              <Text className="text-foreground text-center">
+                "No almoço comi um prato com arroz, feijão e frango grelhado com salada."
+              </Text>
+            </View>
+            <Text className="text-muted-foreground text-center mb-2">
+              Mencione o tipo de refeição e os alimentos consumidos.
+            </Text>
+          </>
+        )}
+      </View>
+
+      {/* Action Buttons */}
+      <View className="items-center justify-center pb-10">
+        {isRecording ? (
+          <>
+            <Pressable
+              onPress={stopRecording}
+              className="w-24 h-24 rounded-full bg-red-500/20 items-center justify-center shadow-md"
+              style={{
+                shadowColor: "#EF4444",
+                shadowOffset: { width: 0, height: 3 },
+                shadowOpacity: 0.2,
+                shadowRadius: 5,
+                elevation: 3,
+              }}
+            >
+              <Feather name="stop-circle" size={40} color="#EF4444" />
+            </Pressable>
+            <Button variant="outline" onPress={handleCancel} className="mt-8">
+              Cancelar
+            </Button>
+          </>
+        ) : (
+          <>
+            <Text className="text-primary font-medium mb-4">Toque para começar a gravar</Text>
+            <Pressable
+              onPress={startRecording}
+              className="w-24 h-24 rounded-full bg-primary/20 items-center justify-center shadow-md"
+              style={{
+                shadowColor: colors.primary,
+                shadowOffset: { width: 0, height: 3 },
+                shadowOpacity: 0.2,
+                shadowRadius: 5,
+                elevation: 3,
+              }}
+            >
+              <Feather name="mic" size={40} color={colors.primary} />
+            </Pressable>
+            <Button variant="outline" onPress={handleCancel} className="mt-8">
+              Cancelar
+            </Button>
+          </>
+        )}
+      </View>
     </View>
   );
 };

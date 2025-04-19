@@ -12,7 +12,7 @@ export const signInWithGoogle = async () => {
   try {
     // Create the redirect URI
     const redirectUri = AuthSession.makeRedirectUri({
-      useProxy: true,
+      scheme: "scar-fit",
     });
 
     console.log("Using redirect URI:", redirectUri);

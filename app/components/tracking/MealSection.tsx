@@ -62,7 +62,7 @@ export default function MealSection({ title, icon, items, colors, onRemove }: Me
     <View className="bg-card rounded-xl border border-border p-4 mb-4">
       <View className="flex-row items-center mb-3">
         <View className="w-8 h-8 rounded-full bg-primary/10 items-center justify-center mr-2">
-          <Feather name={icon} size={16} color={colors.primary} />
+          <Feather name={icon as keyof typeof Feather.glyphMap} size={16} color={colors.primary} />
         </View>
         <Text className="text-lg font-medium text-foreground">{title}</Text>
       </View>

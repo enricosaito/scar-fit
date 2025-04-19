@@ -1,46 +1,143 @@
-// app/components/tracking/AddMenu.tsx (updated)
-// Update the imports
+// app/components/tracking/AddMenu.tsx
 import React, { useEffect, useRef, useState } from "react";
-import { View, Text, Pressable, Modal, SafeAreaView, Animated, Dimensions, Platform } from "react-native";
+import {
+  View,
+  Text,
+  Pressable,
+  Modal,
+  Animated,
+  Dimensions,
+  Platform,
+  AccessibilityInfo,
+  Easing,
+  PanResponder,
+} from "react-native";
 import { useRouter } from "expo-router";
-import { Feather } from "@expo/vector-icons";
+import { Feather, MaterialCommunityIcons, FontAwesome } from "@expo/vector-icons";
 import { useTheme } from "../../context/ThemeContext";
 import { useAddMenu } from "../../context/AddMenuContext";
-import VoiceFoodLoggingModal from "./VoiceFoodLoggingModal";
 
 export default function AddMenu() {
   const router = useRouter();
   const { colors } = useTheme();
   const { isMenuVisible, hideMenu } = useAddMenu();
 
-  // Add state for voice logging modal
-  const [voiceModalVisible, setVoiceModalVisible] = useState(false);
-
-  // Get device height to ensure full rendering
   const { height: screenHeight } = Dimensions.get("window");
 
-  // Animation values
   const backdropOpacity = useRef(new Animated.Value(0)).current;
   const menuTranslateY = useRef(new Animated.Value(screenHeight)).current;
 
+  const [localVisible, setLocalVisible] = useState(false);
+  const goldColor = "#F7B955";
+
+  const panResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: (_, gestureState) => gestureState.dy > 0,
+      onPanResponderMove: (_, gestureState) => {
+        if (gestureState.dy > 0) {
+          menuTranslateY.setValue(gestureState.dy);
+        }
+      },
+      onPanResponderRelease: (_, gestureState) => {
+        if (gestureState.dy > 100 || (gestureState.vy > 0.5 && gestureState.dy > 50)) {
+          hideMenu();
+        } else {
+          Animated.timing(menuTranslateY, {
+            toValue: 0,
+            duration: 200,
+            easing: Easing.out(Easing.cubic),
+            useNativeDriver: true,
+          }).start();
+        }
+      },
+    })
+  ).current;
+
+  // Updated menu items with new icons and colors
+  const menuItems = [
+    {
+      id: "food-search",
+      icon: "search",
+      iconFamily: "Feather",
+      title: "Adicionar Alimento",
+      action: () => {
+        hideMenu();
+        router.push("/screens/food-tracker");
+      },
+      color: colors.primary,
+      isPro: false,
+      order: 1,
+    },
+    {
+      id: "barcode-scan",
+      icon: "barcode-scan",
+      iconFamily: "MaterialIcons",
+      title: "Escanear Código",
+      action: () => {
+        hideMenu();
+        router.push("/screens/barcode-scanner");
+      },
+      color: "#ef4444",
+      isPro: false,
+      order: 2,
+    },
+    {
+      id: "food-voice",
+      icon: "mic",
+      iconFamily: "Feather",
+      title: "Detectar por Áudio",
+      action: () => {
+        hideMenu();
+        router.push("/screens/voice-food-logger");
+      },
+      color: goldColor,
+      isPro: true,
+      order: 3,
+    },
+    {
+      id: "food-photo",
+      icon: "camera",
+      iconFamily: "Feather",
+      title: "Detectar por Foto",
+      action: () => {
+        hideMenu();
+        router.push("/screens/pro-subscription");
+      },
+      color: goldColor,
+      isPro: true,
+      order: 4,
+    },
+  ];
+
+  // Sort items by order
+  const sortedMenuItems = [...menuItems].sort((a, b) => a.order - b.order);
+
   useEffect(() => {
     if (isMenuVisible) {
-      // Animate in
-      Animated.parallel([
-        Animated.timing(backdropOpacity, {
-          toValue: 0.7,
-          duration: 300,
-          useNativeDriver: true,
-        }),
-        Animated.spring(menuTranslateY, {
-          toValue: 0,
-          friction: 8,
-          tension: 80,
-          useNativeDriver: true,
-        }),
-      ]).start();
+      // Prepare animation values before showing
+      menuTranslateY.setValue(screenHeight);
+      backdropOpacity.setValue(0);
+      setLocalVisible(true);
+
+      requestAnimationFrame(() => {
+        Animated.parallel([
+          Animated.timing(backdropOpacity, {
+            toValue: 0.7,
+            duration: 300,
+            easing: Easing.out(Easing.cubic),
+            useNativeDriver: true,
+          }),
+          Animated.timing(menuTranslateY, {
+            toValue: 0,
+            duration: 350,
+            easing: Easing.out(Easing.cubic),
+            useNativeDriver: true,
+          }),
+        ]).start();
+      });
     } else {
-      // Animate out
+      // Animate out and hide modal after
       Animated.parallel([
         Animated.timing(backdropOpacity, {
           toValue: 0,
@@ -49,167 +146,149 @@ export default function AddMenu() {
         }),
         Animated.timing(menuTranslateY, {
           toValue: screenHeight,
-          duration: 250,
+          duration: 200,
           useNativeDriver: true,
         }),
-      ]).start();
+      ]).start(() => {
+        setLocalVisible(false);
+      });
     }
-  }, [isMenuVisible, screenHeight]);
+  }, [isMenuVisible]);
 
-  const menuItems = [
-    {
-      id: "food-search",
-      icon: "search",
-      title: "Adicionar Alimento",
-      subtitle: "Pesquisar no banco de dados",
-      action: () => {
-        hideMenu();
-        router.push("/screens/food-tracker");
-      },
-      pro: false,
-    },
-    {
-      id: "food-barcode",
-      icon: "maximize",
-      title: "Escanear Código de Barras",
-      subtitle: "Adicionar produtos rapidamente",
-      action: () => {
-        hideMenu();
-        router.push("/screens/barcode-scanner");
-      },
-      pro: false,
-    },
-    {
-      id: "food-voice",
-      icon: "mic",
-      title: "Detectar por Áudio",
-      subtitle: "Descreva o alimento por voz",
-      action: () => {
-        hideMenu();
-        router.push("/screens/voice-food-logger");
-      },
-      pro: true,
-    },
-    {
-      id: "food-photo",
-      icon: "camera",
-      title: "Detectar Alimento por Foto",
-      subtitle: "Identificar alimento por imagem",
-      action: () => {
-        hideMenu();
-        router.push("/screens/pro-subscription");
-      },
-      pro: true,
-    },
-    {
-      id: "exercise",
-      icon: "activity",
-      title: "Adicionar Exercício",
-      subtitle: "Registrar atividade física",
-      action: () => {
-        hideMenu();
-        router.push("/screens/exercise");
-      },
-      pro: false,
-    },
-  ];
-
-  // Add extra padding for iOS devices with notch/dynamic island
   const bottomSafeArea = Platform.OS === "ios" ? 34 : 0;
 
   return (
-    <>
-      <Modal
-        visible={isMenuVisible}
-        transparent={true}
-        animationType="none"
-        onRequestClose={hideMenu}
-        statusBarTranslucent={true}
-      >
-        <View className="flex-1" style={{ backgroundColor: "transparent" }}>
-          {/* Backdrop */}
+    <Modal
+      visible={localVisible}
+      transparent={true}
+      animationType="none"
+      onRequestClose={hideMenu}
+      statusBarTranslucent={true}
+      onShow={() => {
+        if (Platform.OS === "ios") {
+          AccessibilityInfo.announceForAccessibility("Menu de adição aberto");
+        }
+      }}
+    >
+      <View className="flex-1" style={{ backgroundColor: "transparent" }}>
+        {/* Backdrop */}
+        <Animated.View
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "#000",
+            opacity: backdropOpacity,
+          }}
+          onTouchEnd={hideMenu}
+        />
+
+        {/* Menu Content */}
+        <View className="flex-1 justify-end">
           <Animated.View
             style={{
-              position: "absolute",
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              backgroundColor: "#000",
-              opacity: backdropOpacity,
+              backgroundColor: colors.background,
+              borderTopLeftRadius: 24,
+              borderTopRightRadius: 24,
+              shadowColor: "#000",
+              shadowOffset: { width: 0, height: -3 },
+              shadowOpacity: 0.1,
+              shadowRadius: 10,
+              elevation: 10,
+              transform: [{ translateY: menuTranslateY }],
+              maxHeight: screenHeight * 0.8,
             }}
-            onTouchEnd={hideMenu}
-          />
+            {...panResponder.panHandlers}
+          >
+            <View className="pb-2 pt-5" />
+            <View className="px-4 pb-8" style={{ paddingBottom: 8 + bottomSafeArea }}>
+              <Text className="text-2xl font-bold text-foreground mb-6">Adicionar</Text>
 
-          {/* Menu Content */}
-          <View className="flex-1 justify-end">
-            <Animated.View
-              style={{
-                backgroundColor: colors.background,
-                borderTopLeftRadius: 24,
-                borderTopRightRadius: 24,
-                shadowColor: "#000",
-                shadowOffset: { width: 0, height: -3 },
-                shadowOpacity: 0.1,
-                shadowRadius: 10,
-                elevation: 10,
-                transform: [{ translateY: menuTranslateY }],
-                maxHeight: screenHeight * 0.85, // Limiting max height
-              }}
-            >
-              {/* Handle Indicator */}
-              <View className="items-center pt-3 pb-2">
-                <View className="w-12 h-1 rounded-full bg-border" />
-              </View>
-
-              <View className="px-4 pb-8" style={{ paddingBottom: 8 + bottomSafeArea }}>
-                <Text className="text-2xl font-bold text-foreground mb-6">Adicionar</Text>
-
-                {menuItems.map((item) => (
-                  <Pressable
-                    key={item.id}
-                    className="flex-row items-center bg-card mb-3 p-4 rounded-xl border border-border"
-                    style={{
-                      shadowColor: colors.primary,
-                      shadowOffset: { width: 0, height: 2 },
-                      shadowOpacity: 0.05,
-                      shadowRadius: 8,
-                      elevation: 2,
-                    }}
-                    onPress={item.action}
-                  >
-                    <View
-                      className="w-12 h-12 rounded-full items-center justify-center mr-4"
-                      style={{ backgroundColor: `${colors.primary}20` }}
+              <View className="flex-row flex-wrap justify-between">
+                {sortedMenuItems.map((item) => (
+                  <View key={item.id} style={{ width: "48%" }}>
+                    <Pressable
+                      className="bg-card mb-4 rounded-xl border border-border overflow-hidden"
+                      style={{
+                        shadowColor: item.color,
+                        shadowOffset: { width: 0, height: 2 },
+                        shadowOpacity: 0.1,
+                        shadowRadius: 8,
+                        elevation: 3,
+                      }}
+                      onPress={item.action}
+                      accessible={true}
+                      accessibilityLabel={item.title}
+                      accessibilityHint={`Toque para ${item.title.toLowerCase()}`}
+                      android_ripple={{ color: `${item.color}20` }}
                     >
-                      <Feather name={item.icon} size={22} color={colors.primary} />
-                    </View>
-                    <View className="flex-1">
-                      <View className="flex-row items-center">
-                        <Text className="text-lg font-medium text-foreground">{item.title}</Text>
-                        {item.pro && (
-                          <View className="ml-2 px-2 py-0.5 bg-primary/20 rounded">
-                            <Text className="text-xs text-primary font-medium">PRO</Text>
+                      <View className="p-4 items-center">
+                        {/* PRO badge for premium features */}
+                        {item.isPro && (
+                          <View
+                            className="absolute top-2 right-2 px-2 py-0.5 rounded-md z-10"
+                            style={{ backgroundColor: `${goldColor}20` }}
+                          >
+                            <Text className="text-xs font-bold" style={{ color: goldColor }}>
+                              PRO
+                            </Text>
                           </View>
                         )}
+
+                        <View
+                          className="w-16 h-16 rounded-full items-center justify-center mb-3"
+                          style={{
+                            backgroundColor: `${item.color}20`,
+                            borderWidth: 0,
+                          }}
+                        >
+                          {(() => {
+                            const size = 28;
+                            const color = item.color;
+                            switch (item.iconFamily) {
+                              case "Feather":
+                                return (
+                                  <Feather
+                                    name={item.icon as keyof typeof Feather.glyphMap}
+                                    size={size}
+                                    color={color}
+                                  />
+                                );
+                              case "MaterialCommunityIcons":
+                              default:
+                                return (
+                                  <MaterialCommunityIcons
+                                    name={item.icon as keyof typeof MaterialCommunityIcons.glyphMap}
+                                    size={size}
+                                    color={color}
+                                  />
+                                );
+                            }
+                          })()}
+                        </View>
+
+                        <Text className="text-foreground text-center font-medium">{item.title}</Text>
                       </View>
-                      <Text className="text-muted-foreground">{item.subtitle}</Text>
-                    </View>
-                    <Feather name="chevron-right" size={22} color={colors.mutedForeground} />
-                  </Pressable>
+                    </Pressable>
+                  </View>
                 ))}
-
-                <Pressable className="bg-card p-4 items-center rounded-xl border border-border mt-4" onPress={hideMenu}>
-                  <Text className="text-primary font-medium">Cancelar</Text>
-                </Pressable>
               </View>
-            </Animated.View>
-          </View>
-        </View>
-      </Modal>
 
-      {/* Voice Food Logging Modal */}
-      <VoiceFoodLoggingModal isVisible={voiceModalVisible} onClose={() => setVoiceModalVisible(false)} />
-    </>
+              <Pressable
+                className="bg-card p-4 items-center rounded-xl border border-border mt-4"
+                onPress={hideMenu}
+                accessible={true}
+                accessibilityLabel="Cancelar"
+                accessibilityHint="Toque para fechar o menu"
+              >
+                <Text className="text-primary font-medium">Cancelar</Text>
+              </Pressable>
+            </View>
+          </Animated.View>
+        </View>
+      </View>
+    </Modal>
   );
 }

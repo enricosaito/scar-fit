@@ -7,6 +7,7 @@ import { useTheme } from "../context/ThemeContext";
 import { useAuth } from "../context/AuthContext";
 import NutritionSummary from "../components/tracking/NutritionSummary"; // Import the new component
 import MealList from "../components/tracking/MealList";
+import type { FoodPortion } from "../models/food";
 import Header from "../components/ui/Header";
 import { MacroData } from "../models/user";
 import { DailyLog, getUserDailyLog } from "../models/tracking";
@@ -63,7 +64,17 @@ export default function Home() {
   };
 
   // Prepare meals data for MealList component
-  const prepareMeals = () => {
+  type MealType = "breakfast" | "lunch" | "dinner" | "snack";
+
+  type Meal = {
+    type: MealType;
+    title: string;
+    items: FoodPortion[];
+    icon: string;
+    time?: string;
+  };
+
+  const prepareMeals = (): Meal[] => {
     if (!dailyLog) return [];
 
     return [

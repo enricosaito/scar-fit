@@ -1,5 +1,5 @@
 // Modify app/screens/onboarding/context/OnboardingContext.tsx
-import React, { createContext, useContext } from "react";
+import React, { createContext, useContext, ReactNode } from "react";
 
 // Types
 export type Gender = "male" | "female";
@@ -15,6 +15,11 @@ export interface OnboardingFormData {
   goal: Goal;
 }
 
+interface OnboardingProviderProps {
+  children: ReactNode;
+  value: OnboardingContextType;
+}
+
 interface OnboardingContextType {
   formData: OnboardingFormData;
   updateFormData: (key: keyof OnboardingFormData, value: any) => void;
@@ -22,7 +27,7 @@ interface OnboardingContextType {
 
 const OnboardingContext = createContext<OnboardingContextType | undefined>(undefined);
 
-export const OnboardingProvider = ({ children, value }) => {
+export const OnboardingProvider = ({ children, value }: OnboardingProviderProps) => {
   return <OnboardingContext.Provider value={value}>{children}</OnboardingContext.Provider>;
 };
 
