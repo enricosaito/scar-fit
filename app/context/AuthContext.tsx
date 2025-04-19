@@ -24,6 +24,7 @@ interface AuthContextType extends AuthState {
   refreshProfile: () => Promise<void>;
   setOnboardingCompleted: (completed: boolean) => void;
   loading: boolean;
+  profileLoading: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -206,6 +207,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       refreshProfile,
       setOnboardingCompleted,
       loading: authLoading || profileLoading,
+      profileLoading,
     }),
     [state, authLoading, profileLoading]
   );
