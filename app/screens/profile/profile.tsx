@@ -1,11 +1,10 @@
-// app/screens/profile/profile.tsx (updated)
+// app/screens/profile/profile.tsx
 import React from "react";
 import { Text, View, SafeAreaView, Pressable, Alert, ScrollView, ActivityIndicator } from "react-native";
 import { useRouter } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import { useTheme } from "../../context/ThemeContext";
 import { useAuth } from "../../context/AuthContext";
-import MacroSummary from "../../components/tracking/MacroSummary";
 import { resetUserMacros } from "../../models/user";
 
 export default function Profile() {
@@ -64,6 +63,30 @@ export default function Profile() {
     );
   };
 
+  // Format user's goal to display in Portuguese
+  const formatGoal = (goal) => {
+    if (!goal) return "";
+    const goals = {
+      lose: "Perder Peso",
+      maintain: "Manter Peso",
+      gain: "Ganhar Massa",
+    };
+    return goals[goal] || "";
+  };
+
+  // Format activity level to display in Portuguese
+  const formatActivityLevel = (level) => {
+    if (!level) return "";
+    const levels = {
+      sedentary: "Sedentário",
+      light: "Levemente Ativo",
+      moderate: "Moderadamente Ativo",
+      active: "Muito Ativo",
+      extreme: "Extremamente Ativo",
+    };
+    return levels[level] || "";
+  };
+
   return (
     <SafeAreaView className="flex-1 bg-background">
       <View className="flex-row items-center p-4 border-b border-border">
@@ -108,7 +131,7 @@ export default function Profile() {
             {loading ? (
               <ActivityIndicator size="small" color="#ef4444" style={{ marginRight: 8 }} />
             ) : (
-              <Feather name="log-out" size={18} color="#ef4444" className="mr-2" />
+              <Feather name="log-out" size={18} color="#ef4444" />
             )}
             <Text className="text-red-500 text-center font-medium ml-2">{loading ? "Saindo..." : "Sair"}</Text>
           </Pressable>
@@ -120,7 +143,7 @@ export default function Profile() {
               <View className="flex-row justify-between items-center mb-4">
                 <Text className="text-lg font-bold text-foreground">Suas Metas Nutricionais</Text>
                 <View className="flex-row">
-                  {/* Add Recalculate button */}
+                  {/* Recalculate button */}
                   <Pressable onPress={() => router.push("/screens/onboarding")} className="mr-4">
                     <Text className="text-primary text-sm">Recalcular</Text>
                   </Pressable>
@@ -129,7 +152,64 @@ export default function Profile() {
                   </Pressable>
                 </View>
               </View>
-              <MacroSummary macros={userProfile.macros} compact={true} />
+
+              {/* Simple, non-graphical macros display */}
+              <View className="bg-card rounded-xl border border-border p-4">
+                {/* Calories target */}
+                <View className="border-b border-border pb-3 mb-3">
+                  <View className="flex-row justify-between items-center">
+                    <View className="flex-row items-center">
+                      <View className="w-8 h-8 rounded-full bg-primary/15 items-center justify-center mr-2">
+                        <Feather name="battery-charging" size={16} color={colors.primary} />
+                      </View>
+                      <Text className="text-foreground font-medium">Calorias</Text>
+                    </View>
+                    <Text className="text-2xl font-bold text-foreground">{userProfile.macros.calories}</Text>
+                  </View>
+                  <Text className="text-xs text-muted-foreground mt-1">
+                    {formatGoal(userProfile.macros.goal)} • {formatActivityLevel(userProfile.macros.activityLevel)}
+                  </Text>
+                </View>
+
+                {/* Macros breakdown */}
+                <View className="flex-row justify-between">
+                  {/* Protein */}
+                  <View className="items-center flex-1 border-r border-border pr-2">
+                    <View className="w-6 h-6 rounded-full bg-purple-500/20 items-center justify-center mb-1">
+                      <Feather name="award" size={12} color="#a855f7" />
+                    </View>
+                    <Text className="text-xs text-muted-foreground">Proteínas</Text>
+                    <Text className="text-lg font-bold text-foreground">{userProfile.macros.protein}g</Text>
+                    <Text className="text-xs text-purple-500">
+                      {Math.round((userProfile.macros.protein * 4 * 100) / userProfile.macros.calories)}%
+                    </Text>
+                  </View>
+
+                  {/* Carbs */}
+                  <View className="items-center flex-1 border-r border-border px-2">
+                    <View className="w-6 h-6 rounded-full bg-yellow-500/20 items-center justify-center mb-1">
+                      <Feather name="pie-chart" size={12} color="#eab308" />
+                    </View>
+                    <Text className="text-xs text-muted-foreground">Carboidratos</Text>
+                    <Text className="text-lg font-bold text-foreground">{userProfile.macros.carbs}g</Text>
+                    <Text className="text-xs text-yellow-500">
+                      {Math.round((userProfile.macros.carbs * 4 * 100) / userProfile.macros.calories)}%
+                    </Text>
+                  </View>
+
+                  {/* Fat */}
+                  <View className="items-center flex-1 pl-2">
+                    <View className="w-6 h-6 rounded-full bg-red-500/20 items-center justify-center mb-1">
+                      <Feather name="droplet" size={12} color="#ef4444" />
+                    </View>
+                    <Text className="text-xs text-muted-foreground">Gorduras</Text>
+                    <Text className="text-lg font-bold text-foreground">{userProfile.macros.fat}g</Text>
+                    <Text className="text-xs text-red-500">
+                      {Math.round((userProfile.macros.fat * 9 * 100) / userProfile.macros.calories)}%
+                    </Text>
+                  </View>
+                </View>
+              </View>
             </View>
           )}
 
