@@ -158,7 +158,7 @@ export default function NutritionSummary({
       {/* Today's date with weekday */}
       <Pressable onPress={onToggleDetails} className="flex-row justify-between items-center mb-4">
         <Text className="text-lg font-semibold text-foreground">{formatTodayDate()}</Text>
-        {onToggleDetails && (
+        {onToggleDetails !== (() => {}) && (
           <Feather name={showDetails ? "calendar" : "chevron-down"} size={18} color={colors.mutedForeground} />
         )}
       </Pressable>
