@@ -16,25 +16,8 @@ const VoiceRecorder = ({ onRecordingComplete, onCancel }: VoiceRecorderProps) =>
   const [recording, setRecording] = useState<Audio.Recording | null>(null);
   const [isRecording, setIsRecording] = useState(false);
   const [recordingDuration, setRecordingDuration] = useState(0);
-  const [permissionStatus, setPermissionStatus] = useState<boolean | null>(null);
 
-  useEffect(() => {
-    const getPermissions = async () => {
-      try {
-        const { status } = await Audio.requestPermissionsAsync();
-        setPermissionStatus(status === "granted");
-      } catch (error) {
-        console.error("Error getting audio permissions:", error);
-        setPermissionStatus(false);
-      }
-    };
-
-    getPermissions();
-
-    return () => {
-      if (recording) stopRecording();
-    };
-  }, []);
+  // Remove auto permission check from useEffect
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -46,6 +29,23 @@ const VoiceRecorder = ({ onRecordingComplete, onCancel }: VoiceRecorderProps) =>
 
   const startRecording = async () => {
     try {
+      // Check permissions first
+      const { status: existingStatus } = await Audio.getPermissionsAsync();
+      let finalStatus = existingStatus;
+
+      if (existingStatus !== "granted") {
+        const { status } = await Audio.requestPermissionsAsync();
+        finalStatus = status;
+      }
+
+      if (finalStatus !== "granted") {
+        Alert.alert("Permissão Negada", "É necessário permitir o acesso ao microfone para usar esta funcionalidade.", [
+          { text: "OK" },
+        ]);
+        return;
+      }
+
+      // Continue with recording
       await Audio.setAudioModeAsync({
         allowsRecordingIOS: true,
         playsInSilentModeIOS: true,
@@ -129,32 +129,9 @@ const VoiceRecorder = ({ onRecordingComplete, onCancel }: VoiceRecorderProps) =>
     return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
   };
 
-  if (permissionStatus === null) {
-    return (
-      <View className="items-center justify-center py-8">
-        <ActivityIndicator size="large" color={colors.primary} />
-        <Text className="text-foreground mt-2">Solicitando permissões...</Text>
-      </View>
-    );
-  }
-
-  if (permissionStatus === false) {
-    return (
-      <View className="items-center justify-center py-8">
-        <Feather name="mic-off" size={48} color={colors.mutedForeground} />
-        <Text className="text-foreground mt-2 text-center">
-          Permissão para usar o microfone negada. Por favor, habilite nas configurações do seu dispositivo.
-        </Text>
-        <Button className="mt-4" onPress={handleCancel}>
-          Voltar
-        </Button>
-      </View>
-    );
-  }
-
+  // Regular UI without permission checks
   return (
     <View className="flex-1 justify-between">
-      {/* Top Instructions */}
       <View className="items-center justify-center px-6 pt-6">
         <Text className="text-xl font-bold text-foreground mb-4">Detectar por Áudio</Text>
         {isRecording ? (
@@ -177,7 +154,6 @@ const VoiceRecorder = ({ onRecordingComplete, onCancel }: VoiceRecorderProps) =>
         )}
       </View>
 
-      {/* Action Buttons */}
       <View className="items-center justify-center pb-10">
         {isRecording ? (
           <>
