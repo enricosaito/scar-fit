@@ -44,7 +44,7 @@ const VoiceFoodLoggingModal = ({ isVisible, onClose }: VoiceFoodLoggingModalProp
       // 1. Transcribe audio
       console.log("Starting transcription...");
       const transcriptionResult = await transcribeAudio(uri);
-      console.log("Transcription result:", transcriptionResult);
+      console.log("Transcription complete, success:", transcriptionResult.success);
 
       if (!transcriptionResult.success) {
         throw new Error(transcriptionResult.error || "Falha na transcrição de áudio");
@@ -58,7 +58,7 @@ const VoiceFoodLoggingModal = ({ isVisible, onClose }: VoiceFoodLoggingModalProp
       const foodItems = await extractFoodItems(transcriptionResult.text);
       console.log("Extracted food items:", foodItems);
 
-      if (foodItems.length === 0) {
+      if (!foodItems || foodItems.length === 0) {
         throw new Error(
           "Não foi possível identificar alimentos na transcrição. Por favor, tente novamente com mais detalhes."
         );
@@ -68,10 +68,23 @@ const VoiceFoodLoggingModal = ({ isVisible, onClose }: VoiceFoodLoggingModalProp
 
       // 3. Match with database foods
       console.log("Matching with database...");
-      const matchedItems = await matchWithDatabaseFoods(foodItems);
-      console.log("Matched items:", matchedItems);
+      try {
+        const matchedItems = await matchWithDatabaseFoods(foodItems);
+        console.log("Matched items:", matchedItems);
 
-      // ... rest of the function remains the same
+        if (!matchedItems || matchedItems.length === 0) {
+          throw new Error("Não foi possível encontrar os alimentos em nosso banco de dados");
+        }
+
+        setExtractedItems(matchedItems);
+        setStep("reviewing");
+      } catch (matchError) {
+        console.error("Error matching with database:", matchError);
+        throw new Error(
+          "Erro ao procurar alimentos no banco de dados: " +
+            (matchError instanceof Error ? matchError.message : "Erro desconhecido")
+        );
+      }
     } catch (error) {
       console.error("Error processing audio:", error);
       setError(error instanceof Error ? error.message : "Erro desconhecido ao processar áudio");
