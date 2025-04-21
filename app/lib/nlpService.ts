@@ -1,10 +1,5 @@
 // app/lib/nlpService.ts (updated)
-import Constants from "expo-constants";
 import { supabase } from "./supabase";
-
-// Get the OpenAI API key from environment variables
-const OPENAI_API_KEY = Constants.expoConfig?.extra?.openaiApiKey || "";
-const OPENAI_API_URL = "https://api.openai.com/v1/chat/completions";
 
 export interface ExtractedFoodItem {
   name: string;
@@ -13,168 +8,90 @@ export interface ExtractedFoodItem {
   mealType?: "breakfast" | "lunch" | "dinner" | "snack";
 }
 
-// Modified extractFoodItems function to handle different response formats
 export async function extractFoodItems(text: string): Promise<ExtractedFoodItem[]> {
   try {
-    // First attempt: try to extract directly if not using API
-    if (!OPENAI_API_KEY) {
-      console.log("No API key available, using fallback extraction");
-      return fallbackExtractFoodItems(text);
+    console.log("Extracting food items using extract-food-info function, text:", text);
+
+    // Get session token for authentication
+    const { data: sessionData } = await supabase.auth.getSession();
+    if (!sessionData.session) {
+      throw new Error("No session available");
     }
-
-    console.log("Extracting food items with OpenAI, text:", text);
-
-    // Improved prompt that emphasizes returning an array
-    const prompt = `
-      Analise o seguinte texto em português e extraia todas as informações sobre alimentos consumidos.
-      Para cada alimento, determine:
-      1. Nome do alimento
-      2. Quantidade (em gramas, se mencionado)
-      3. Unidade de medida (se mencionada)
-      4. Tipo de refeição (café da manhã, almoço, jantar, ou lanche)
-
-      Exemplos de palavras-chave para tipo de refeição:
-      - Café da manhã: café da manhã, desjejum, manhã
-      - Almoço: almoço, meio-dia
-      - Jantar: jantar, noite
-      - Lanche: lanche, snack, merenda
-
-      Texto: "${text}"
-
-      IMPORTANTE: Sua resposta deve ser um objeto JSON com uma única propriedade chamada "items" 
-      que contém um array de objetos, cada objeto representando um alimento mencionado.
-      
-      Exemplo de formato de resposta:
-      {
-        "items": [
-          {
-            "name": "arroz",
-            "quantity": 100,
-            "unit": "g",
-            "mealType": "almoço"
-          },
-          {
-            "name": "feijão",
-            "quantity": 50,
-            "unit": "g",
-            "mealType": "almoço"
-          }
-        ]
-      }
-      
-      Se não encontrar nenhuma informação sobre alimentos, retorne:
-      {
-        "items": []
-      }
-    `;
-
-    const response = await fetch(OPENAI_API_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${OPENAI_API_KEY}`,
-      },
-      body: JSON.stringify({
-        model: "gpt-4o-mini",
-        messages: [{ role: "user", content: prompt }],
-        temperature: 0.2,
-        response_format: { type: "json_object" },
-      }),
-    });
-
-    const data = await response.json();
-    console.log("OpenAI response:", data);
-
-    if (!response.ok) {
-      console.error("OpenAI API error:", data.error);
-      // Fallback to basic extraction if API fails
-      return fallbackExtractFoodItems(text);
-    }
-
-    // Parse the response
+    
+    // Call the Supabase Edge Function
     try {
-      const content = data.choices[0].message.content;
-      console.log("OpenAI content:", content);
-      const parsedContent = JSON.parse(content);
-
-      // Handle different possible response structures
-      if (Array.isArray(parsedContent)) {
-        // Already in the expected format: array of food items
-        return parsedContent.length === 0 ? fallbackExtractFoodItems(text) : parsedContent;
-      } else if (parsedContent.items && Array.isArray(parsedContent.items)) {
-        // Response has an 'items' property with an array
-        return parsedContent.items.length === 0 ? fallbackExtractFoodItems(text) : parsedContent.items;
-      } else if (parsedContent.name && typeof parsedContent.name === 'string') {
-        // Single item returned as an object instead of an array
-        // Convert it to an array with one item
-        return [parsedContent];
-      } else {
-        // Unknown structure, use fallback
-        console.log("Unknown JSON structure, using fallback");
-        return fallbackExtractFoodItems(text);
+      const { data, error } = await supabase.functions.invoke("extract-food-info", {
+        body: { text },
+      });
+      
+      if (error) {
+        console.error("Function error:", error);
+        throw error;
       }
-    } catch (parseError) {
-      console.error("Error parsing JSON response:", parseError);
-      // Fallback to basic extraction if parsing fails
+      
+      console.log("Extraction result:", data);
+      
+      // Map meal types from Portuguese to the app's internal format
+      const mapMealType = (type: string): "breakfast" | "lunch" | "dinner" | "snack" => {
+        switch (type) {
+          case "café da manhã": return "breakfast";
+          case "almoço": return "lunch";
+          case "jantar": return "dinner";
+          default: return "snack";
+        }
+      };
+      
+      // Process the extracted items to match the app's expected format
+      const formattedItems = data.foodItems.map((item: any) => ({
+        name: item.name,
+        quantity: item.quantity || 100,
+        unit: item.unit || "g",
+        mealType: mapMealType(item.mealType),
+      }));
+      
+      return formattedItems;
+    } catch (invokeError) {
+      console.error("Function invoke error:", invokeError);
+      // Fall back to local extraction
       return fallbackExtractFoodItems(text);
     }
   } catch (error) {
     console.error("NLP extraction error:", error);
-    // Fallback to basic extraction for all errors
+    // Use the fallback extraction method
     return fallbackExtractFoodItems(text);
   }
 }
 
-// Fallback food extraction function using regex patterns
+// Keep the existing fallback method
 function fallbackExtractFoodItems(text: string): ExtractedFoodItem[] {
   console.log("Using fallback extraction for:", text);
   const items: ExtractedFoodItem[] = [];
-  const lowerText = text.toLowerCase().trim();
+  const lowerText = text.toLowerCase();
 
   // Determine meal type
   let mealType: "breakfast" | "lunch" | "dinner" | "snack" = "snack";
-  if (lowerText.includes("café da manhã") || lowerText.includes("café") || lowerText.includes("manhã") || 
-      lowerText.includes("desjejum")) {
+  if (lowerText.includes("café da manhã") || lowerText.includes("café") || lowerText.includes("manhã")) {
     mealType = "breakfast";
-  } else if (lowerText.includes("almoço") || lowerText.includes("almocei") || lowerText.includes("meio-dia")) {
+  } else if (lowerText.includes("almoço") || lowerText.includes("almocei")) {
     mealType = "lunch";
-  } else if (lowerText.includes("jantar") || lowerText.includes("jantei") || lowerText.includes("noite")) {
+  } else if (lowerText.includes("jantar") || lowerText.includes("jantei")) {
     mealType = "dinner";
-  } else if (lowerText.includes("lanche") || lowerText.includes("merenda") || lowerText.includes("snack")) {
-    mealType = "snack";
   }
 
-  // Extract food items using regex
+  // Extract food items using regex (keep your existing implementation)
   const foodPatterns = [
-    // Pattern: number + "gramas"/"g" + "de" + food 
-    /(\d+)\s*(?:gramas?|g)\s*(?:de)?\s*([a-zÀ-ú\s]+?)(?:\s+(?:com|e|no|na|para|\.|\,)\s+|$)/gi,
-    
-    // Pattern: food + number + "gramas"/"g"
-    /([a-zÀ-ú\s]+?)\s+(\d+)\s*(?:gramas?|g)(?:\s+(?:com|e|no|na|para|\.|\,)\s+|$)/gi,
-    
-    // Pattern: "comi"/"ingeri"/"consumi" + food
-    /(?:comi|ingeri|consumi)\s+([a-zÀ-ú\s]+?)(?:\s+(?:com|e|no|na|para|\.|\,)\s+|$)/gi,
-    
-    // Pattern: "de" + food
-    /\s+de\s+([a-zÀ-ú\s]+?)(?:\s+(?:com|e|no|na|para|\.|\,)\s+|$)/gi,
+    /(\d+)\s*(?:gramas?|g)\s*(?:de)?\s*([a-zÀ-ú\s]+?)(?:\s+(?:com|e|no|na|para)\s+|$)/gi,
+    /([a-zÀ-ú\s]+?)\s+(\d+)\s*(?:gramas?|g)(?:\s+(?:com|e|no|na|para)\s+|$)/gi,
+    /(?:comi|ingeri|consumi)\s+([a-zÀ-ú\s]+?)(?:\s+(?:com|e|no|na|para)\s+|$)/gi,
   ];
 
+  // Keep the rest of your fallback implementation as is...
   for (const pattern of foodPatterns) {
     let match;
     while ((match = pattern.exec(text)) !== null) {
       if (pattern.source.includes("comi|ingeri|consumi")) {
         // Pattern without quantity
-        const foodName = match[1].trim().replace(/\.$/, '');
-        if (foodName && foodName.length > 2) {
-          items.push({
-            name: foodName,
-            quantity: 100, // Default quantity
-            mealType,
-          });
-        }
-      } else if (pattern.source.includes("de\\s+")) {
-        // Pattern with "de" + food
-        const foodName = match[1].trim().replace(/\.$/, '');
+        const foodName = match[1].trim();
         if (foodName && foodName.length > 2) {
           items.push({
             name: foodName,
@@ -185,7 +102,7 @@ function fallbackExtractFoodItems(text: string): ExtractedFoodItem[] {
       } else if (pattern.source.startsWith("(\\d+)")) {
         // Pattern with quantity first
         const quantity = parseInt(match[1], 10);
-        const foodName = match[2].trim().replace(/\.$/, '');
+        const foodName = match[2].trim();
         if (foodName && foodName.length > 2) {
           items.push({
             name: foodName,
@@ -195,7 +112,7 @@ function fallbackExtractFoodItems(text: string): ExtractedFoodItem[] {
         }
       } else {
         // Pattern with food first
-        const foodName = match[1].trim().replace(/\.$/, '');
+        const foodName = match[1].trim();
         const quantity = parseInt(match[2], 10);
         if (foodName && foodName.length > 2) {
           items.push({
@@ -212,9 +129,23 @@ function fallbackExtractFoodItems(text: string): ExtractedFoodItem[] {
   if (items.length === 0) {
     // Check for common food items
     const commonFoods = [
-      "arroz", "feijão", "macarrão", "carne", "frango", "peixe", "salada", 
-      "ovo", "pão", "queijo", "leite", "iogurte", "aveia", "batata", 
-      "maçã", "banana", "laranja", "tomate", "cenoura", "alface"
+      "omelete",
+      "queijo",
+      "pão",
+      "arroz",
+      "feijão",
+      "carne",
+      "frango",
+      "salada",
+      "ovo",
+      "macarrão",
+      "batata",
+      "leite",
+      "iogurte",
+      "fruta",
+      "maçã",
+      "banana",
+      "laranja",
     ];
 
     for (const food of commonFoods) {
@@ -232,19 +163,21 @@ function fallbackExtractFoodItems(text: string): ExtractedFoodItem[] {
     }
   }
 
-  // Remove duplicates based on food name
-  const uniqueItems = items.filter((item, index, self) => 
-    index === self.findIndex((t) => t.name === item.name)
-  );
-
-  console.log("Fallback extraction results:", uniqueItems);
-  return uniqueItems;
+  console.log("Fallback extraction results:", items);
+  return items;
 }
 
+// Keep the existing matchWithDatabaseFoods function
 export async function matchWithDatabaseFoods(extractedItems: ExtractedFoodItem[]): Promise<any[]> {
   try {
     const matchedItems = [];
     console.log("Starting food matching with database for items:", extractedItems);
+    
+    // Check if extractedItems is defined and not empty
+    if (!extractedItems || extractedItems.length === 0) {
+      console.log("No items to match with database");
+      return [];
+    }
 
     for (const item of extractedItems) {
       console.log(`Trying to match food: "${item.name}"`);
@@ -297,7 +230,7 @@ export async function matchWithDatabaseFoods(extractedItems: ExtractedFoodItem[]
         }
       }
 
-      // Strategy 3: Partial match with ILIKE (contains)
+      // Strategy 3: Partial match with ILIKE
       if (!matchFound) {
         const { data: partialMatches, error } = await supabase
           .from("foods")
@@ -321,16 +254,7 @@ export async function matchWithDatabaseFoods(extractedItems: ExtractedFoodItem[]
 
       // Strategy 4: Try with individual words for common foods
       if (!matchFound) {
-        // Clean the food name: remove articles and common prepositions
-        const cleanName = item.name
-          .replace(/\b(o|a|os|as|um|uma|uns|umas|de|do|da|dos|das|com|sem|no|na|nos|nas)\b/gi, ' ')
-          .replace(/\s+/g, ' ')
-          .trim();
-
-        // Split into words and sort by length (longest first) for more specific matching
-        const words = cleanName.split(/\s+/).filter((word) => word.length > 2);
-        words.sort((a, b) => b.length - a.length);
-        
+        const words = item.name.split(/\s+/).filter((word) => word.length > 3);
         for (const word of words) {
           const { data: wordMatches, error } = await supabase
             .from("foods")
