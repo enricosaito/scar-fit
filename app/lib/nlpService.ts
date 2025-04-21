@@ -13,6 +13,7 @@ export interface ExtractedFoodItem {
   mealType?: "breakfast" | "lunch" | "dinner" | "snack";
 }
 
+// Modified extractFoodItems function to handle different response formats
 export async function extractFoodItems(text: string): Promise<ExtractedFoodItem[]> {
   try {
     // First attempt: try to extract directly if not using API
@@ -23,6 +24,7 @@ export async function extractFoodItems(text: string): Promise<ExtractedFoodItem[
 
     console.log("Extracting food items with OpenAI, text:", text);
 
+    // Improved prompt that emphasizes returning an array
     const prompt = `
       Analise o seguinte texto em português e extraia todas as informações sobre alimentos consumidos.
       Para cada alimento, determine:
@@ -39,23 +41,31 @@ export async function extractFoodItems(text: string): Promise<ExtractedFoodItem[
 
       Texto: "${text}"
 
-      Responda apenas em formato JSON, como este exemplo:
-      [
-        {
-          "name": "arroz",
-          "quantity": 100,
-          "unit": "g",
-          "mealType": "almoço"
-        },
-        {
-          "name": "pão integral",
-          "quantity": 2,
-          "unit": "fatias",
-          "mealType": "café da manhã"
-        }
-      ]
+      IMPORTANTE: Sua resposta deve ser um objeto JSON com uma única propriedade chamada "items" 
+      que contém um array de objetos, cada objeto representando um alimento mencionado.
       
-      Se não encontrar nenhuma informação sobre alimentos, retorne um array vazio: []
+      Exemplo de formato de resposta:
+      {
+        "items": [
+          {
+            "name": "arroz",
+            "quantity": 100,
+            "unit": "g",
+            "mealType": "almoço"
+          },
+          {
+            "name": "feijão",
+            "quantity": 50,
+            "unit": "g",
+            "mealType": "almoço"
+          }
+        ]
+      }
+      
+      Se não encontrar nenhuma informação sobre alimentos, retorne:
+      {
+        "items": []
+      }
     `;
 
     const response = await fetch(OPENAI_API_URL, {
@@ -87,18 +97,20 @@ export async function extractFoodItems(text: string): Promise<ExtractedFoodItem[
       console.log("OpenAI content:", content);
       const parsedContent = JSON.parse(content);
 
+      // Handle different possible response structures
       if (Array.isArray(parsedContent)) {
-        if (parsedContent.length === 0) {
-          // No foods found, try fallback
-          console.log("No foods found in OpenAI extraction, trying fallback");
-          return fallbackExtractFoodItems(text);
-        }
-        return parsedContent;
+        // Already in the expected format: array of food items
+        return parsedContent.length === 0 ? fallbackExtractFoodItems(text) : parsedContent;
       } else if (parsedContent.items && Array.isArray(parsedContent.items)) {
-        return parsedContent.items;
+        // Response has an 'items' property with an array
+        return parsedContent.items.length === 0 ? fallbackExtractFoodItems(text) : parsedContent.items;
+      } else if (parsedContent.name && typeof parsedContent.name === 'string') {
+        // Single item returned as an object instead of an array
+        // Convert it to an array with one item
+        return [parsedContent];
       } else {
-        // Handle case where OpenAI returns differently structured JSON
-        console.log("Unexpected JSON structure, using fallback");
+        // Unknown structure, use fallback
+        console.log("Unknown JSON structure, using fallback");
         return fallbackExtractFoodItems(text);
       }
     } catch (parseError) {
@@ -117,24 +129,34 @@ export async function extractFoodItems(text: string): Promise<ExtractedFoodItem[
 function fallbackExtractFoodItems(text: string): ExtractedFoodItem[] {
   console.log("Using fallback extraction for:", text);
   const items: ExtractedFoodItem[] = [];
-  const lowerText = text.toLowerCase();
+  const lowerText = text.toLowerCase().trim();
 
   // Determine meal type
   let mealType: "breakfast" | "lunch" | "dinner" | "snack" = "snack";
-  if (lowerText.includes("café da manhã") || lowerText.includes("café") || lowerText.includes("manhã")) {
+  if (lowerText.includes("café da manhã") || lowerText.includes("café") || lowerText.includes("manhã") || 
+      lowerText.includes("desjejum")) {
     mealType = "breakfast";
-  } else if (lowerText.includes("almoço") || lowerText.includes("almocei")) {
+  } else if (lowerText.includes("almoço") || lowerText.includes("almocei") || lowerText.includes("meio-dia")) {
     mealType = "lunch";
-  } else if (lowerText.includes("jantar") || lowerText.includes("jantei")) {
+  } else if (lowerText.includes("jantar") || lowerText.includes("jantei") || lowerText.includes("noite")) {
     mealType = "dinner";
+  } else if (lowerText.includes("lanche") || lowerText.includes("merenda") || lowerText.includes("snack")) {
+    mealType = "snack";
   }
 
   // Extract food items using regex
-  // Pattern: number + unit + de + food or food + number + unit
   const foodPatterns = [
-    /(\d+)\s*(?:gramas?|g)\s*(?:de)?\s*([a-zÀ-ú\s]+?)(?:\s+(?:com|e|no|na|para)\s+|$)/gi,
-    /([a-zÀ-ú\s]+?)\s+(\d+)\s*(?:gramas?|g)(?:\s+(?:com|e|no|na|para)\s+|$)/gi,
-    /(?:comi|ingeri|consumi)\s+([a-zÀ-ú\s]+?)(?:\s+(?:com|e|no|na|para)\s+|$)/gi,
+    // Pattern: number + "gramas"/"g" + "de" + food 
+    /(\d+)\s*(?:gramas?|g)\s*(?:de)?\s*([a-zÀ-ú\s]+?)(?:\s+(?:com|e|no|na|para|\.|\,)\s+|$)/gi,
+    
+    // Pattern: food + number + "gramas"/"g"
+    /([a-zÀ-ú\s]+?)\s+(\d+)\s*(?:gramas?|g)(?:\s+(?:com|e|no|na|para|\.|\,)\s+|$)/gi,
+    
+    // Pattern: "comi"/"ingeri"/"consumi" + food
+    /(?:comi|ingeri|consumi)\s+([a-zÀ-ú\s]+?)(?:\s+(?:com|e|no|na|para|\.|\,)\s+|$)/gi,
+    
+    // Pattern: "de" + food
+    /\s+de\s+([a-zÀ-ú\s]+?)(?:\s+(?:com|e|no|na|para|\.|\,)\s+|$)/gi,
   ];
 
   for (const pattern of foodPatterns) {
@@ -142,7 +164,17 @@ function fallbackExtractFoodItems(text: string): ExtractedFoodItem[] {
     while ((match = pattern.exec(text)) !== null) {
       if (pattern.source.includes("comi|ingeri|consumi")) {
         // Pattern without quantity
-        const foodName = match[1].trim();
+        const foodName = match[1].trim().replace(/\.$/, '');
+        if (foodName && foodName.length > 2) {
+          items.push({
+            name: foodName,
+            quantity: 100, // Default quantity
+            mealType,
+          });
+        }
+      } else if (pattern.source.includes("de\\s+")) {
+        // Pattern with "de" + food
+        const foodName = match[1].trim().replace(/\.$/, '');
         if (foodName && foodName.length > 2) {
           items.push({
             name: foodName,
@@ -153,7 +185,7 @@ function fallbackExtractFoodItems(text: string): ExtractedFoodItem[] {
       } else if (pattern.source.startsWith("(\\d+)")) {
         // Pattern with quantity first
         const quantity = parseInt(match[1], 10);
-        const foodName = match[2].trim();
+        const foodName = match[2].trim().replace(/\.$/, '');
         if (foodName && foodName.length > 2) {
           items.push({
             name: foodName,
@@ -163,7 +195,7 @@ function fallbackExtractFoodItems(text: string): ExtractedFoodItem[] {
         }
       } else {
         // Pattern with food first
-        const foodName = match[1].trim();
+        const foodName = match[1].trim().replace(/\.$/, '');
         const quantity = parseInt(match[2], 10);
         if (foodName && foodName.length > 2) {
           items.push({
@@ -180,23 +212,9 @@ function fallbackExtractFoodItems(text: string): ExtractedFoodItem[] {
   if (items.length === 0) {
     // Check for common food items
     const commonFoods = [
-      "omelete",
-      "queijo",
-      "pão",
-      "arroz",
-      "feijão",
-      "carne",
-      "frango",
-      "salada",
-      "ovo",
-      "macarrão",
-      "batata",
-      "leite",
-      "iogurte",
-      "fruta",
-      "maçã",
-      "banana",
-      "laranja",
+      "arroz", "feijão", "macarrão", "carne", "frango", "peixe", "salada", 
+      "ovo", "pão", "queijo", "leite", "iogurte", "aveia", "batata", 
+      "maçã", "banana", "laranja", "tomate", "cenoura", "alface"
     ];
 
     for (const food of commonFoods) {
@@ -214,8 +232,13 @@ function fallbackExtractFoodItems(text: string): ExtractedFoodItem[] {
     }
   }
 
-  console.log("Fallback extraction results:", items);
-  return items;
+  // Remove duplicates based on food name
+  const uniqueItems = items.filter((item, index, self) => 
+    index === self.findIndex((t) => t.name === item.name)
+  );
+
+  console.log("Fallback extraction results:", uniqueItems);
+  return uniqueItems;
 }
 
 export async function matchWithDatabaseFoods(extractedItems: ExtractedFoodItem[]): Promise<any[]> {
@@ -274,7 +297,7 @@ export async function matchWithDatabaseFoods(extractedItems: ExtractedFoodItem[]
         }
       }
 
-      // Strategy 3: Partial match with ILIKE
+      // Strategy 3: Partial match with ILIKE (contains)
       if (!matchFound) {
         const { data: partialMatches, error } = await supabase
           .from("foods")
@@ -298,7 +321,16 @@ export async function matchWithDatabaseFoods(extractedItems: ExtractedFoodItem[]
 
       // Strategy 4: Try with individual words for common foods
       if (!matchFound) {
-        const words = item.name.split(/\s+/).filter((word) => word.length > 3);
+        // Clean the food name: remove articles and common prepositions
+        const cleanName = item.name
+          .replace(/\b(o|a|os|as|um|uma|uns|umas|de|do|da|dos|das|com|sem|no|na|nos|nas)\b/gi, ' ')
+          .replace(/\s+/g, ' ')
+          .trim();
+
+        // Split into words and sort by length (longest first) for more specific matching
+        const words = cleanName.split(/\s+/).filter((word) => word.length > 2);
+        words.sort((a, b) => b.length - a.length);
+        
         for (const word of words) {
           const { data: wordMatches, error } = await supabase
             .from("foods")
