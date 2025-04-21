@@ -1,19 +1,14 @@
 // app/lib/supabase.ts
 import { createClient } from "@supabase/supabase-js";
-import { Alert } from "react-native";
-import Constants from "expo-constants";
 import customStorageAdapter from "./secureStorage";
 
-// Get Supabase URL and anon key from Expo constants
-const supabaseUrl = Constants.expoConfig?.extra?.supabaseUrl || "";
-const supabaseAnonKey = Constants.expoConfig?.extra?.supabaseAnonKey || "";
+const supabaseUrl = "https://ssrklevifozwowhpumvu.supabase.co";
+const supabaseAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNzcmtsZXZpZm96d293aHB1bXZ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM4MDc4NzcsImV4cCI6MjA1OTM4Mzg3N30.0rwKDJUkJMDggk27C0Cx08ldg_4FNWgBnQjssb9uhzc";
 
-// Validate configuration
 if (!supabaseUrl || !supabaseAnonKey) {
-  console.warn("Missing Supabase credentials. Please check your app.config.js and environment variables.");
+  console.warn("Missing Supabase credentials.");
 }
 
-// Initialize the Supabase client with additional configuration
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     autoRefreshToken: true,
@@ -28,19 +23,8 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   },
 });
 
-// Error handler helper
-export const handleSupabaseError = (error: Error) => {
-  console.error("Supabase error:", error);
-  if (typeof window !== "undefined") {
-    // Only show alerts in browser environment
-    Alert.alert("Erro", error.message || "Ocorreu um erro. Por favor, tente novamente.");
-  }
-};
+// Add the supabase URL to the client itself for easy access
+(supabase as any).supabaseUrl = supabaseUrl;
 
-// Helper function to check if user is authenticated
-export const isAuthenticated = async () => {
-  const { data } = await supabase.auth.getSession();
-  return !!data.session;
-};
-
+// Export as default to avoid router warnings
 export default supabase;

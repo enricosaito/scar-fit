@@ -15,13 +15,9 @@ export interface FoodItem {
   mealType?: "breakfast" | "lunch" | "dinner" | "snack";
 }
 
-// Transcribe audio using the OpenAI Whisper API
+// Export the functions from the other services
 export { transcribeAudio };
-
-// Extract food information from transcribed text
 export { extractFoodItems };
-
-// Match extracted food items with database foods
 export { matchWithDatabaseFoods };
 
 export default {

@@ -35,6 +35,7 @@ yarn-error.*
 .env.test
 .env.production
 expo-env.d.ts
+eas.json
 
 # typescript
 *.tsbuildinfo

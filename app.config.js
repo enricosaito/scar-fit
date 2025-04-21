@@ -16,6 +16,7 @@ module.exports = {
       NSMicrophoneUsageDescription: "Este aplicativo usa o microfone para a função de registro de alimentos por voz.",
       NSCameraUsageDescription: "Este aplicativo usa a câmera para escanear códigos de barras de alimentos.",
       UIBackgroundModes: ["audio"],
+      ITSAppUsesNonExemptEncryption: false,
     },
   },
   android: {
@@ -50,11 +51,8 @@ module.exports = {
     typedRoutes: true,
   },
   extra: {
-    supabaseUrl: process.env.EXPO_PUBLIC_SUPABASE_URL,
-    supabaseAnonKey: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY,
-    openaiApiKey: process.env.EXPO_PUBLIC_OPENAI_API_KEY,
     eas: {
-      projectId: "scarfit",
+      projectId: "ae14be7e-93fd-4a33-aff7-a4ba0d1186ba",
     },
   },
 };

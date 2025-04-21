@@ -1,10 +1,6 @@
-// app/lib/transcriptionService.ts (updated for m4a)
+// app/lib/transcriptionService.ts (fixed for FormData)
 import * as FileSystem from "expo-file-system";
-import Constants from "expo-constants";
-
-// Get the OpenAI API key from environment variables
-const OPENAI_API_KEY = Constants.expoConfig?.extra?.openaiApiKey || "";
-const OPENAI_API_URL = "https://api.openai.com/v1/audio/transcriptions";
+import { supabase } from "./supabase";
 
 interface TranscriptionResult {
   text: string;
@@ -14,12 +10,7 @@ interface TranscriptionResult {
 
 export const transcribeAudio = async (audioUri: string): Promise<TranscriptionResult> => {
   try {
-    // Check if we have the API key
-    if (!OPENAI_API_KEY) {
-      throw new Error("API key not configured");
-    }
-
-    // Prepare the file for upload
+    // Check if file exists
     const fileInfo = await FileSystem.getInfoAsync(audioUri);
     if (!fileInfo.exists) {
       throw new Error("Audio file does not exist");
@@ -27,42 +18,54 @@ export const transcribeAudio = async (audioUri: string): Promise<TranscriptionRe
 
     console.log("Audio file info:", fileInfo);
 
-    // Create form data with the audio file
-    const formData = new FormData();
-
-    // Create a file object from the URI
-    formData.append("file", {
-      uri: audioUri,
-      name: "recording.m4a",
-      type: "audio/m4a",
-    } as any);
-
-    formData.append("model", "whisper-1");
-    formData.append("language", "pt"); // Portuguese language
-    formData.append("response_format", "json");
-
-    console.log("Sending request to OpenAI API...");
-
-    // Make the API request
-    const response = await fetch(OPENAI_API_URL, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${OPENAI_API_KEY}`,
-      },
-      body: formData,
+    // Instead of using FormData, let's use base64 encoding
+    // Read the audio file as base64
+    const base64Audio = await FileSystem.readAsStringAsync(audioUri, {
+      encoding: FileSystem.EncodingType.Base64,
     });
 
-    console.log("Response status:", response.status);
+    console.log("Audio encoded as base64, length:", base64Audio.length);
 
-    const data = await response.json();
-    console.log("API response:", data);
-
-    if (!response.ok) {
-      throw new Error(data.error?.message || "Failed to transcribe audio");
+    // Get session for authentication
+    const { data: sessionData } = await supabase.auth.getSession();
+    const token = sessionData.session?.access_token;
+    
+    if (!token) {
+      throw new Error("No authentication token available");
     }
-
+    
+    console.log("Sending request to transcribe-audio function...");
+    
+    // Extract the URL from the Supabase client
+    const baseUrl = "https://ssrklevifozwowhpumvu.supabase.co";
+    const functionUrl = `${baseUrl}/functions/v1/transcribe-audio`;
+    
+    // Send the base64-encoded audio data instead of FormData
+    const response = await fetch(functionUrl, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        audioBase64: base64Audio,
+        fileName: "recording.m4a",
+        fileType: "audio/m4a"
+      }),
+    });
+    
+    if (!response.ok) {
+      console.error(`Fetch error: ${response.status} ${response.statusText}`);
+      const errorText = await response.text();
+      console.error("Error response:", errorText);
+      throw new Error(`Function returned status ${response.status}: ${errorText}`);
+    }
+    
+    const data = await response.json();
+    console.log("Transcription result:", data);
+    
     return {
-      text: data.text,
+      text: data.text || "",
       success: true,
     };
   } catch (error) {
