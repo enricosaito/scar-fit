@@ -1,4 +1,4 @@
-// transcribe-audio
+// Updated transcribe-audio Edge Function
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 const corsHeaders = {
@@ -40,12 +40,11 @@ serve(async (req)=>{
         }
       });
     }
-    // Get audio data
-    const formData = await req.formData();
-    const audioFile = formData.get('file');
-    if (!audioFile) {
+    // Get the JSON body instead of FormData
+    const { audioBase64, fileName, fileType } = await req.json();
+    if (!audioBase64) {
       return new Response(JSON.stringify({
-        error: 'No audio file provided'
+        error: 'No audio data provided'
       }), {
         status: 400,
         headers: {
@@ -54,11 +53,24 @@ serve(async (req)=>{
         }
       });
     }
-    // Call OpenAI API
+    // Convert base64 to Uint8Array
+    const binaryData = Uint8Array.from(atob(audioBase64), (c)=>c.charCodeAt(0));
+    // Create a blob from the binary data
+    const audioBlob = new Blob([
+      binaryData
+    ], {
+      type: fileType || 'audio/m4a'
+    });
+    // Create FormData to send to OpenAI
     const openAIFormData = new FormData();
-    openAIFormData.append('file', audioFile);
+    openAIFormData.append('file', new File([
+      audioBlob
+    ], fileName || 'audio.m4a', {
+      type: fileType || 'audio/m4a'
+    }));
     openAIFormData.append('model', 'whisper-1');
     openAIFormData.append('language', 'pt');
+    // Call OpenAI API
     const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {
       method: 'POST',
       headers: {
