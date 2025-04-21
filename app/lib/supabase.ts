@@ -6,7 +6,7 @@ const supabaseUrl = "https://ssrklevifozwowhpumvu.supabase.co";
 const supabaseAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNzcmtsZXZpZm96d293aHB1bXZ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM4MDc4NzcsImV4cCI6MjA1OTM4Mzg3N30.0rwKDJUkJMDggk27C0Cx08ldg_4FNWgBnQjssb9uhzc";
 
 if (!supabaseUrl || !supabaseAnonKey) {
-  console.warn("Missing Supabase credentials. Please check your app.config.js and environment variables.");
+  console.warn("Missing Supabase credentials.");
 }
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
