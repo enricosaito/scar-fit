@@ -42,3 +42,5 @@ export const useToast = (): ToastContextType => {
   }
   return context;
 };
+
+export default ToastContext;
