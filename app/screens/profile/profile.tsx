@@ -1,5 +1,5 @@
 // app/screens/profile/profile.tsx (updated without MacroSummary)
-import React from "react";
+import React, { useState } from "react";
 import { Text, View, SafeAreaView, Pressable, Alert, ScrollView, ActivityIndicator } from "react-native";
 import { useRouter } from "expo-router";
 import { Feather } from "@expo/vector-icons";
@@ -12,6 +12,7 @@ export default function Profile() {
   const router = useRouter();
   const { colors } = useTheme();
   const { user, signOut, userProfile, refreshProfile, loading } = useAuth();
+  const [logoutLoading, setLogoutLoading] = useState(false);
 
   const handleLogout = () => {
     Alert.alert(
@@ -26,7 +27,14 @@ export default function Profile() {
           text: "Sim, sair",
           style: "destructive",
           onPress: async () => {
-            await signOut();
+            setLogoutLoading(true);
+            try {
+              await signOut();
+              // The AuthGuard will handle the navigation
+            } catch (error) {
+              console.error("Error signing out:", error);
+              setLogoutLoading(false);
+            }
           },
         },
       ],
@@ -127,14 +135,14 @@ export default function Profile() {
           <Pressable
             className="w-full bg-transparent border border-red-500 py-2 px-4 rounded-lg flex-row justify-center items-center"
             onPress={handleLogout}
-            disabled={loading}
+            disabled={logoutLoading}
           >
-            {loading ? (
+            {logoutLoading ? (
               <ActivityIndicator size="small" color="#ef4444" style={{ marginRight: 8 }} />
             ) : (
               <Feather name="log-out" size={18} color="#ef4444" />
             )}
-            <Text className="text-red-500 text-center font-medium ml-2">{loading ? "Saindo..." : "Sair"}</Text>
+            <Text className="text-red-500 text-center font-medium ml-2">{logoutLoading ? "Saindo..." : "Sair"}</Text>
           </Pressable>
         </View>
 
