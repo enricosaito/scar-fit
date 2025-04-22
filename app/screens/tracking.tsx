@@ -17,6 +17,7 @@ import { useRouter, useLocalSearchParams } from "expo-router";
 import Button from "../components/ui/Button";
 import { useTheme } from "../context/ThemeContext";
 import { useAuth } from "../context/AuthContext";
+import { useToast } from "../context/ToastContext";
 import { Food, FoodPortion, searchFoods } from "../models/food";
 import { DailyLog, getUserDailyLog, addFoodToLog, removeFoodFromLog } from "../models/tracking";
 import Header from "../components/ui/Header";
@@ -64,6 +65,7 @@ export default function Tracking() {
   const { colors } = useTheme();
   const { mode, showSearch } = useLocalSearchParams();
   const { user, userProfile } = useAuth();
+  const { showToast } = useToast();
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
 
   // Daily log state
@@ -203,6 +205,9 @@ export default function Tracking() {
       setAddFoodVisible(false);
       setSelectedFood(null);
       setQuantity("100");
+
+      // Show toast notification
+      showToast(`${selectedFood.description} adicionado ao diário`, "success");
     } catch (error) {
       console.error("Error adding food:", error);
       Alert.alert("Erro", "Ocorreu um erro ao adicionar o alimento.");
@@ -215,8 +220,16 @@ export default function Tracking() {
 
     try {
       const dateStr = formatDateForDb(selectedDate);
+      // Get the food name before removing it
+      const foodName = dailyLog.items[itemIndex]?.food.description;
+
       const updatedLog = await removeFoodFromLog(user.id, dateStr, itemIndex);
       setDailyLog(updatedLog);
+
+      // Show toast notification
+      if (foodName) {
+        showToast(`${foodName} removido do diário`, "info");
+      }
     } catch (error) {
       console.error("Error removing food:", error);
       Alert.alert("Erro", "Ocorreu um erro ao remover o alimento.");
