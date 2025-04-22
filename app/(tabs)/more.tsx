@@ -1,5 +1,5 @@
 // Update app/(tabs)/more.tsx
-import React from "react";
+import React, { useState } from "react";
 import { Text, View, SafeAreaView, ScrollView, Pressable, Alert, ActivityIndicator } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { useTheme } from "../context/ThemeContext";
@@ -31,8 +31,9 @@ interface MenuItem {
 
 export default function More() {
   const { colors, theme, toggleTheme } = useTheme();
-  const { signOut, user, loading } = useAuth();
+  const { signOut, user } = useAuth();
   const router = useRouter();
+  const [logoutLoading, setLogoutLoading] = useState(false);
 
   // Golden colors for premium feel (copied from pro-subscription)
   const goldColor = "#F7B955"; // Icon color for text and icons
@@ -50,7 +51,16 @@ export default function More() {
         {
           text: "Sim, sair",
           style: "destructive",
-          onPress: signOut,
+          onPress: async () => {
+            setLogoutLoading(true);
+            try {
+              await signOut();
+              // AuthGuard will handle navigation
+            } catch (error) {
+              console.error("Error signing out:", error);
+              setLogoutLoading(false);
+            }
+          },
         },
       ],
       { cancelable: true }
@@ -120,7 +130,7 @@ export default function More() {
               key={index}
               className={`flex-row items-center py-4 border-b border-border ${item.isPro ? "mb-2" : ""}`}
               onPress={item.action || (() => router.push(item.route as any))}
-              disabled={loading && item.icon === "log-out"}
+              disabled={logoutLoading && item.icon === "log-out"}
             >
               <View
                 className="w-10 h-10 rounded-full items-center justify-center mr-4"
@@ -128,7 +138,7 @@ export default function More() {
                   backgroundColor: item.isPro ? `${goldColor}20` : colors.primary + "10",
                 }}
               >
-                {loading && item.icon === "log-out" ? (
+                {logoutLoading && item.icon === "log-out" ? (
                   <ActivityIndicator size="small" color={colors.primary} />
                 ) : (
                   <Feather name={item.icon} size={20} color={item.isPro ? goldColor : colors.primary} />
@@ -140,7 +150,7 @@ export default function More() {
                     className="text-base font-medium text-foreground"
                     style={item.isPro ? { color: goldColor } : {}}
                   >
-                    {item.icon === "log-out" && loading ? "Saindo..." : item.title}
+                    {item.icon === "log-out" && logoutLoading ? "Saindo..." : item.title}
                   </Text>
                   {item.isPro && (
                     <View

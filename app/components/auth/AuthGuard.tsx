@@ -1,60 +1,63 @@
 // app/components/auth/AuthGuard.tsx
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter, useSegments } from "expo-router";
 import { useAuth } from "../../context/AuthContext";
 import { View, ActivityIndicator, Text } from "react-native";
+import { useTheme } from "../../context/ThemeContext";
 
 export default function AuthGuard({ children }: { children: React.ReactNode }) {
   const { user, initialized, userProfile, loading, profileLoading } = useAuth();
   const segments = useSegments();
   const router = useRouter();
+  const { colors } = useTheme();
+  const [navigated, setNavigated] = useState(false);
 
-  // In AuthGuard.tsx
+  // Clean approach that minimizes state changes and navigation attempts
   useEffect(() => {
-    // Don't do anything until fully initialized and not in a loading state
-    if (!initialized || loading || profileLoading) {
-      // console.log(
-      //   "AuthGuard: Not ready yet. initialized:",
-      //   initialized,
-      //   "loading:",
-      //   loading,
-      //   "profileLoading:",
-      //   profileLoading
-      // );
+    // Only proceed if fully initialized and not currently navigating
+    if (!initialized || navigated) {
       return;
     }
 
     const inAuthGroup = segments[0] === "auth";
     const inOnboarding = segments[0] === "screens" && segments[1] === "onboarding";
+    const hasMacros = !!(userProfile?.macros && Object.keys(userProfile?.macros || {}).length > 0);
 
-    // Check if user has macros already configured
-    const hasMacros = userProfile?.macros && Object.keys(userProfile?.macros || {}).length > 0;
+    // Store navigation decision in a single variable
+    let shouldNavigateTo = null;
 
-    // console.log(
-    //   "AuthGuard: Evaluating navigation. user:",
-    //   !!user,
-    //   "inAuthGroup:",
-    //   inAuthGroup,
-    //   "hasMacros:",
-    //   hasMacros
-    // );
-
-    // Only perform navigation if not already on the correct screen
+    // Determine if we need to navigate
     if (!user && !inAuthGroup) {
-      // console.log("AuthGuard: Redirecting to login");
-      // Not logged in and not on auth screen - go to login
-      router.replace("/auth/login");
+      shouldNavigateTo = "/auth/login";
     } else if (user && inAuthGroup) {
-      // console.log("AuthGuard: Redirecting to home");
-      // Logged in but on auth screen - go to home
-      router.replace("/(tabs)");
+      shouldNavigateTo = "/(tabs)";
     } else if (user && !hasMacros && !inOnboarding && !inAuthGroup) {
-      // console.log("AuthGuard: Redirecting to onboarding");
-      // Logged in, no macros, not on onboarding - go to onboarding
-      router.replace("/screens/onboarding");
+      shouldNavigateTo = "/screens/onboarding";
     }
-  }, [initialized, loading, profileLoading, user, userProfile, segments]);
 
-  // Just render children - no loading screen
+    // Only attempt navigation if absolutely necessary
+    if (shouldNavigateTo) {
+      console.log(`AuthGuard: Navigating to ${shouldNavigateTo}`);
+      setNavigated(true);
+
+      // Use a timeout to ensure component is fully mounted
+      setTimeout(() => {
+        try {
+          // Cast the path to any to fix TypeScript error
+          router.replace(shouldNavigateTo as any);
+        } catch (error) {
+          console.error("Navigation error:", error);
+        }
+
+        // Reset navigation flag after a delay to allow for next check
+        setTimeout(() => {
+          setNavigated(false);
+        }, 1000);
+      }, 100);
+    }
+  }, [initialized, user, userProfile, segments, navigated]);
+
+  // Always render the children instead of showing a full-screen loading state
+  // This allows the current screen to be visible during login/logout transitions
   return <>{children}</>;
 }
