@@ -5,6 +5,7 @@ import { useRouter } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import { useTheme } from "../../context/ThemeContext";
 import { useAuth } from "../../context/AuthContext";
+import { useToast } from "../../context/ToastContext";
 import VoiceRecorder from "./VoiceRecorder";
 import Button from "../ui/Button";
 import { transcribeAudio, extractFoodItems, matchWithDatabaseFoods } from "../../lib/voiceProcessingService";
@@ -20,6 +21,7 @@ const VoiceFoodLoggingModal = ({ isVisible, onClose }: VoiceFoodLoggingModalProp
   const { colors } = useTheme();
   const router = useRouter();
   const { user } = useAuth();
+  const { showToast } = useToast();
 
   const [step, setStep] = useState<"recording" | "processing" | "reviewing" | "saving">("recording");
   const [audioUri, setAudioUri] = useState<string | null>(null);
@@ -115,10 +117,15 @@ const VoiceFoodLoggingModal = ({ isVisible, onClose }: VoiceFoodLoggingModalProp
         }
       }
 
-      // Remove the Alert and directly close the modal and navigate back
+      // Close the modal
       onClose();
 
-      // Navigate directly to main dashboard instead of showing an alert
+      // Show toast notification and navigate
+      const itemCount = extractedItems.filter((item) => item.food).length;
+      showToast(
+        `${itemCount} ${itemCount === 1 ? "alimento adicionado" : "alimentos adicionados"} ao diário`,
+        "success"
+      );
       router.replace("/(tabs)");
     } catch (error) {
       console.error("Error saving items:", error);
