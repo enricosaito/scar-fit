@@ -11,7 +11,7 @@ import { Goal, ActivityLevel } from "../../screens/onboarding/context/Onboarding
 export default function Profile() {
   const router = useRouter();
   const { colors } = useTheme();
-  const { user, signOut, userProfile, refreshProfile, loading } = useAuth();
+  const { user, signOut, userProfile, refreshProfile, loading, setOnboardingCompleted } = useAuth();
   const [logoutLoading, setLogoutLoading] = useState(false);
 
   const handleLogout = () => {
@@ -58,6 +58,8 @@ export default function Profile() {
             try {
               if (user) {
                 await resetUserMacros(user.id);
+                // Also reset the onboarding status
+                setOnboardingCompleted(false);
                 await refreshProfile();
                 Alert.alert("Sucesso", "Seus dados foram resetados com sucesso.");
               }
