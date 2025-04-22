@@ -12,6 +12,42 @@ import { transcribeAudio, extractFoodItems, matchWithDatabaseFoods } from "../..
 import { addFoodToLog } from "../../models/tracking";
 import { getFoodById } from "../../models/food";
 
+// MacroTag Component
+const MacroTag = ({
+  value,
+  color,
+  label,
+  textColor = "white",
+}: {
+  value: string | number;
+  color: string;
+  label: string;
+  textColor?: string;
+}) => {
+  return (
+    <View
+      className="rounded-md px-2 py-0.5 mr-2 flex-row items-center justify-center"
+      style={{ backgroundColor: color }}
+    >
+      <Text className="text-xs font-medium" style={{ color: textColor }}>
+        {value}g {label}
+      </Text>
+    </View>
+  );
+};
+
+// Calorie Tag Component
+const CalorieTag = ({ calories }: { calories: number }) => {
+  return (
+    <View
+      className="rounded-md px-2 py-0.5 mr-2 flex-row items-center justify-center"
+      style={{ backgroundColor: "#3b82f680" }}
+    >
+      <Text className="text-xs font-medium text-white">{calories} kcal</Text>
+    </View>
+  );
+};
+
 interface VoiceFoodLoggingModalProps {
   isVisible: boolean;
   onClose: () => void;
@@ -30,6 +66,13 @@ const VoiceFoodLoggingModal = ({ isVisible, onClose }: VoiceFoodLoggingModalProp
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [debug, setDebug] = useState<string | null>(null);
+
+  // Macro tag colors - softer, more modern palette
+  const macroColors = {
+    protein: "#9333ea80", // Softer purple with transparency
+    carbs: "#ca8a0480", // Softer amber with transparency
+    fat: "#dc262680", // Softer red with transparency
+  };
 
   const handleRecordingComplete = (uri: string) => {
     setAudioUri(uri);
@@ -262,11 +305,13 @@ const VoiceFoodLoggingModal = ({ isVisible, onClose }: VoiceFoodLoggingModalProp
 
               {extractedItems.length > 0 ? (
                 extractedItems.map((item, index) => (
-                  <View key={index} className="bg-card rounded-lg border border-border p-4 mb-3">
-                    <Text className="text-foreground font-medium">
+                  <View key={index} className="bg-card rounded-xl border border-border p-4 mb-3">
+                    <Text className="text-foreground font-medium mb-1">
                       {item.food?.description || "Alimento não encontrado"}
                     </Text>
-                    <View className="flex-row justify-between mt-2">
+                    <Text className="text-muted-foreground text-xs mb-2">{item.food?.category}</Text>
+
+                    <View className="flex-row justify-between mt-2 mb-2">
                       <Text className="text-muted-foreground">Quantidade: {item.quantity}g</Text>
                       <Text className="text-muted-foreground">
                         Refeição:{" "}
@@ -279,14 +324,28 @@ const VoiceFoodLoggingModal = ({ isVisible, onClose }: VoiceFoodLoggingModalProp
                           : "Lanche"}
                       </Text>
                     </View>
+
                     {item.food && (
                       <View className="mt-2 pt-2 border-t border-border">
-                        <Text className="text-muted-foreground">
-                          {Math.round((item.food.kcal * item.quantity) / 100)} kcal | P:{" "}
-                          {Math.round((item.food.protein_g * item.quantity) / 100)}g | C:{" "}
-                          {Math.round((item.food.carbs_g * item.quantity) / 100)}g | G:{" "}
-                          {Math.round((item.food.fat_g * item.quantity) / 100)}g
-                        </Text>
+                        {/* Macro tags using the same components and styling as other screens */}
+                        <View className="flex-row flex-wrap mt-1.5">
+                          <CalorieTag calories={Math.round((item.food.kcal * item.quantity) / 100)} />
+                          <MacroTag
+                            value={Math.round((item.food.protein_g * item.quantity) / 100)}
+                            color={macroColors.protein}
+                            label="prot."
+                          />
+                          <MacroTag
+                            value={Math.round((item.food.carbs_g * item.quantity) / 100)}
+                            color={macroColors.carbs}
+                            label="carb."
+                          />
+                          <MacroTag
+                            value={Math.round((item.food.fat_g * item.quantity) / 100)}
+                            color={macroColors.fat}
+                            label="gord."
+                          />
+                        </View>
                       </View>
                     )}
                   </View>
