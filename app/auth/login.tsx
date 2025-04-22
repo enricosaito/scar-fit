@@ -94,7 +94,7 @@ export default function Login() {
         <ScrollView className="flex-1 px-4">
           <View className="py-10 items-center mb-6">
             <View className="w-20 h-20 bg-primary rounded-full items-center justify-center mb-4">
-              <Feather name="activity" size={36} color="white" />
+              <Feather name="zap" size={36} color="white" />
             </View>
             <Text className="text-3xl font-bold text-foreground mb-2">Scar Fit</Text>
             <Text className="text-muted-foreground text-center">Sua saúde em primeiro lugar</Text>
