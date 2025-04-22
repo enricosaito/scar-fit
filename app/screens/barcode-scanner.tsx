@@ -22,7 +22,7 @@ const BarcodeScanner = () => {
     setScanned(true);
 
     router.push({
-      pathname: "/screens/barcode-product",
+      pathname: "/screens/add-food-barcode",
       params: { barcode: data },
     });
   };

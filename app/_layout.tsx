@@ -85,7 +85,7 @@ export default function RootLayout() {
                   <Stack.Screen name="screens/onboarding/index" />
                   <Stack.Screen name="screens/add-food-voice" />
                   <Stack.Screen name="screens/barcode-scanner" options={{ headerShown: false }} />
-                  <Stack.Screen name="screens/barcode-product" options={{ headerShown: false }} />
+                  <Stack.Screen name="screens/add-food-barcode" options={{ headerShown: false }} />
                   <Stack.Screen name="auth" />
                 </Stack>
               </AuthGuard>
