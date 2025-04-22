@@ -1,4 +1,4 @@
-// app/screens/food-tracker.tsx (updated with better styling)
+// app/screens/add-food-search.tsx
 import React, { useState, useEffect } from "react";
 import {
   Text,

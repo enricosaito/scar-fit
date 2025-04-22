@@ -115,7 +115,7 @@ const BarcodeScanner = () => {
         <Text className="text-muted-foreground text-center mb-4">
           Escaneie o código de barras de um alimento para adicionar automaticamente ao seu diário.
         </Text>
-        <Button variant="outline" onPress={() => router.push("/screens/food-tracker")}>
+        <Button variant="outline" onPress={() => router.push("/screens/add-food-search")}>
           Digitar Manualmente
         </Button>
       </View>

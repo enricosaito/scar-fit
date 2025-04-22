@@ -63,7 +63,7 @@ export default function AddMenu() {
       title: "Adicionar Alimento",
       action: () => {
         hideMenu();
-        router.push("/screens/food-tracker");
+        router.push("/screens/add-food-search");
       },
       color: colors.primary,
       isPro: false,

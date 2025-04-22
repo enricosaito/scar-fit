@@ -160,7 +160,7 @@ export default function BarcodeProductScreen() {
           <Button className="mb-4" onPress={handleScanAgain}>
             Escanear Novamente
           </Button>
-          <Button variant="outline" onPress={() => router.push("/screens/food-tracker")}>
+          <Button variant="outline" onPress={() => router.push("/screens/add-food-search")}>
             Buscar Manualmente
           </Button>
         </View>

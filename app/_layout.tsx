@@ -79,7 +79,7 @@ export default function RootLayout() {
                   <Stack.Screen name="screens/profile/password" />
                   <Stack.Screen name="screens/notifications" />
                   <Stack.Screen name="screens/manage-meals" options={{ presentation: "modal" }} />
-                  <Stack.Screen name="screens/food-tracker" />
+                  <Stack.Screen name="screens/add-food-search" />
                   <Stack.Screen name="screens/exercise" />
                   <Stack.Screen name="screens/pro-subscription" />
                   <Stack.Screen name="screens/onboarding/index" />
