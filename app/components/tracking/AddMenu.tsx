@@ -60,7 +60,7 @@ export default function AddMenu() {
       id: "food-search",
       icon: "search",
       iconFamily: "Feather",
-      title: "Adicionar Alimento",
+      title: "Procurar Alimento",
       action: () => {
         hideMenu();
         router.push("/screens/add-food-search");
@@ -204,7 +204,7 @@ export default function AddMenu() {
           >
             <View className="pb-2 pt-5" />
             <View className="px-4 pb-8" style={{ paddingBottom: 8 + bottomSafeArea }}>
-              <Text className="text-2xl font-bold text-foreground mb-6">Adicionar</Text>
+              <Text className="text-2xl font-bold text-foreground mb-6">Registrar Refeição</Text>
 
               <View className="flex-row flex-wrap justify-between">
                 {sortedMenuItems.map((item) => (
