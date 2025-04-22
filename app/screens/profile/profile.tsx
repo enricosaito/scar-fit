@@ -227,18 +227,6 @@ export default function Profile() {
 
           <Text className="text-lg font-bold text-foreground mb-4">Estatísticas</Text>
 
-          <View className="flex-row mb-4">
-            <View className="flex-1 bg-card rounded-xl border border-border p-4 mr-2">
-              <Text className="text-muted-foreground">Dias Ativos</Text>
-              <Text className="text-2xl font-bold text-foreground">0</Text>
-            </View>
-
-            <View className="flex-1 bg-card rounded-xl border border-border p-4 ml-2">
-              <Text className="text-muted-foreground">Refeições</Text>
-              <Text className="text-2xl font-bold text-foreground">0</Text>
-            </View>
-          </View>
-
           <View className="bg-card rounded-xl border border-border p-4 mb-6">
             <Text className="text-muted-foreground mb-2">Plano Atual</Text>
             <View className="flex-row justify-between items-center">

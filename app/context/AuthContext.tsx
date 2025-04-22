@@ -5,6 +5,9 @@ import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "../lib/supabase";
 import { createUserProfile, getUserProfile, updateUserProfile, UserProfile } from "../models/user";
 import { signInWithGoogle } from "../lib/googleAuth";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
+const ONBOARDING_COMPLETED_KEY = "onboardingCompleted";
 
 interface AuthState {
   user: User | null;
@@ -47,11 +50,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setProfileLoading(true);
     try {
       const profile = await getUserProfile(userId);
+      const hasMacros = !!(profile?.macros && Object.keys(profile.macros).length > 0);
+
+      // Check stored onboarding status
+      let storedOnboardingStatus = false;
+      try {
+        const storedValue = await AsyncStorage.getItem(ONBOARDING_COMPLETED_KEY);
+        storedOnboardingStatus = storedValue === "true";
+      } catch (error) {
+        console.error("Error reading onboarding status:", error);
+      }
+
+      // If the user has macros or the onboarding is already marked completed, set it as completed
+      const onboardingCompleted = hasMacros || storedOnboardingStatus;
+
       setState((prev) => ({
         ...prev,
         userProfile: profile,
-        onboardingCompleted: !!(profile?.macros && Object.keys(profile.macros).length > 0),
+        onboardingCompleted,
       }));
+
+      // Save the status to storage if user has macros but onboarding status isn't saved yet
+      if (hasMacros && !storedOnboardingStatus) {
+        try {
+          await AsyncStorage.setItem(ONBOARDING_COMPLETED_KEY, "true");
+        } catch (error) {
+          console.error("Error saving onboarding status:", error);
+        }
+      }
     } catch (error) {
       console.error("Error fetching user profile:", error);
     } finally {
@@ -59,13 +85,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const setOnboardingCompleted = (completed: boolean) => {
+  const setOnboardingCompleted = async (completed: boolean) => {
     setState((prev) => ({ ...prev, onboardingCompleted: completed }));
+    try {
+      await AsyncStorage.setItem(ONBOARDING_COMPLETED_KEY, completed ? "true" : "false");
+    } catch (error) {
+      console.error("Error saving onboarding status:", error);
+    }
   };
 
   useEffect(() => {
     const initialize = async () => {
       try {
+        // Load onboarding status from storage
+        let storedOnboardingStatus = false;
+        try {
+          const storedValue = await AsyncStorage.getItem(ONBOARDING_COMPLETED_KEY);
+          storedOnboardingStatus = storedValue === "true";
+        } catch (error) {
+          console.error("Error reading onboarding status:", error);
+        }
+
         const { data } = await supabase.auth.getSession();
         if (data?.session) {
           const { session } = data;
@@ -74,11 +114,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             session,
             userProfile: null,
             initialized: true,
-            onboardingCompleted: false,
+            onboardingCompleted: storedOnboardingStatus,
           });
           fetchUserProfile(session.user.id);
         } else {
-          setState({ ...initialAuthState, initialized: true });
+          setState({
+            ...initialAuthState,
+            initialized: true,
+            onboardingCompleted: storedOnboardingStatus,
+          });
         }
       } catch (error) {
         console.error("Error initializing auth:", error);
@@ -92,16 +136,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      // Load onboarding status from storage
+      let storedOnboardingStatus = false;
+      try {
+        const storedValue = await AsyncStorage.getItem(ONBOARDING_COMPLETED_KEY);
+        storedOnboardingStatus = storedValue === "true";
+      } catch (error) {
+        console.error("Error reading onboarding status:", error);
+      }
+
       setState((prev) => ({
         ...prev,
         user: session?.user || null,
         session: session || null,
         initialized: true,
+        onboardingCompleted: session ? prev.onboardingCompleted : storedOnboardingStatus,
       }));
+
       if (session?.user) {
         fetchUserProfile(session.user.id);
       } else {
-        setState((prev) => ({ ...prev, userProfile: null, onboardingCompleted: false }));
+        setState((prev) => ({
+          ...prev,
+          userProfile: null,
+          onboardingCompleted: storedOnboardingStatus,
+        }));
       }
     });
     return () => subscription.unsubscribe();
@@ -167,14 +226,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         profile = await getUserProfile(user.id);
       }
 
+      // Check stored onboarding status
+      let storedOnboardingStatus = false;
+      try {
+        const storedValue = await AsyncStorage.getItem(ONBOARDING_COMPLETED_KEY);
+        storedOnboardingStatus = storedValue === "true";
+      } catch (error) {
+        console.error("Error reading onboarding status:", error);
+      }
+
+      const hasMacros = !!(profile?.macros && Object.keys(profile.macros).length > 0);
+      const onboardingCompleted = hasMacros || storedOnboardingStatus;
+
       setState((prev) => ({
         ...prev,
         user,
         session,
         userProfile: profile,
         initialized: true,
-        onboardingCompleted: !!(profile?.macros && Object.keys(profile.macros).length > 0),
+        onboardingCompleted,
       }));
+
+      // Save onboarding status if user has macros
+      if (hasMacros && !storedOnboardingStatus) {
+        try {
+          await AsyncStorage.setItem(ONBOARDING_COMPLETED_KEY, "true");
+        } catch (error) {
+          console.error("Error saving onboarding status:", error);
+        }
+      }
 
       return { error: null };
     } catch (err: any) {
