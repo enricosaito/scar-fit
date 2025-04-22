@@ -85,7 +85,7 @@ export default function MealList({ meals }: MealListProps) {
   };
 
   const navigateToTracking = () => {
-    router.push("/screens/tracking");
+    router.push("/screens/manage-meals");
   };
 
   if (meals.length === 0 || meals.every((meal) => meal.items.length === 0)) {
@@ -103,7 +103,7 @@ export default function MealList({ meals }: MealListProps) {
             className="flex-row items-center bg-primary px-4 py-2.5 rounded-lg"
             onPress={() =>
               router.push({
-                pathname: "/screens/tracking",
+                pathname: "/screens/manage-meals",
                 params: { showSearch: "true" },
               })
             }
