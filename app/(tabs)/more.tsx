@@ -77,7 +77,7 @@ export default function More() {
     },
     {
       icon: "sliders",
-      title: "Calcular Macros",
+      title: "Ajustar Objetivo",
       route: "/screens/onboarding/index",
       action: () => router.push("/screens/onboarding"),
     },
