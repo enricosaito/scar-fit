@@ -369,17 +369,6 @@ export default function Tracking() {
                   </View>
                 )}
               </View>
-
-              {/* Tips - only show in normal mode */}
-              {!isAddMode && (
-                <View className="bg-accent rounded-xl p-6">
-                  <Text className="text-lg font-semibold text-accent-foreground mb-2">Dica do Dia</Text>
-                  <Text className="text-accent-foreground">
-                    Para ter mais energia ao longo do dia, procure distribuir suas refeições em intervalos regulares de
-                    3-4 horas.
-                  </Text>
-                </View>
-              )}
             </>
           )}
         </View>
