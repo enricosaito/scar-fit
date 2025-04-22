@@ -23,7 +23,8 @@ export default function Login() {
   const { colors } = useTheme();
   const { signIn, signInWithGoogle } = useAuth();
 
-  const [loading, setLoading] = useState(false);
+  const [loginLoading, setLoginLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -35,56 +36,38 @@ export default function Login() {
       return;
     }
 
+    setLoginLoading(true);
     try {
       const { error } = await signIn(email, password);
 
       if (error) {
         setErrorMessage(error.message || "Erro ao fazer login. Tente novamente.");
-      } else {
-        // Redirect to home on successful login
-        router.replace("/(tabs)");
       }
+      // Don't redirect here - let AuthGuard handle it
     } catch (error: any) {
       setErrorMessage(error.message || "Ocorreu um erro inesperado. Tente novamente.");
+    } finally {
+      setLoginLoading(false);
     }
   };
 
   const handleGoogleLogin = async () => {
     try {
       setErrorMessage("");
-      console.log("Starting Google login flow...");
-
-      // Show loading state
-      setLoading(true);
+      setGoogleLoading(true);
 
       const { error } = await signInWithGoogle();
 
       if (error) {
         console.error("Google login error:", error);
         setErrorMessage(error.message || "Erro ao fazer login com Google. Tente novamente.");
-        setLoading(false);
-        return;
       }
-
-      console.log("Google login successful, checking auth state...");
-
-      // Check if we're actually signed in
-      const { data: sessionData } = await supabase.auth.getSession();
-      console.log("Current session:", sessionData?.session ? "Exists" : "None");
-
-      if (sessionData?.session) {
-        console.log("Session exists, redirecting...");
-        // This ensures navigation happens if the auth state change doesn't trigger
-        router.replace("/(tabs)");
-      } else {
-        console.log("No session found after successful flow");
-        setErrorMessage("Login com Google bem-sucedido, mas a sessão não foi criada. Tente novamente.");
-        setLoading(false);
-      }
+      // Don't redirect or check session - let AuthGuard handle navigation
     } catch (error) {
       console.error("Unexpected error:", error);
       setErrorMessage("Ocorreu um erro inesperado. Tente novamente.");
-      setLoading(false);
+    } finally {
+      setGoogleLoading(false);
     }
   };
 
@@ -125,8 +108,8 @@ export default function Login() {
             secureTextEntry
           />
 
-          <Button className="mb-4" onPress={handleLogin} disabled={loading}>
-            {loading ? <ActivityIndicator size="small" color="white" /> : "Entrar"}
+          <Button className="mb-4" onPress={handleLogin} disabled={loginLoading}>
+            {loginLoading ? <ActivityIndicator size="small" color="white" /> : "Entrar"}
           </Button>
 
           <TouchableOpacity className="mb-6" onPress={() => router.push("/auth/forgot-password")}>
@@ -144,14 +127,20 @@ export default function Login() {
           <TouchableOpacity
             className="flex-row items-center justify-center bg-card border border-border rounded-lg py-3 mb-6"
             onPress={handleGoogleLogin}
-            disabled={loading}
+            disabled={googleLoading}
           >
-            <Image
-              source={require("../../assets/images/google-logo.png")}
-              style={{ width: 20, height: 20 }}
-              resizeMode="contain"
-            />
-            <Text className="text-foreground font-medium ml-2">Entrar com Google</Text>
+            {googleLoading ? (
+              <ActivityIndicator size="small" color={colors.foreground} style={{ marginRight: 8 }} />
+            ) : (
+              <Image
+                source={require("../../assets/images/google-logo.png")}
+                style={{ width: 20, height: 20 }}
+                resizeMode="contain"
+              />
+            )}
+            <Text className="text-foreground font-medium ml-2">
+              {googleLoading ? "Processando..." : "Entrar com Google"}
+            </Text>
           </TouchableOpacity>
 
           <View className="flex-row justify-center items-center">
