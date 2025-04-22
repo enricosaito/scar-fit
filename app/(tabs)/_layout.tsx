@@ -58,7 +58,7 @@ export default function TabLayout() {
           title: "Treinos",
           tabBarIcon: ({ color }) => (
             <View className="items-center justify-center">
-              <Feather name="activity" size={24} color={color} />
+              <Feather name="zap" size={24} color={color} />
             </View>
           ),
         }}
@@ -105,7 +105,7 @@ export default function TabLayout() {
           title: "Receitas",
           tabBarIcon: ({ color }) => (
             <View className="items-center justify-center">
-              <FontAwesome5 name="utensils" size={22} color={color} />
+              <Feather name="book" size={22} color={color} />
             </View>
           ),
         }}
