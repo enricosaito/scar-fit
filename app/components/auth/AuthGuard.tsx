@@ -15,7 +15,7 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
   // Clean approach that minimizes state changes and navigation attempts
   useEffect(() => {
     // Only proceed if fully initialized and not currently navigating
-    if (!initialized || loading || profileLoading || navigated) {
+    if (!initialized || navigated) {
       return;
     }
 
@@ -43,7 +43,8 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
       // Use a timeout to ensure component is fully mounted
       setTimeout(() => {
         try {
-          router.replace(shouldNavigateTo);
+          // Cast the path to any to fix TypeScript error
+          router.replace(shouldNavigateTo as any);
         } catch (error) {
           console.error("Navigation error:", error);
         }
@@ -54,18 +55,9 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
         }, 1000);
       }, 100);
     }
-  }, [initialized, loading, profileLoading, user, userProfile, segments, navigated]);
+  }, [initialized, user, userProfile, segments, navigated]);
 
-  // Simple loading screen
-  if (!initialized || loading || profileLoading) {
-    return (
-      <View className="flex-1 justify-center items-center bg-background">
-        <ActivityIndicator size="large" color={colors.primary} />
-        <Text className="text-foreground mt-4">Carregando...</Text>
-      </View>
-    );
-  }
-
-  // Render app content
+  // Always render the children instead of showing a full-screen loading state
+  // This allows the current screen to be visible during login/logout transitions
   return <>{children}</>;
 }
