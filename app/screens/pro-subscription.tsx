@@ -136,7 +136,7 @@ export default function ProSubscription() {
             >
               <Text className="text-2xl font-extrabold mb-1 text-foreground">ANUAL</Text>
 
-              <Text className="text-lg font-semibold text-muted-foreground">R$99,90/ano</Text>
+              <Text className="text-lg font-semibold text-muted-foreground">R$129,90/ano</Text>
             </Pressable>
           </View>
 
@@ -156,12 +156,12 @@ export default function ProSubscription() {
           >
             <Text className="text-2xl font-extrabold mb-1 text-foreground">MENSAL</Text>
 
-            <Text className="text-lg font-extrabold text-muted-foreground">R$14,90/mês</Text>
+            <Text className="text-lg font-extrabold text-muted-foreground">R$21,90/mês</Text>
           </Pressable>
         </View>
 
         {/* Keep blue button for free trial */}
-        <Button onPress={() => router.back()}>Iniciar availiação gratuita de 7 dias )</Button>
+        <Button onPress={() => router.back()}>Iniciar availiação gratuita de 7 dias</Button>
       </View>
     </SafeAreaView>
   );
