@@ -89,7 +89,7 @@ export default function AddMenu() {
       title: "Detectar por Áudio",
       action: () => {
         hideMenu();
-        router.push("/screens/voice-food-logger");
+        router.push("/screens/add-food-voice");
       },
       color: goldColor,
       isPro: true,
