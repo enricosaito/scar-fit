@@ -6,7 +6,7 @@ import { View, ActivityIndicator, Text } from "react-native";
 import { useTheme } from "../../context/ThemeContext";
 
 export default function AuthGuard({ children }: { children: React.ReactNode }) {
-  const { user, initialized, userProfile, loading, profileLoading } = useAuth();
+  const { user, initialized, userProfile, loading, profileLoading, onboardingCompleted } = useAuth();
   const segments = useSegments();
   const router = useRouter();
   const { colors } = useTheme();
@@ -31,7 +31,8 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
       shouldNavigateTo = "/auth/login";
     } else if (user && inAuthGroup) {
       shouldNavigateTo = "/(tabs)";
-    } else if (user && !hasMacros && !inOnboarding && !inAuthGroup) {
+    } else if (user && !hasMacros && !inOnboarding && !onboardingCompleted && !inAuthGroup) {
+      // Only redirect to onboarding if the user doesn't have macros AND onboarding is not completed
       shouldNavigateTo = "/screens/onboarding";
     }
 
@@ -55,7 +56,7 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
         }, 1000);
       }, 100);
     }
-  }, [initialized, user, userProfile, segments, navigated]);
+  }, [initialized, user, userProfile, segments, navigated, onboardingCompleted]);
 
   // Always render the children instead of showing a full-screen loading state
   // This allows the current screen to be visible during login/logout transitions
