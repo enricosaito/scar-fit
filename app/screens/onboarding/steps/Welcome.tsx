@@ -74,7 +74,7 @@ const Welcome = ({ onNext }: WelcomeStepProps) => {
         style={[iconStyle, breathingStyle]}
         className="w-36 h-36 bg-primary/20 rounded-full items-center justify-center mb-8"
       >
-        <Feather name="activity" size={72} color={colors.primary} />
+        <Feather name="zap" size={72} color={colors.primary} />
       </Animated.View>
 
       {/* Animated Title */}
