@@ -1,4 +1,4 @@
-// app/screens/onboarding/steps/Results.tsx (continued)
+// Update app/screens/onboarding/steps/Results.tsx
 import React, { useEffect } from "react";
 import { View, Text, Alert, ActivityIndicator } from "react-native";
 import Animated, {
