@@ -1,4 +1,4 @@
-// app/screens/profile/profile.tsx (updated without MacroSummary)
+// Updated app/screens/profile/profile.tsx
 import React, { useState } from "react";
 import { Text, View, SafeAreaView, Pressable, Alert, ScrollView, ActivityIndicator } from "react-native";
 import { useRouter } from "expo-router";
@@ -13,7 +13,7 @@ export default function Profile() {
   const { user, signOut, userProfile, refreshProfile, loading, setOnboardingCompleted } = useAuth();
   const [logoutLoading, setLogoutLoading] = useState(false);
 
-  // Golden colors for premium feature - consistent with existing PRO styling
+  // Golden colors for premium feature (consistent with existing PRO styling)
   const goldColor = "#F7B955";
   const goldBg = "rgba(247, 185, 85, 0.2)";
 
@@ -74,10 +74,13 @@ export default function Profile() {
     if (userProfile?.plan !== "premium") {
       router.push("/screens/pro-subscription");
     } else {
-      // If user is premium, we'll navigate to custom goal screen
+      // If user is premium, navigate to custom goal screen
       router.push("/screens/profile/custom-goal");
     }
   };
+
+  // Check if user is premium
+  const isPremium = userProfile?.plan === "premium";
 
   return (
     <SafeAreaView className="flex-1 bg-background">
@@ -92,8 +95,24 @@ export default function Profile() {
         <View className="p-6 items-center">
           {user && !loading ? (
             <>
-              <View className="w-24 h-24 bg-primary/20 rounded-full items-center justify-center mb-4">
-                <Feather name="user" size={40} color={colors.primary} />
+              {/* User avatar with conditional gold border for premium users */}
+              <View
+                className={`w-24 h-24 rounded-full items-center justify-center mb-4 ${
+                  isPremium ? "border-2" : "bg-primary/20"
+                }`}
+                style={isPremium ? { borderColor: goldColor, backgroundColor: `${goldColor}10` } : {}}
+              >
+                <Feather name="user" size={40} color={isPremium ? goldColor : colors.primary} />
+                {isPremium && (
+                  <View
+                    className="absolute -bottom-1 -right-1 px-2 py-0.5 rounded-full"
+                    style={{ backgroundColor: goldBg }}
+                  >
+                    <Text className="text-xs font-bold" style={{ color: goldColor }}>
+                      PRO
+                    </Text>
+                  </View>
+                )}
               </View>
 
               <Text className="text-2xl font-bold text-foreground mb-1">
@@ -134,33 +153,55 @@ export default function Profile() {
             <View className="mb-6">
               <View className="flex-row justify-between items-center mb-4">
                 <Text className="text-lg font-bold text-foreground">Suas Metas Nutricionais</Text>
-                <View className="flex-row">
-                  {/* Recalculate button */}
-                  <Pressable onPress={() => router.push("/screens/onboarding")} className="mr-4">
-                    <Text className="text-primary text-sm">Recalcular</Text>
-                  </Pressable>
-                  {/* Custom Goal button (PRO feature) */}
-                  <Pressable onPress={handleCustomGoalPress} className="flex-row items-center">
-                    <Text className="text-sm" style={{ color: goldColor }}>
-                      Meta Personalizada
-                    </Text>
+              </View>
+
+              {/* Action buttons - now styled as proper buttons */}
+              <View className="flex-row mb-4">
+                <Pressable
+                  onPress={() => router.push("/screens/onboarding")}
+                  className="flex-1 py-2 bg-secondary rounded-lg flex-row items-center justify-center mr-2"
+                >
+                  <Feather name="refresh-cw" size={16} color={colors.primary} />
+                  <Text className="text-primary font-medium ml-2">Recalcular</Text>
+                </Pressable>
+
+                <Pressable
+                  onPress={handleCustomGoalPress}
+                  className="flex-1 py-2 rounded-lg flex-row items-center justify-center"
+                  style={{ backgroundColor: isPremium ? goldBg : "#33415520" }}
+                >
+                  <Feather name="sliders" size={16} color={isPremium ? goldColor : colors.mutedForeground} />
+                  <Text className="font-medium ml-2" style={{ color: isPremium ? goldColor : colors.mutedForeground }}>
+                    Meta Personalizada
+                  </Text>
+                  {!isPremium && (
                     <View className="ml-1 px-1 rounded" style={{ backgroundColor: goldBg }}>
                       <Text className="text-xs" style={{ color: goldColor }}>
                         PRO
                       </Text>
                     </View>
-                  </Pressable>
-                </View>
+                  )}
+                </Pressable>
               </View>
 
               {/* Simple, non-graphical macros display */}
-              <View className="bg-card rounded-xl border border-border p-4">
+              <View
+                className={`bg-card rounded-xl border border-border p-4 ${
+                  isPremium && userProfile.macros.isCustom ? "border-2" : ""
+                }`}
+                style={isPremium && userProfile.macros.isCustom ? { borderColor: goldColor } : {}}
+              >
                 {/* Calories target */}
                 <View className="border-b border-border pb-3 mb-3">
                   <View className="flex-row justify-between items-center">
                     <View className="flex-row items-center">
-                      <View className="w-8 h-8 rounded-full bg-primary/15 items-center justify-center mr-2">
-                        <Feather name="battery-charging" size={16} color={colors.primary} />
+                      <View
+                        className="w-8 h-8 rounded-full items-center justify-center mr-2"
+                        style={{
+                          backgroundColor: isPremium ? `${goldColor}15` : `${colors.primary}15`,
+                        }}
+                      >
+                        <Feather name="battery-charging" size={16} color={isPremium ? goldColor : colors.primary} />
                       </View>
                       <Text className="text-foreground font-medium">Calorias</Text>
                     </View>
@@ -220,11 +261,27 @@ export default function Profile() {
           <View className="bg-card rounded-xl border border-border p-4 mb-6">
             <Text className="text-muted-foreground mb-2">Plano Atual</Text>
             <View className="flex-row justify-between items-center">
-              <Text className="text-lg font-bold text-foreground">Gratuito</Text>
-              <View className="bg-primary py-1 px-3 rounded-full">
-                <Text className="text-white text-xs font-medium">Upgrade</Text>
-              </View>
+              <Text className="text-lg font-bold" style={{ color: isPremium ? goldColor : colors.foreground }}>
+                {isPremium ? "Premium" : "Gratuito"}
+              </Text>
+              {!isPremium && (
+                <Pressable
+                  className="py-1 px-3 rounded-full"
+                  style={{ backgroundColor: goldBg }}
+                  onPress={() => router.push("/screens/pro-subscription")}
+                >
+                  <Text className="text-xs font-medium" style={{ color: goldColor }}>
+                    Fazer Upgrade
+                  </Text>
+                </Pressable>
+              )}
             </View>
+            {isPremium && (
+              <View className="mt-2 py-1 px-2 rounded bg-green-500/10 border border-green-500/20 flex-row items-center">
+                <Feather name="check-circle" size={14} color="#22c55e" style={{ marginRight: 4 }} />
+                <Text className="text-green-500 text-xs">Assinatura Premium ativa</Text>
+              </View>
+            )}
           </View>
         </View>
       </ScrollView>
