@@ -1,10 +1,11 @@
-// app/screens/barcode-product.tsx
+// app/screens/add-food-barcode.tsx
 import React, { useState, useEffect } from "react";
 import { Text, View, SafeAreaView, Pressable, ActivityIndicator, Image, ScrollView, Alert } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import { useTheme } from "../context/ThemeContext";
 import { useAuth } from "../context/AuthContext";
+import { useToast } from "../context/ToastContext";
 import Button from "../components/ui/Button";
 import { fetchProductByBarcode, Product } from "../lib/openFoodFactsApi";
 import { addFoodToLog } from "../models/tracking";
@@ -50,6 +51,7 @@ export default function BarcodeProductScreen() {
   const { barcode } = useLocalSearchParams();
   const { colors } = useTheme();
   const { user } = useAuth();
+  const { showToast } = useToast();
 
   const [loading, setLoading] = useState(true);
   const [product, setProduct] = useState<Product | null>(null);
@@ -121,7 +123,8 @@ export default function BarcodeProductScreen() {
         date: today,
       });
 
-      // Remove success alert and navigate directly to main dashboard
+      // Show toast and navigate to dashboard
+      showToast(`${food.description} adicionado ao diário`, "success");
       router.replace("/(tabs)");
     } catch (err) {
       console.error("Error adding food to log:", err);
@@ -157,7 +160,7 @@ export default function BarcodeProductScreen() {
           <Button className="mb-4" onPress={handleScanAgain}>
             Escanear Novamente
           </Button>
-          <Button variant="outline" onPress={() => router.push("/screens/food-tracker")}>
+          <Button variant="outline" onPress={() => router.push("/screens/add-food-search")}>
             Buscar Manualmente
           </Button>
         </View>

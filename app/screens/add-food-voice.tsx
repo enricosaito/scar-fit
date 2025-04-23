@@ -1,4 +1,4 @@
-// app/screens/voice-food-logger.tsx (updated)
+// app/screens/add-food-voice.tsx
 import React, { useState, useEffect } from "react";
 import {
   View,
@@ -15,15 +15,53 @@ import { useRouter } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import { useTheme } from "../context/ThemeContext";
 import { useAuth } from "../context/AuthContext";
+import { useToast } from "../context/ToastContext";
 import VoiceRecorder from "../components/tracking/VoiceRecorder";
 import Button from "../components/ui/Button";
 import { transcribeAudio, extractFoodItems, matchWithDatabaseFoods } from "../lib/voiceProcessingService";
 import { addFoodToLog } from "../models/tracking";
 
+// MacroTag Component
+const MacroTag = ({
+  value,
+  color,
+  label,
+  textColor = "white",
+}: {
+  value: string | number;
+  color: string;
+  label: string;
+  textColor?: string;
+}) => {
+  return (
+    <View
+      className="rounded-md px-2 py-0.5 mr-2 flex-row items-center justify-center"
+      style={{ backgroundColor: color }}
+    >
+      <Text className="text-xs font-medium" style={{ color: textColor }}>
+        {value}g {label}
+      </Text>
+    </View>
+  );
+};
+
+// Calorie Tag Component
+const CalorieTag = ({ calories }: { calories: number }) => {
+  return (
+    <View
+      className="rounded-md px-2 py-0.5 mr-2 flex-row items-center justify-center"
+      style={{ backgroundColor: "#3b82f680" }}
+    >
+      <Text className="text-xs font-medium text-white">{calories} kcal</Text>
+    </View>
+  );
+};
+
 export default function VoiceFoodLogger() {
   const { colors } = useTheme();
   const router = useRouter();
   const { user } = useAuth();
+  const { showToast } = useToast();
 
   const [step, setStep] = useState<"recording" | "processing" | "reviewing" | "saving">("recording");
   const [audioUri, setAudioUri] = useState<string | null>(null);
@@ -31,6 +69,13 @@ export default function VoiceFoodLogger() {
   const [extractedItems, setExtractedItems] = useState<any[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Macro tag colors - softer, more modern palette
+  const macroColors = {
+    protein: "#9333ea80", // Softer purple with transparency
+    carbs: "#ca8a0480", // Softer amber with transparency
+    fat: "#dc262680", // Softer red with transparency
+  };
 
   // Animation values
   const fadeAnim = React.useRef(new Animated.Value(0)).current;
@@ -109,9 +154,15 @@ export default function VoiceFoodLogger() {
         }
       }
 
-      Alert.alert("Sucesso!", "Alimentos adicionados com sucesso ao seu diário.", [
-        { text: "OK", onPress: () => router.replace("/(tabs)") },
-      ]);
+      // Show toast notification instead of alert
+      const itemCount = extractedItems.filter((item) => item.food).length;
+      showToast(
+        `${itemCount} ${itemCount === 1 ? "alimento adicionado" : "alimentos adicionados"} ao diário`,
+        "success"
+      );
+
+      // Navigate back to tabs
+      router.replace("/(tabs)");
     } catch (error) {
       console.error("Error saving items:", error);
       Alert.alert("Erro", "Ocorreu um erro ao salvar os alimentos. Por favor, tente novamente.", [{ text: "OK" }]);
@@ -178,11 +229,13 @@ export default function VoiceFoodLogger() {
 
             {extractedItems.length > 0 ? (
               extractedItems.map((item, index) => (
-                <View key={index} className="bg-card rounded-lg border border-border p-4 mb-3">
-                  <Text className="text-foreground font-medium">
+                <View key={index} className="bg-card rounded-xl border border-border p-4 mb-3">
+                  <Text className="text-foreground font-medium mb-1">
                     {item.food?.description || "Alimento não encontrado"}
                   </Text>
-                  <View className="flex-row justify-between mt-2">
+                  <Text className="text-muted-foreground text-xs mb-2">{item.food?.category}</Text>
+
+                  <View className="flex-row justify-between mt-2 mb-2">
                     <Text className="text-muted-foreground">Quantidade: {item.quantity}g</Text>
                     <Text className="text-muted-foreground">
                       Refeição:{" "}
@@ -195,14 +248,27 @@ export default function VoiceFoodLogger() {
                         : "Lanche"}
                     </Text>
                   </View>
+
                   {item.food && (
                     <View className="mt-2 pt-2 border-t border-border">
-                      <Text className="text-muted-foreground">
-                        {Math.round((item.food.kcal * item.quantity) / 100)} kcal | P:{" "}
-                        {Math.round((item.food.protein_g * item.quantity) / 100)}g | C:{" "}
-                        {Math.round((item.food.carbs_g * item.quantity) / 100)}g | G:{" "}
-                        {Math.round((item.food.fat_g * item.quantity) / 100)}g
-                      </Text>
+                      <View className="flex-row flex-wrap mt-1.5">
+                        <CalorieTag calories={Math.round((item.food.kcal * item.quantity) / 100)} />
+                        <MacroTag
+                          value={Math.round((item.food.protein_g * item.quantity) / 100)}
+                          color={macroColors.protein}
+                          label="prot."
+                        />
+                        <MacroTag
+                          value={Math.round((item.food.carbs_g * item.quantity) / 100)}
+                          color={macroColors.carbs}
+                          label="carb."
+                        />
+                        <MacroTag
+                          value={Math.round((item.food.fat_g * item.quantity) / 100)}
+                          color={macroColors.fat}
+                          label="gord."
+                        />
+                      </View>
                     </View>
                   )}
                 </View>

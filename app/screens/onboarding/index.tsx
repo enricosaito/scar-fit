@@ -10,11 +10,13 @@ import StepNavigation from "./components/StepNavigation";
 import { useTheme } from "../../context/ThemeContext";
 import { OnboardingProvider, Gender, ActivityLevel, Goal, OnboardingFormData } from "./context/OnboardingContext";
 import { Keyboard } from "react-native";
+import { useAuth } from "../../context/AuthContext";
 
 export default function OnboardingScreen() {
   const router = useRouter();
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
+  const { setOnboardingCompleted } = useAuth();
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [formData, setFormData] = useState<OnboardingFormData>({
     gender: "male",
@@ -71,6 +73,7 @@ export default function OnboardingScreen() {
   };
 
   const completeOnboarding = () => {
+    setOnboardingCompleted(true);
     router.replace("/(tabs)");
   };
 

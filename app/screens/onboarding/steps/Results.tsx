@@ -28,7 +28,7 @@ interface ResultsStepProps {
 const Results = ({ onNext, onBack }: ResultsStepProps) => {
   const { colors } = useTheme();
   const { formData } = useOnboarding();
-  const { user, refreshProfile } = useAuth();
+  const { user, refreshProfile, setOnboardingCompleted } = useAuth();
   const [isSaving, setIsSaving] = React.useState(false);
   const [isSaved, setIsSaved] = React.useState(false);
 
@@ -102,6 +102,9 @@ const Results = ({ onNext, onBack }: ResultsStepProps) => {
       // Refresh the profile to update context
       await refreshProfile();
       setIsSaved(true);
+
+      // Mark onboarding as completed to prevent future redirects
+      setOnboardingCompleted(true);
 
       // Complete and exit onboarding
       setTimeout(() => {

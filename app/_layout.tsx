@@ -5,6 +5,7 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { ThemeProvider } from "./context/ThemeContext";
 import { AuthProvider } from "./context/AuthContext";
 import { AddMenuProvider } from "./context/AddMenuContext";
+import { ToastProvider } from "./context/ToastContext";
 import AuthGuard from "./components/auth/AuthGuard";
 import AddMenu from "./components/tracking/AddMenu";
 import "../global.css";
@@ -66,28 +67,31 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <ThemeProvider>
         <AuthProvider>
-          <AddMenuProvider>
-            <AuthGuard>
-              <StatusBar style="light" />
-              <AddMenu />
-              <Stack screenOptions={{ headerShown: false }}>
-                <Stack.Screen name="(tabs)" />
-                <Stack.Screen name="screens/profile/profile" />
-                <Stack.Screen name="screens/profile/edit" />
-                <Stack.Screen name="screens/profile/password" />
-                <Stack.Screen name="screens/notifications" />
-                <Stack.Screen name="screens/tracking" options={{ presentation: "modal" }} />
-                <Stack.Screen name="screens/food-tracker" />
-                <Stack.Screen name="screens/exercise" />
-                <Stack.Screen name="screens/pro-subscription" />
-                <Stack.Screen name="screens/onboarding/index" />
-                <Stack.Screen name="screens/voice-food-logger" />
-                <Stack.Screen name="screens/barcode-scanner" options={{ headerShown: false }} />
-                <Stack.Screen name="screens/barcode-product" options={{ headerShown: false }} />
-                <Stack.Screen name="auth" />
-              </Stack>
-            </AuthGuard>
-          </AddMenuProvider>
+          <ToastProvider>
+            <AddMenuProvider>
+              <AuthGuard>
+                <StatusBar style="light" />
+                <AddMenu />
+                <Stack screenOptions={{ headerShown: false }}>
+                  <Stack.Screen name="(tabs)" />
+                  <Stack.Screen name="screens/profile/profile" />
+                  <Stack.Screen name="screens/profile/edit" />
+                  <Stack.Screen name="screens/profile/password" />
+                  <Stack.Screen name="screens/profile/custom-goal" />
+                  <Stack.Screen name="screens/notifications" />
+                  <Stack.Screen name="screens/manage-meals" options={{ presentation: "modal" }} />
+                  <Stack.Screen name="screens/add-food-search" />
+                  <Stack.Screen name="screens/add-food-voice" />
+                  <Stack.Screen name="screens/add-food-barcode" options={{ headerShown: false }} />
+                  <Stack.Screen name="screens/barcode-scanner" options={{ headerShown: false }} />
+                  <Stack.Screen name="screens/pro-subscription" />
+                  <Stack.Screen name="screens/onboarding/index" />
+                  <Stack.Screen name="screens/exercise" />
+                  <Stack.Screen name="auth" />
+                </Stack>
+              </AuthGuard>
+            </AddMenuProvider>
+          </ToastProvider>
         </AuthProvider>
       </ThemeProvider>
     </GestureHandlerRootView>

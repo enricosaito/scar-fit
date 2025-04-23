@@ -1,5 +1,8 @@
 // app/models/user.ts
 import { supabase } from "../lib/supabase";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
+const ONBOARDING_COMPLETED_KEY = "onboardingCompleted";
 
 export interface MacroData {
   calories: number;
@@ -9,6 +12,7 @@ export interface MacroData {
   goal: "lose" | "maintain" | "gain";
   activityLevel: "sedentary" | "light" | "moderate" | "active" | "extreme";
   updatedAt: string;
+  isCustom?: boolean;
 }
 
 export interface UserProfile {
@@ -75,6 +79,13 @@ export async function saveUserMacros(userId: string, macroData: Omit<MacroData, 
       throw error;
     }
 
+    // Mark onboarding as completed in AsyncStorage
+    try {
+      await AsyncStorage.setItem(ONBOARDING_COMPLETED_KEY, "true");
+    } catch (storageError) {
+      console.error("Error saving onboarding status:", storageError);
+    }
+
     return data && data.length > 0 ? data[0] : null;
   } catch (error) {
     console.error("Error saving user macros:", error);
@@ -92,6 +103,13 @@ export async function resetUserMacros(userId: string) {
 
     if (error) {
       throw error;
+    }
+
+    // Reset onboarding completed flag in AsyncStorage
+    try {
+      await AsyncStorage.setItem(ONBOARDING_COMPLETED_KEY, "false");
+    } catch (storageError) {
+      console.error("Error resetting onboarding status:", storageError);
     }
 
     return data && data.length > 0 ? data[0] : null;

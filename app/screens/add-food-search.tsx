@@ -1,4 +1,4 @@
-// app/screens/food-tracker.tsx (updated with better styling)
+// app/screens/add-food-search.tsx
 import React, { useState, useEffect } from "react";
 import {
   Text,
@@ -16,6 +16,7 @@ import { Feather } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useTheme } from "../context/ThemeContext";
 import { useAuth } from "../context/AuthContext";
+import { useToast } from "../context/ToastContext";
 import { Food, FoodPortion, searchFoods } from "../models/food";
 import { DailyLog, addFoodToLog, getUserDailyLog } from "../models/tracking";
 import Button from "../components/ui/Button";
@@ -60,6 +61,7 @@ export default function FoodTracker() {
   const router = useRouter();
   const { colors } = useTheme();
   const { user } = useAuth();
+  const { showToast } = useToast();
 
   // Search state
   const [searchQuery, setSearchQuery] = useState("");
@@ -206,10 +208,8 @@ export default function FoodTracker() {
       setSelectedFood(null);
       setQuantity("100");
 
-      // Show success message
-      Alert.alert("Alimento Adicionado", `${selectedFood.description} foi adicionado ao seu diário com sucesso!`, [
-        { text: "OK" },
-      ]);
+      // Show toast notification instead of alert
+      showToast(`${selectedFood.description} adicionado ao diário`, "success");
     } catch (error) {
       console.error("Error adding food:", error);
       Alert.alert("Erro", "Ocorreu um erro ao adicionar o alimento.");
