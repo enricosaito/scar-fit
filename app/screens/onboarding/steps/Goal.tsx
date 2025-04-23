@@ -18,37 +18,37 @@ const Goal = ({ onNext, onBack }: GoalStepProps) => {
   const goals = [
     {
       id: "lose",
-      title: "Perder Peso",
+      title: "CUTTING",
       description: "Déficit calórico para perda de gordura",
       icon: "trending-down",
-      bgColor: "#ef444420", // Red tint
-      iconColor: "#ef4444", // Red
+      bgColor: "#22c55e20", // Green tint
+      iconColor: "#22c55e", // Green
       detailText:
         "Déficit recomendado de 20% para perda de peso saudável, com ênfase em proteínas para preservar massa muscular.",
-      bgDetail: "bg-red-500/10",
-      borderDetail: "border-red-500/30",
-      textDetail: "text-red-500",
+      bgDetail: "bg-green-500/10",
+      borderDetail: "border-green-500/30",
+      textDetail: "text-green-500",
     },
     {
       id: "maintain",
-      title: "Manter Peso",
-      description: "Manutenção do peso atual",
+      title: "MANTER PESO",
+      description: "Comer saudável e manter  físico",
       icon: "activity",
       bgColor: "#3b82f620", // Blue tint
       iconColor: "#3b82f6", // Blue
       detailText:
         "Consumo equilibrado de calorias para manutenção do peso, com distribuição balanceada de macronutrientes.",
-      bgDetail: "bg-blue-500/10",
-      borderDetail: "border-blue-500/30",
-      textDetail: "text-blue-500",
+      bgDetail: "bg-green-500/10",
+      borderDetail: "border-green-500/30",
+      textDetail: "text-green-500",
     },
     {
       id: "gain",
-      title: "Ganhar Massa",
+      title: "BULKING",
       description: "Superávit calórico para ganho muscular",
       icon: "trending-up",
-      bgColor: "#22c55e20", // Green tint
-      iconColor: "#22c55e", // Green
+      bgColor: "#ef444420", // Red tint
+      iconColor: "#ef4444", // Red
       detailText:
         "Superávit moderado de 15% para ganho de massa muscular, com aumento de carboidratos para energia durante treinos.",
       bgDetail: "bg-green-500/10",
