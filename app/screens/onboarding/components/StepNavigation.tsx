@@ -1,9 +1,9 @@
-// app/screens/onboarding/components/StepNavigation.tsx
+// Update app/screens/onboarding/components/StepNavigation.tsx
 import React from "react";
 import { View, Pressable, Text } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { useTheme } from "../../../context/ThemeContext";
-import Animated, { FadeIn, FadeOut } from "react-native-reanimated";
+import Animated, { FadeIn, FadeOut, SlideInRight, SlideOutLeft } from "react-native-reanimated";
 import Button from "../../../components/ui/Button";
 
 interface StepNavigationProps {
@@ -26,23 +26,43 @@ const StepNavigation = ({ currentStep, totalSteps, onNext, onBack, onSkip }: Ste
       exiting={FadeOut.duration(200)}
     >
       {onSkip && (
-        <Pressable className="absolute top-4 right-6" onPress={onSkip}>
+        <Pressable
+          className="absolute top-4 right-6"
+          onPress={onSkip}
+          style={{
+            opacity: 0.8,
+          }}
+        >
           <Text className="text-primary font-medium">Pular</Text>
         </Pressable>
       )}
 
-      <View className="flex-row justify-between mt-2">
-        <Pressable
-          className={`p-3 ${isFirstStep ? "opacity-0" : "opacity-100"}`}
-          onPress={onBack}
-          disabled={isFirstStep}
+      <View className="flex-row justify-between items-center mt-2">
+        <Animated.View
+          entering={isFirstStep ? FadeOut.duration(0) : FadeIn.duration(300)}
+          exiting={FadeOut.duration(200)}
         >
-          <Feather name="arrow-left" size={24} color={colors.foreground} />
-        </Pressable>
+          <Pressable
+            className={`p-3 rounded-full ${isFirstStep ? "opacity-0" : "opacity-100"}`}
+            onPress={onBack}
+            disabled={isFirstStep}
+            style={{
+              backgroundColor: colors.card,
+            }}
+          >
+            <Feather name="arrow-left" size={24} color={colors.foreground} />
+          </Pressable>
+        </Animated.View>
 
-        <Button onPress={onNext} className="px-8">
-          {isLastStep ? "Concluir" : "Próximo"}
-        </Button>
+        <Animated.View
+          entering={SlideInRight.duration(400)}
+          exiting={SlideOutLeft.duration(300)}
+          key={`button-${currentStep}`}
+        >
+          <Button onPress={onNext} className="px-8 py-3">
+            {isLastStep ? "Concluir" : "Próximo"}
+          </Button>
+        </Animated.View>
       </View>
     </Animated.View>
   );
