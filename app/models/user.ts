@@ -12,6 +12,7 @@ export interface MacroData {
   goal: "lose" | "maintain" | "gain";
   activityLevel: "sedentary" | "light" | "moderate" | "active" | "extreme";
   updatedAt: string;
+  isCustom?: boolean;
 }
 
 export interface UserProfile {
