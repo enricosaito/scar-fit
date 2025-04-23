@@ -1,4 +1,4 @@
-// app/screens/onboarding/components/ProgressIndicator.tsx
+// Update app/screens/onboarding/components/ProgressIndicator.tsx
 import React, { useEffect } from "react";
 import { View } from "react-native";
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing } from "react-native-reanimated";
@@ -29,11 +29,11 @@ const ProgressIndicator = ({ totalSteps, currentStep }: ProgressIndicatorProps) 
 
   return (
     <View className="px-6 py-4">
-      <View className="h-1 bg-muted rounded-full w-full overflow-hidden">
+      <View className="h-2 bg-muted rounded-full w-full overflow-hidden">
         <Animated.View className="h-full bg-primary rounded-full" style={progressStyle} />
       </View>
 
-      {/* Optional: Dot indicators */}
+      {/* Optional: Add step dots for visual reference */}
       <View className="flex-row justify-between mt-2">
         {Array.from({ length: totalSteps }).map((_, index) => (
           <View key={index} className={`h-2 w-2 rounded-full ${index <= currentStep ? "bg-primary" : "bg-muted"}`} />
