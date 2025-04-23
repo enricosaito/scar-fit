@@ -28,9 +28,9 @@ export default function ProSubscription() {
       description: "Identifique pratos automaticamente por fotos",
     },
     {
-      icon: "maximize",
-      title: "Adição com Código de Barras",
-      description: "Escaneie para adicionar alimentos instantaneamente",
+      icon: "book",
+      title: "500+ Receitas Inteligentes",
+      description: "Sugestões personalizadas de cardápios",
     },
   ];
 
@@ -98,7 +98,7 @@ export default function ProSubscription() {
             </View>
             <View className="flex-row items-center w-1/2 mb-2">
               <Feather name="zap" size={14} color={colors.primary} />
-              <Text className="text-sm text-foreground ml-2">Sem anúncios</Text>
+              <Text className="text-sm text-foreground ml-2">Metas personalizadas</Text>
             </View>
             <View className="flex-row items-center w-1/2 mb-2">
               <Feather name="user" size={14} color={colors.primary} />
@@ -156,7 +156,7 @@ export default function ProSubscription() {
           >
             <Text className="text-2xl font-extrabold mb-1 text-foreground">MENSAL</Text>
 
-            <Text className="text-lg font-extrabold text-muted-foreground">R$21,90/mês</Text>
+            <Text className="text-lg font-semibold text-muted-foreground">R$21,90/mês</Text>
           </Pressable>
         </View>
 
