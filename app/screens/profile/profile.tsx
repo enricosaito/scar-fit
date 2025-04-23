@@ -19,7 +19,7 @@ export default function Profile() {
 
   const handleLogout = () => {
     Alert.alert(
-      "Sair",
+      "Desconectar Conta",
       "Tem certeza que deseja sair?",
       [
         {
@@ -202,7 +202,7 @@ export default function Profile() {
                       </View>
                       <Text className="text-foreground font-medium">Calorias</Text>
                     </View>
-                    <Text className="text-2xl font-bold text-foreground">{userProfile.macros.calories}</Text>
+                    <Text className="text-2xl font-bold text-foreground">{userProfile.macros.calories} kcal</Text>
                   </View>
                   <Text className="text-xs text-muted-foreground mt-1">
                     {formatGoal(userProfile.macros.goal as Goal)} •{" "}
