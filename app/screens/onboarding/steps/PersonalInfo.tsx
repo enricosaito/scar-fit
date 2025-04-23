@@ -1,4 +1,4 @@
-// app/screens/onboarding/steps/PersonalInfo.tsx
+// Update app/screens/onboarding/steps/PersonalInfo.tsx
 import React from "react";
 import {
   View,

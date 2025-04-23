@@ -1,4 +1,4 @@
-// Modify app/screens/onboarding/context/OnboardingContext.tsx
+// Update app/screens/onboarding/context/OnboardingContext.tsx
 import React, { createContext, useContext, ReactNode } from "react";
 
 // Types
@@ -25,6 +25,16 @@ interface OnboardingContextType {
   updateFormData: (key: keyof OnboardingFormData, value: any) => void;
 }
 
+// Default values
+export const defaultFormData: OnboardingFormData = {
+  gender: "male",
+  age: "30",
+  weight: "60",
+  height: "160",
+  activityLevel: "moderate",
+  goal: "maintain",
+};
+
 const OnboardingContext = createContext<OnboardingContextType | undefined>(undefined);
 
 export const OnboardingProvider = ({ children, value }: OnboardingProviderProps) => {
@@ -40,4 +50,4 @@ export const useOnboarding = () => {
 };
 
 // Add default export
-export default { OnboardingContext, OnboardingProvider, useOnboarding };
+export default { OnboardingContext, OnboardingProvider, useOnboarding, defaultFormData };

@@ -1,4 +1,4 @@
-// app/screens/onboarding/index.tsx
+// Update app/screens/onboarding/index.tsx
 import React, { useState, useEffect } from "react";
 import { SafeAreaView, View, StatusBar } from "react-native";
 import { useRouter } from "expo-router";
@@ -8,7 +8,14 @@ import { onboardingSteps } from "./config/OnboardingFlow";
 import ProgressIndicator from "./components/ProgressIndicator";
 import StepNavigation from "./components/StepNavigation";
 import { useTheme } from "../../context/ThemeContext";
-import { OnboardingProvider, Gender, ActivityLevel, Goal, OnboardingFormData } from "./context/OnboardingContext";
+import {
+  OnboardingProvider,
+  Gender,
+  ActivityLevel,
+  Goal,
+  OnboardingFormData,
+  defaultFormData,
+} from "./context/OnboardingContext";
 import { Keyboard } from "react-native";
 import { useAuth } from "../../context/AuthContext";
 
@@ -18,14 +25,7 @@ export default function OnboardingScreen() {
   const insets = useSafeAreaInsets();
   const { setOnboardingCompleted } = useAuth();
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
-  const [formData, setFormData] = useState<OnboardingFormData>({
-    gender: "male",
-    age: "",
-    weight: "",
-    height: "",
-    activityLevel: "moderate",
-    goal: "maintain",
-  });
+  const [formData, setFormData] = useState<OnboardingFormData>(defaultFormData);
 
   const dismissKeyboardBeforeTransition = () => {
     Keyboard.dismiss();

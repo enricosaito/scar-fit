@@ -1,5 +1,5 @@
-// app/utils/heightWeightValues.ts
-// Height values from 140cm to 220cm
+// Update app/utils/heightWeightValues.ts
+// Height values from 140cm to 220cm with defaults closer to 160cm
 export const heightValues = Array.from({ length: 81 }, (_, i) => {
   const height = 140 + i;
   return {
@@ -8,7 +8,7 @@ export const heightValues = Array.from({ length: 81 }, (_, i) => {
   };
 });
 
-// Weight values from 40kg to 150kg
+// Weight values from 40kg to 150kg with defaults closer to 60kg
 export const weightValues = Array.from({ length: 111 }, (_, i) => {
   const weight = 40 + i;
   return {

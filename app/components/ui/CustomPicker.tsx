@@ -1,11 +1,12 @@
-// app/components/ui/CustomPicker.tsx
+// Update app/components/ui/CustomPicker.tsx
 import React, { useState } from "react";
-import { View, Text, TextInput, Modal, Pressable, SafeAreaView, Platform } from "react-native";
+import { View, Text, TextInput, Modal, Pressable, SafeAreaView, Platform, FlatList } from "react-native";
 import { Picker } from "@react-native-picker/picker";
 import { Feather } from "@expo/vector-icons";
 import { Keyboard } from "react-native";
 import { useTheme } from "../../context/ThemeContext";
 import Button from "./Button";
+import Animated, { FadeIn, FadeOut } from "react-native-reanimated";
 
 interface CustomPickerProps {
   label: string;
@@ -14,6 +15,7 @@ interface CustomPickerProps {
   placeholder?: string;
   items: { label: string; value: string | number }[];
   error?: string;
+  defaultScrollIndex?: number;
 }
 
 const CustomPicker: React.FC<CustomPickerProps> = ({
@@ -23,21 +25,25 @@ const CustomPicker: React.FC<CustomPickerProps> = ({
   placeholder = "Selecionar",
   items,
   error,
+  defaultScrollIndex = 20, // Default to about 60kg for weight or 160cm for height
 }) => {
   const { colors } = useTheme();
   const [modalVisible, setModalVisible] = useState(false);
   const [tempValue, setTempValue] = useState<string | number>(value);
+  const [searchText, setSearchText] = useState("");
 
   const handleConfirm = () => {
     onValueChange(tempValue);
     setModalVisible(false);
     Keyboard.dismiss();
+    setSearchText("");
     TextInput.State.blurTextInput(TextInput.State.currentlyFocusedInput());
   };
 
   const handleCancel = () => {
     setTempValue(value); // Reset temp value
     setModalVisible(false);
+    setSearchText("");
   };
 
   // Format display text
@@ -46,6 +52,9 @@ const CustomPicker: React.FC<CustomPickerProps> = ({
     const selectedItem = items.find((item) => item.value === value);
     return selectedItem ? selectedItem.label : placeholder;
   };
+
+  // Filter items based on search text
+  const filteredItems = items.filter((item) => item.label.toLowerCase().includes(searchText.toLowerCase()));
 
   return (
     <View className="mb-4">
@@ -71,36 +80,82 @@ const CustomPicker: React.FC<CustomPickerProps> = ({
 
       <Modal visible={modalVisible} transparent={true} animationType="slide" onRequestClose={handleCancel}>
         <SafeAreaView className="flex-1 justify-end bg-black/50">
-          <View className="bg-card p-4">
-            <View className="flex-row justify-between items-center mb-4">
+          <Animated.View className="bg-card" entering={FadeIn.duration(300)} exiting={FadeOut.duration(200)}>
+            <View className="flex-row justify-between items-center p-4 border-b border-border">
               <Text className="text-lg font-medium text-foreground">{label}</Text>
               <Pressable onPress={handleCancel}>
                 <Feather name="x" size={24} color={colors.mutedForeground} />
               </Pressable>
             </View>
 
-            <View className="border border-border rounded-lg overflow-hidden mb-4">
-              <Picker
-                selectedValue={tempValue}
-                onValueChange={(itemValue) => setTempValue(itemValue)}
-                style={{
-                  backgroundColor: colors.card,
-                  color: colors.foreground,
-                }}
-              >
-                {items.map((item) => (
-                  <Picker.Item
-                    key={item.value.toString()}
-                    label={item.label}
-                    value={item.value}
-                    color={Platform.OS === "ios" ? colors.foreground : undefined}
+            {/* Search input for large lists */}
+            {items.length > 20 && (
+              <View className="px-4 py-2">
+                <View className="flex-row items-center bg-muted rounded-lg px-3 py-2">
+                  <Feather name="search" size={16} color={colors.mutedForeground} />
+                  <TextInput
+                    className="ml-2 flex-1 text-foreground"
+                    placeholder="Buscar..."
+                    placeholderTextColor={colors.mutedForeground}
+                    value={searchText}
+                    onChangeText={setSearchText}
                   />
-                ))}
-              </Picker>
-            </View>
+                  {searchText ? (
+                    <Pressable onPress={() => setSearchText("")}>
+                      <Feather name="x" size={16} color={colors.mutedForeground} />
+                    </Pressable>
+                  ) : null}
+                </View>
+              </View>
+            )}
 
-            <Button onPress={handleConfirm}>Confirmar</Button>
-          </View>
+            {Platform.OS === "ios" ? (
+              // iOS uses the native picker wheel
+              <View className="border-t border-border">
+                <Picker
+                  selectedValue={tempValue}
+                  onValueChange={(itemValue) => setTempValue(itemValue)}
+                  style={{
+                    backgroundColor: colors.card,
+                    color: colors.foreground,
+                    height: 200,
+                  }}
+                  itemStyle={{ color: colors.foreground, fontSize: 18 }}
+                >
+                  {filteredItems.map((item) => (
+                    <Picker.Item key={item.value.toString()} label={item.label} value={item.value} />
+                  ))}
+                </Picker>
+              </View>
+            ) : (
+              // Android uses a scrollable list
+              <FlatList
+                data={filteredItems}
+                keyExtractor={(item) => item.value.toString()}
+                initialScrollIndex={defaultScrollIndex}
+                getItemLayout={(data, index) => ({
+                  length: 50,
+                  offset: 50 * index,
+                  index,
+                })}
+                style={{ maxHeight: 300 }}
+                renderItem={({ item }) => (
+                  <Pressable
+                    className={`py-3 px-4 ${item.value === tempValue ? "bg-primary/10" : ""}`}
+                    onPress={() => setTempValue(item.value)}
+                  >
+                    <Text className={`${item.value === tempValue ? "text-primary font-medium" : "text-foreground"}`}>
+                      {item.label}
+                    </Text>
+                  </Pressable>
+                )}
+              />
+            )}
+
+            <View className="p-4">
+              <Button onPress={handleConfirm}>Confirmar</Button>
+            </View>
+          </Animated.View>
         </SafeAreaView>
       </Modal>
     </View>
