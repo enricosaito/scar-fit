@@ -220,7 +220,7 @@ export default function Profile() {
                     </View>
                     <Text className="text-xs text-muted-foreground">Proteínas</Text>
                     <Text className="text-lg font-bold text-foreground">{userProfile.macros.protein}g</Text>
-                    <Text className="text-xs text-purple-500">
+                    <Text className="text-xs text-muted-foreground">
                       {Math.round((userProfile.macros.protein * 4 * 100) / userProfile.macros.calories)}%
                     </Text>
                   </View>
@@ -232,7 +232,7 @@ export default function Profile() {
                     </View>
                     <Text className="text-xs text-muted-foreground">Carboidratos</Text>
                     <Text className="text-lg font-bold text-foreground">{userProfile.macros.carbs}g</Text>
-                    <Text className="text-xs text-yellow-500">
+                    <Text className="text-xs text-muted-foreground">
                       {Math.round((userProfile.macros.carbs * 4 * 100) / userProfile.macros.calories)}%
                     </Text>
                   </View>
@@ -244,7 +244,7 @@ export default function Profile() {
                     </View>
                     <Text className="text-xs text-muted-foreground">Gorduras</Text>
                     <Text className="text-lg font-bold text-foreground">{userProfile.macros.fat}g</Text>
-                    <Text className="text-xs text-red-500">
+                    <Text className="text-xs text-muted-foreground">
                       {Math.round((userProfile.macros.fat * 9 * 100) / userProfile.macros.calories)}%
                     </Text>
                   </View>
