@@ -5,7 +5,6 @@ import { useRouter } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import { useTheme } from "../../context/ThemeContext";
 import { useAuth } from "../../context/AuthContext";
-import { resetUserMacros } from "../../models/user";
 import { Goal, ActivityLevel } from "../../screens/onboarding/context/OnboardingContext";
 
 export default function Profile() {
@@ -13,6 +12,10 @@ export default function Profile() {
   const { colors } = useTheme();
   const { user, signOut, userProfile, refreshProfile, loading, setOnboardingCompleted } = useAuth();
   const [logoutLoading, setLogoutLoading] = useState(false);
+
+  // Golden colors for premium feature - consistent with existing PRO styling
+  const goldColor = "#F7B955";
+  const goldBg = "rgba(247, 185, 85, 0.2)";
 
   const handleLogout = () => {
     Alert.alert(
@@ -34,38 +37,6 @@ export default function Profile() {
             } catch (error) {
               console.error("Error signing out:", error);
               setLogoutLoading(false);
-            }
-          },
-        },
-      ],
-      { cancelable: true }
-    );
-  };
-
-  const handleResetMacros = () => {
-    Alert.alert(
-      "Resetar Macros",
-      "Tem certeza que deseja apagar seus dados de macronutrientes?",
-      [
-        {
-          text: "Cancelar",
-          style: "cancel",
-        },
-        {
-          text: "Sim, resetar",
-          style: "destructive",
-          onPress: async () => {
-            try {
-              if (user) {
-                await resetUserMacros(user.id);
-                // Also reset the onboarding status
-                setOnboardingCompleted(false);
-                await refreshProfile();
-                Alert.alert("Sucesso", "Seus dados foram resetados com sucesso.");
-              }
-            } catch (error) {
-              console.error("Error resetting macros:", error);
-              Alert.alert("Erro", "Não foi possível resetar seus dados. Tente novamente.");
             }
           },
         },
@@ -96,6 +67,16 @@ export default function Profile() {
       extreme: "Extremamente Ativo",
     };
     return levels[level] || "";
+  };
+
+  const handleCustomGoalPress = () => {
+    // Check if user is on free plan
+    if (userProfile?.plan !== "premium") {
+      router.push("/screens/pro-subscription");
+    } else {
+      // If user is premium, we'll navigate to custom goal screen
+      router.push("/screens/profile/custom-goal");
+    }
   };
 
   return (
@@ -158,8 +139,16 @@ export default function Profile() {
                   <Pressable onPress={() => router.push("/screens/onboarding")} className="mr-4">
                     <Text className="text-primary text-sm">Recalcular</Text>
                   </Pressable>
-                  <Pressable onPress={handleResetMacros}>
-                    <Text className="text-primary text-sm">Resetar</Text>
+                  {/* Custom Goal button (PRO feature) */}
+                  <Pressable onPress={handleCustomGoalPress} className="flex-row items-center">
+                    <Text className="text-sm" style={{ color: goldColor }}>
+                      Meta Personalizada
+                    </Text>
+                    <View className="ml-1 px-1 rounded" style={{ backgroundColor: goldBg }}>
+                      <Text className="text-xs" style={{ color: goldColor }}>
+                        PRO
+                      </Text>
+                    </View>
                   </Pressable>
                 </View>
               </View>
@@ -180,6 +169,7 @@ export default function Profile() {
                   <Text className="text-xs text-muted-foreground mt-1">
                     {formatGoal(userProfile.macros.goal as Goal)} •{" "}
                     {formatActivityLevel(userProfile.macros.activityLevel as ActivityLevel)}
+                    {userProfile.macros.isCustom && <Text style={{ color: goldColor }}> • Meta Personalizada</Text>}
                   </Text>
                 </View>
 
