@@ -84,11 +84,20 @@ export default function Profile() {
 
   return (
     <SafeAreaView className="flex-1 bg-background">
-      <View className="flex-row items-center p-4 border-b border-border">
+      <View className="flex-row items-center justify-between p-4 border-b border-border relative">
         <Pressable onPress={() => router.back()} className="p-2">
           <Feather name="arrow-left" size={24} color={colors.foreground} />
         </Pressable>
-        <Text className="text-lg font-medium flex-1 text-center text-foreground mr-8">Meu Perfil</Text>
+
+        <Text className="text-lg font-medium text-foreground absolute left-1/2 -translate-x-1/2">Meu Perfil</Text>
+
+        <Pressable onPress={handleLogout} disabled={logoutLoading} className="p-2">
+          {logoutLoading ? (
+            <ActivityIndicator size="small" color="#ef4444" />
+          ) : (
+            <Feather name="log-out" size={22} color="#ef4444" />
+          )}
+        </Pressable>
       </View>
 
       <ScrollView className="flex-1">
@@ -133,19 +142,6 @@ export default function Profile() {
               <ActivityIndicator size="large" color={colors.primary} />
             </View>
           )}
-
-          <Pressable
-            className="w-full bg-transparent border border-red-500 py-2 px-4 rounded-lg flex-row justify-center items-center"
-            onPress={handleLogout}
-            disabled={logoutLoading}
-          >
-            {logoutLoading ? (
-              <ActivityIndicator size="small" color="#ef4444" style={{ marginRight: 8 }} />
-            ) : (
-              <Feather name="log-out" size={18} color="#ef4444" />
-            )}
-            <Text className="text-red-500 text-center font-medium ml-2">{logoutLoading ? "Saindo..." : "Sair"}</Text>
-          </Pressable>
         </View>
 
         <View className="px-6 pb-6">
@@ -159,7 +155,8 @@ export default function Profile() {
               <View className="flex-row mb-4">
                 <Pressable
                   onPress={() => router.push("/screens/onboarding")}
-                  className="flex-1 py-2 bg-secondary rounded-lg flex-row items-center justify-center mr-2"
+                  className="flex-1 py-2 rounded-lg flex-row items-center justify-center mr-2"
+                  style={{ backgroundColor: `${colors.primary}15` }}
                 >
                   <Feather name="refresh-cw" size={16} color={colors.primary} />
                   <Text className="text-primary font-medium ml-2">Recalcular</Text>
@@ -170,9 +167,9 @@ export default function Profile() {
                   className="flex-1 py-2 rounded-lg flex-row items-center justify-center"
                   style={{ backgroundColor: isPremium ? goldBg : "#33415520" }}
                 >
-                  <Feather name="sliders" size={16} color={isPremium ? goldColor : colors.mutedForeground} />
+                  <Feather name="feather" size={16} color={isPremium ? goldColor : colors.mutedForeground} />
                   <Text className="font-medium ml-2" style={{ color: isPremium ? goldColor : colors.mutedForeground }}>
-                    Meta Personalizada
+                    Personalizar
                   </Text>
                   {!isPremium && (
                     <View className="ml-1 px-1 rounded" style={{ backgroundColor: goldBg }}>
@@ -198,10 +195,10 @@ export default function Profile() {
                       <View
                         className="w-8 h-8 rounded-full items-center justify-center mr-2"
                         style={{
-                          backgroundColor: isPremium ? `${goldColor}15` : `${colors.primary}15`,
+                          backgroundColor: `${colors.primary}15`,
                         }}
                       >
-                        <Feather name="battery-charging" size={16} color={isPremium ? goldColor : colors.primary} />
+                        <Feather name="zap" size={16} color={colors.primary} />
                       </View>
                       <Text className="text-foreground font-medium">Calorias</Text>
                     </View>
@@ -255,9 +252,6 @@ export default function Profile() {
               </View>
             </View>
           )}
-
-          <Text className="text-lg font-bold text-foreground mb-4">Estatísticas</Text>
-
           <View className="bg-card rounded-xl border border-border p-4 mb-6">
             <Text className="text-muted-foreground mb-2">Plano Atual</Text>
             <View className="flex-row justify-between items-center">
@@ -277,9 +271,14 @@ export default function Profile() {
               )}
             </View>
             {isPremium && (
-              <View className="mt-2 py-1 px-2 rounded bg-green-500/10 border border-green-500/20 flex-row items-center">
-                <Feather name="check-circle" size={14} color="#22c55e" style={{ marginRight: 4 }} />
-                <Text className="text-green-500 text-xs">Assinatura Premium ativa</Text>
+              <View
+                className="mt-2 py-1 px-2 rounded border flex-row items-center"
+                style={{ backgroundColor: goldBg, borderColor: goldColor + "20" }}
+              >
+                <Feather name="zap" size={14} color={goldColor} style={{ marginRight: 4 }} />
+                <Text className="text-xs font-medium" style={{ color: goldColor }}>
+                  Assinatura PRO
+                </Text>
               </View>
             )}
           </View>
