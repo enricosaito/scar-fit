@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { View, ActivityIndicator } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { useTheme } from "../../context/ThemeContext";
 import { cn } from "../../lib/utils";
 import { getAvatarUrlWithCacheBusting } from "../../utils/imageUpload";
-import { Image } from "expo-image";
+import { Image, ImageSource } from "expo-image";
 
 // Define a placeholder blurhash for smooth loading
 const AVATAR_PLACEHOLDER = "L6PZfSi_.AyE_3t7t7R**0o#DgR4";
@@ -20,9 +20,19 @@ export default function Avatar({ url, size = 40, className }: AvatarProps) {
   const [imageError, setImageError] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
+  // Track if this component is mounted to avoid state updates after unmount
+  const isMounted = useRef(true);
+
   // Create a stable URL reference that won't change with every render
   // This prevents cache busting on every render, but still respects URL changes
   const [stableUrl, setStableUrl] = useState<string | undefined>(undefined);
+
+  useEffect(() => {
+    isMounted.current = true;
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
 
   useEffect(() => {
     // Only update the stable URL when the input URL changes
@@ -60,13 +70,20 @@ export default function Avatar({ url, size = 40, className }: AvatarProps) {
         transition={100}
         placeholder={AVATAR_PLACEHOLDER}
         cachePolicy="memory-disk"
+        priority="high"
         recyclingKey={stableUrl} // Use the URL as recycling key for better caching
-        onLoadStart={() => setIsLoading(true)}
-        onLoad={() => setIsLoading(false)}
+        onLoadStart={() => {
+          if (isMounted.current) setIsLoading(true);
+        }}
+        onLoad={() => {
+          if (isMounted.current) setIsLoading(false);
+        }}
         onError={() => {
           console.error("Failed to load image:", stableUrl);
-          setImageError(true);
-          setIsLoading(false);
+          if (isMounted.current) {
+            setImageError(true);
+            setIsLoading(false);
+          }
         }}
       />
     </View>
