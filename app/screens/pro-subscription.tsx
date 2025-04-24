@@ -111,10 +111,10 @@ export default function ProSubscription() {
         <Text className="text-lg font-bold text-foreground mb-6 text-center">
           Escolha seu plano e comece um teste grátis.
         </Text>
-        <View className="flex-row justify-between mb-8">
-          {/* Annual Plan (with centered tag above) */}
+
+        <View className="flex-row justify-between mb-3">
+          {/* Annual Plan */}
           <View className="w-[48%] relative">
-            {/* Best Value Tag - now centered above entire card */}
             <View className="absolute -top-3 left-0 w-full items-center z-10">
               <View className="px-3 py-0.5 rounded-full" style={{ backgroundColor: colors.primary }}>
                 <Text className="text-xs font-bold text-black">50% OFF</Text>
@@ -135,12 +135,11 @@ export default function ProSubscription() {
               onPress={() => setSelectedPlan("annual")}
             >
               <Text className="text-2xl font-extrabold mb-1 text-foreground">ANUAL</Text>
-
               <Text className="text-lg font-semibold text-muted-foreground">R$129,90/ano</Text>
             </Pressable>
           </View>
 
-          {/* Monthly Plan (right) */}
+          {/* Monthly Plan */}
           <Pressable
             className={`w-[48%] border ${
               selectedPlan === "monthly" ? "border-primary bg-primary/10" : "border-border"
@@ -155,12 +154,15 @@ export default function ProSubscription() {
             onPress={() => setSelectedPlan("monthly")}
           >
             <Text className="text-2xl font-extrabold mb-1 text-foreground">MENSAL</Text>
-
             <Text className="text-lg font-semibold text-muted-foreground">R$21,90/mês</Text>
           </Pressable>
         </View>
 
-        {/* Keep blue button for free trial */}
+        {/* Moved this up for better spacing */}
+        <Text className="text-sm font-light text-muted-foreground mb-8 text-center">
+          Altere os planos ou cancele quando quiser.
+        </Text>
+
         <Button onPress={() => router.back()}>Iniciar availiação gratuita de 7 dias</Button>
       </View>
     </SafeAreaView>
