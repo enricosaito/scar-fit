@@ -1,6 +1,7 @@
 // app/models/user.ts
 import { supabase } from "../lib/supabase";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { uploadProfileImage } from "../utils/imageUpload";
 
 const ONBOARDING_COMPLETED_KEY = "onboardingCompleted";
 
@@ -66,6 +67,26 @@ export async function updateUserProfile(userId: string, updates: Partial<UserPro
   return data && data.length > 0 ? data[0] : null;
 }
 
+/**
+ * Updates the user's profile avatar
+ */
+export async function updateUserAvatar(userId: string, imageUri: string): Promise<UserProfile | null> {
+  try {
+    // Upload the image to storage
+    const uploadResult = await uploadProfileImage(userId, imageUri);
+    
+    if (!uploadResult) {
+      throw new Error("Failed to upload avatar image");
+    }
+
+    // Update the user profile with the new avatar URL
+    return await updateUserProfile(userId, { avatar_url: uploadResult.url });
+  } catch (error) {
+    console.error("Error updating user avatar:", error);
+    throw error;
+  }
+}
+
 export async function saveUserMacros(userId: string, macroData: Omit<MacroData, "updatedAt">) {
   try {
     const macros: MacroData = {
@@ -126,4 +147,5 @@ export default {
   updateUserMacros,
   saveUserMacros,
   resetUserMacros,
+  updateUserAvatar,
 };
