@@ -7,6 +7,7 @@ import { createUserProfile, getUserProfile, updateUserProfile, UserProfile } fro
 import { signInWithGoogle } from "../lib/googleAuth";
 import { isAppleAuthAvailable, signInWithApple } from "../lib/appleAuth";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { preloadAvatarImage } from "../utils/imageUpload";
 
 const ONBOARDING_COMPLETED_KEY = "onboardingCompleted";
 
@@ -54,6 +55,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const profile = await getUserProfile(userId);
       const hasMacros = !!(profile?.macros && Object.keys(profile.macros).length > 0);
+
+      // Preload the avatar image if it exists
+      if (profile?.avatar_url) {
+        preloadAvatarImage(profile.avatar_url).catch((err) => console.error("Error preloading avatar:", err));
+      }
 
       // Check stored onboarding status
       let storedOnboardingStatus = false;
@@ -177,6 +183,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Force a new profile fetch to get updated data
       const profile = await getUserProfile(state.user.id);
       const hasMacros = !!(profile?.macros && Object.keys(profile.macros).length > 0);
+
+      // Preload the avatar image if it exists
+      if (profile?.avatar_url) {
+        preloadAvatarImage(profile.avatar_url).catch((err) => console.error("Error preloading avatar:", err));
+      }
 
       setState((prev) => ({
         ...prev,
