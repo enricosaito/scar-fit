@@ -111,26 +111,21 @@ export const pickImage = async (useCamera = false): Promise<ImagePicker.ImagePic
  * This is useful to force the UI to refresh the image after updates
  * but also avoids excessive refreshing by reusing timestamps
  */
-export const getAvatarUrlWithCacheBusting = (url?: string | null): string | undefined => {
-  if (!url) return undefined;
-  
-  // Check if we already have a timestamp for this URL
-  const baseUrl = url.split('?')[0]; // Remove any existing query params
-  
-  if (!urlTimestamps.has(baseUrl)) {
-    // Add a timestamp that's stable for this session
-    urlTimestamps.set(baseUrl, Date.now().toString());
-  }
-  
-  const timestamp = urlTimestamps.get(baseUrl);
-  return `${baseUrl}?t=${timestamp}`;
-};
+export function getAvatarUrlWithCacheBusting(url: string | null | undefined): string {
+  // Return placeholder if URL is not available
+  if (!url) return "https://i.imgur.com/p7ucIoQ.png";
+
+  // Add cache busting parameter to ensure UI refresh after avatar update
+  // Only update every hour to prevent excessive refreshing
+  const cacheBuster = Math.floor(Date.now() / 3600000);
+  return `${url}?cacheBust=${cacheBuster}`;
+}
 
 /**
- * Force refresh the avatar URL by generating a new timestamp
+ * Forces refresh of avatar URL by generating a new timestamp
  * Call this when you know the image has changed
  */
-export const forceRefreshAvatarUrl = (url?: string | null): string | undefined => {
+export function forceRefreshAvatarUrl(url: string | null | undefined): string | undefined {
   if (!url) return undefined;
   
   // Remove any existing query params
@@ -141,7 +136,25 @@ export const forceRefreshAvatarUrl = (url?: string | null): string | undefined =
   urlTimestamps.set(baseUrl, newTimestamp);
   
   return `${baseUrl}?t=${newTimestamp}`;
-};
+}
+
+/**
+ * Clears the image cache to ensure all avatar instances are refreshed
+ * This helps with updating avatars displayed in lists and headers
+ */
+export async function clearImageCache(): Promise<void> {
+  try {
+    // Clear the expo-image cache
+    if (typeof Image !== 'undefined') {
+      await Image.clearMemoryCache();
+      await Image.clearDiskCache();
+    }
+    
+    console.log('Image cache cleared successfully');
+  } catch (error) {
+    console.error('Error clearing image cache:', error);
+  }
+}
 
 /**
  * Uploads an image to Supabase storage
@@ -256,21 +269,6 @@ export const preloadAvatarImage = async (url?: string | null): Promise<void> => 
 };
 
 /**
- * Clears the image cache
- * This is useful for troubleshooting image loading issues
- */
-export const clearImageCache = async (): Promise<void> => {
-  try {
-    // Clear the expo-image cache
-    await Image.clearMemoryCache();
-    await Image.clearDiskCache();
-    console.log('Image cache cleared');
-  } catch (error) {
-    console.error('Error clearing image cache:', error);
-  }
-};
-
-/**
  * Preload multiple avatar images for better performance
  * @param urls Array of avatar URLs to preload
  */
@@ -305,36 +303,6 @@ export const batchPreloadAvatarImages = async (urls: (string | undefined | null)
   }
 };
 
-/**
- * Force refresh all avatar images in the app
- * @param profileAvatarUrl The current profile avatar URL to refresh
- * @returns A new cache-busted URL
- */
-export const forceClearAndRefreshAvatar = async (profileAvatarUrl?: string | null): Promise<string | undefined> => {
-  try {
-    // Clear the entire image cache
-    await clearImageCache();
-    
-    // Force refresh the specific avatar URL if provided
-    if (profileAvatarUrl) {
-      // Generate a completely new timestamp to ensure the cache is busted
-      const baseUrl = profileAvatarUrl.split('?')[0];
-      const newTimestamp = Date.now().toString();
-      
-      // Update our URL timestamp cache
-      urlTimestamps.set(baseUrl, newTimestamp);
-      
-      // Return the refreshed URL
-      return `${baseUrl}?t=${newTimestamp}`;
-    }
-    
-    return undefined;
-  } catch (error) {
-    console.error('Error force refreshing avatar:', error);
-    return undefined;
-  }
-};
-
 // Define the default export
 const imageUploadUtils = {
   bucketExists,
@@ -347,8 +315,7 @@ const imageUploadUtils = {
   forceRefreshAvatarUrl,
   preloadAvatarImage,
   batchPreloadAvatarImages,
-  clearImageCache,
-  forceClearAndRefreshAvatar
+  clearImageCache
 };
 
 export default imageUploadUtils; 
