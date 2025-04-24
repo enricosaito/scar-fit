@@ -27,7 +27,7 @@ export default function Profile() {
           style: "cancel",
         },
         {
-          text: "Sim, sair",
+          text: "Sair",
           style: "destructive",
           onPress: async () => {
             setLogoutLoading(true);
@@ -143,7 +143,6 @@ export default function Profile() {
             </View>
           )}
         </View>
-
         <View className="px-6 pb-6">
           {userProfile?.macros && (
             <View className="mb-6">
@@ -165,10 +164,13 @@ export default function Profile() {
                 <Pressable
                   onPress={handleCustomGoalPress}
                   className="flex-1 py-2 rounded-lg flex-row items-center justify-center"
-                  style={{ backgroundColor: isPremium ? goldBg : "#33415520" }}
+                  style={{ backgroundColor: isPremium ? `${colors.primary}15` : "#33415520" }}
                 >
-                  <Feather name="feather" size={16} color={isPremium ? goldColor : colors.mutedForeground} />
-                  <Text className="font-medium ml-2" style={{ color: isPremium ? goldColor : colors.mutedForeground }}>
+                  <Feather name="feather" size={16} color={isPremium ? colors.primary : colors.mutedForeground} />
+                  <Text
+                    className="font-medium ml-2"
+                    style={{ color: isPremium ? colors.primary : colors.mutedForeground }}
+                  >
                     Personalizar
                   </Text>
                   {!isPremium && (
@@ -252,12 +254,29 @@ export default function Profile() {
               </View>
             </View>
           )}
-          <View className="bg-card rounded-xl border border-border p-4 mb-6">
-            <Text className="text-muted-foreground mb-2">Plano Atual</Text>
+
+          {/* Plan Info */}
+          <View
+            className="rounded-xl border p-4 mb-6"
+            style={{
+              backgroundColor: isPremium ? goldBg : colors.card,
+              borderColor: isPremium ? goldColor : colors.border,
+            }}
+          >
+            <Text
+              className="text-muted-foreground mb-2"
+              style={{ color: isPremium ? goldColor : colors.mutedForeground }}
+            >
+              Plano Atual
+            </Text>
             <View className="flex-row justify-between items-center">
-              <Text className="text-lg font-bold" style={{ color: isPremium ? goldColor : colors.foreground }}>
-                {isPremium ? "Premium" : "Gratuito"}
-              </Text>
+              <View className="flex-row items-center">
+                {isPremium && <Feather name="zap" size={16} color={goldColor} style={{ marginRight: 6 }} />}
+                <Text className="text-lg font-bold" style={{ color: isPremium ? goldColor : colors.foreground }}>
+                  {isPremium ? "PRO" : "Gratuito"}
+                </Text>
+              </View>
+
               {!isPremium && (
                 <Pressable
                   className="py-1 px-3 rounded-full"
@@ -270,17 +289,6 @@ export default function Profile() {
                 </Pressable>
               )}
             </View>
-            {isPremium && (
-              <View
-                className="mt-2 py-1 px-2 rounded border flex-row items-center"
-                style={{ backgroundColor: goldBg, borderColor: goldColor + "20" }}
-              >
-                <Feather name="zap" size={14} color={goldColor} style={{ marginRight: 4 }} />
-                <Text className="text-xs font-medium" style={{ color: goldColor }}>
-                  Assinatura PRO
-                </Text>
-              </View>
-            )}
           </View>
         </View>
       </ScrollView>
