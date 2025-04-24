@@ -305,6 +305,36 @@ export const batchPreloadAvatarImages = async (urls: (string | undefined | null)
   }
 };
 
+/**
+ * Force refresh all avatar images in the app
+ * @param profileAvatarUrl The current profile avatar URL to refresh
+ * @returns A new cache-busted URL
+ */
+export const forceClearAndRefreshAvatar = async (profileAvatarUrl?: string | null): Promise<string | undefined> => {
+  try {
+    // Clear the entire image cache
+    await clearImageCache();
+    
+    // Force refresh the specific avatar URL if provided
+    if (profileAvatarUrl) {
+      // Generate a completely new timestamp to ensure the cache is busted
+      const baseUrl = profileAvatarUrl.split('?')[0];
+      const newTimestamp = Date.now().toString();
+      
+      // Update our URL timestamp cache
+      urlTimestamps.set(baseUrl, newTimestamp);
+      
+      // Return the refreshed URL
+      return `${baseUrl}?t=${newTimestamp}`;
+    }
+    
+    return undefined;
+  } catch (error) {
+    console.error('Error force refreshing avatar:', error);
+    return undefined;
+  }
+};
+
 // Define the default export
 const imageUploadUtils = {
   bucketExists,
@@ -317,7 +347,8 @@ const imageUploadUtils = {
   forceRefreshAvatarUrl,
   preloadAvatarImage,
   batchPreloadAvatarImages,
-  clearImageCache
+  clearImageCache,
+  forceClearAndRefreshAvatar
 };
 
 export default imageUploadUtils; 
