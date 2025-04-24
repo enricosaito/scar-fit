@@ -164,8 +164,16 @@ export default function ProfileEdit() {
         // Force refresh the profile in the auth context
         await refreshProfile();
 
+        // Clear image cache to ensure all instances of the avatar are refreshed
+        await clearImageCache();
+
         setMessage("Foto de perfil atualizada com sucesso!");
         setIsError(false);
+
+        // Navigate back to profile after a short delay to show the success message
+        setTimeout(() => {
+          router.back();
+        }, 1500);
       }
     } catch (error: any) {
       console.error("Error updating avatar:", error);
