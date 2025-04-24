@@ -5,6 +5,9 @@ import { supabase } from "../lib/supabase";
 import { decode } from "base64-arraybuffer";
 import { Image } from "expo-image";
 
+// Cache timestamps to avoid excessive refreshing
+const urlTimestamps = new Map<string, string>();
+
 /**
  * Checks if a bucket exists in Supabase storage
  */
@@ -101,6 +104,43 @@ export const pickImage = async (useCamera = false): Promise<ImagePicker.ImagePic
 };
 
 /**
+ * Gets a cache-busting URL for an avatar
+ * This is useful to force the UI to refresh the image after updates
+ * but also avoids excessive refreshing by reusing timestamps
+ */
+export const getAvatarUrlWithCacheBusting = (url?: string | null): string | undefined => {
+  if (!url) return undefined;
+  
+  // Check if we already have a timestamp for this URL
+  const baseUrl = url.split('?')[0]; // Remove any existing query params
+  
+  if (!urlTimestamps.has(baseUrl)) {
+    // Add a timestamp that's stable for this session
+    urlTimestamps.set(baseUrl, Date.now().toString());
+  }
+  
+  const timestamp = urlTimestamps.get(baseUrl);
+  return `${baseUrl}?t=${timestamp}`;
+};
+
+/**
+ * Force refresh the avatar URL by generating a new timestamp
+ * Call this when you know the image has changed
+ */
+export const forceRefreshAvatarUrl = (url?: string | null): string | undefined => {
+  if (!url) return undefined;
+  
+  // Remove any existing query params
+  const baseUrl = url.split('?')[0];
+  
+  // Generate a new timestamp
+  const newTimestamp = Date.now().toString();
+  urlTimestamps.set(baseUrl, newTimestamp);
+  
+  return `${baseUrl}?t=${newTimestamp}`;
+};
+
+/**
  * Uploads an image to Supabase storage
  */
 export const uploadProfileImage = async (
@@ -128,11 +168,13 @@ export const uploadProfileImage = async (
         throw error;
       }
 
-      // Add a cache-busting timestamp query parameter to the URL
-      const timestamp = Date.now();
-      return {
-        url: `${(supabase as any).supabaseUrl}/storage/v1/object/public/avatars/${data.path}?t=${timestamp}`,
-      };
+      // Generate URL without cache busting (we'll add it when needed)
+      const url = `${(supabase as any).supabaseUrl}/storage/v1/object/public/avatars/${data.path}`;
+      
+      // Force refresh this URL in our timestamp cache
+      forceRefreshAvatarUrl(url);
+      
+      return { url };
     } 
     // For native platforms, we read as base64 and convert to ArrayBuffer
     else {
@@ -151,11 +193,13 @@ export const uploadProfileImage = async (
         throw error;
       }
 
-      // Add a cache-busting timestamp query parameter to the URL
-      const timestamp = Date.now();
-      return {
-        url: `${(supabase as any).supabaseUrl}/storage/v1/object/public/avatars/${data.path}?t=${timestamp}`,
-      };
+      // Generate URL without cache busting (we'll add it when needed)
+      const url = `${(supabase as any).supabaseUrl}/storage/v1/object/public/avatars/${data.path}`;
+      
+      // Force refresh this URL in our timestamp cache
+      forceRefreshAvatarUrl(url);
+      
+      return { url };
     }
   } catch (error) {
     console.error("Error uploading profile image:", error);
@@ -186,32 +230,22 @@ export const removeProfileImage = async (userId: string): Promise<boolean> => {
 };
 
 /**
- * Gets a cache-busting URL for an avatar
- * This is useful to force the UI to refresh the image after updates
- */
-export const getAvatarUrlWithCacheBusting = (url?: string | null): string | undefined => {
-  if (!url) return undefined;
-  
-  // Add a timestamp to bust the cache
-  const separator = url.includes('?') ? '&' : '?';
-  return `${url}${separator}t=${Date.now()}`;
-};
-
-/**
  * Preloads an avatar image to ensure it's available in the cache
  */
 export const preloadAvatarImage = async (url?: string | null): Promise<void> => {
   if (!url) return;
   
   try {
-    // Add cache-busting to ensure we get the latest version
+    // Get a stable URL with cache busting
     const cacheBustingUrl = getAvatarUrlWithCacheBusting(url);
     
     // Ensure we have a valid URL before prefetching
     if (cacheBustingUrl) {
-      // Preload the image
-      await Image.prefetch(cacheBustingUrl);
-      console.log('Avatar image preloaded:', cacheBustingUrl);
+      // Preload the image with appropriate caching
+      await Image.prefetch(cacheBustingUrl, {
+        cachePolicy: 'memory-disk'
+      });
+      console.log('Avatar image preloaded');
     }
   } catch (error) {
     console.error('Error preloading avatar image:', error);
@@ -242,6 +276,7 @@ const imageUploadUtils = {
   uploadProfileImage,
   removeProfileImage,
   getAvatarUrlWithCacheBusting,
+  forceRefreshAvatarUrl,
   preloadAvatarImage,
   clearImageCache
 };
