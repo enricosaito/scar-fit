@@ -1,7 +1,7 @@
 // app/models/user.ts
 import { supabase } from "../lib/supabase";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { uploadProfileImage } from "../utils/imageUpload";
+import { uploadProfileImage, removeProfileImage } from "../utils/imageUpload";
 
 const ONBOARDING_COMPLETED_KEY = "onboardingCompleted";
 
@@ -87,6 +87,26 @@ export async function updateUserAvatar(userId: string, imageUri: string): Promis
   }
 }
 
+/**
+ * Removes the user's profile avatar
+ */
+export async function removeUserAvatar(userId: string): Promise<UserProfile | null> {
+  try {
+    // Remove the image from storage
+    const removed = await removeProfileImage(userId);
+    
+    if (!removed) {
+      throw new Error("Failed to remove avatar image");
+    }
+
+    // Update the user profile to clear the avatar URL
+    return await updateUserProfile(userId, { avatar_url: undefined });
+  } catch (error) {
+    console.error("Error removing user avatar:", error);
+    throw error;
+  }
+}
+
 export async function saveUserMacros(userId: string, macroData: Omit<MacroData, "updatedAt">) {
   try {
     const macros: MacroData = {
@@ -148,4 +168,5 @@ export default {
   saveUserMacros,
   resetUserMacros,
   updateUserAvatar,
+  removeUserAvatar,
 };

@@ -1,8 +1,13 @@
-import React from "react";
-import { View, Image, StyleSheet } from "react-native";
+import React, { useState, useEffect, useRef } from "react";
+import { View, ActivityIndicator } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { useTheme } from "../../context/ThemeContext";
 import { cn } from "../../lib/utils";
+import { getAvatarUrlWithCacheBusting } from "../../utils/imageUpload";
+import { Image, ImageSource } from "expo-image";
+
+// Define a placeholder blurhash for smooth loading
+const AVATAR_PLACEHOLDER = "L6PZfSi_.AyE_3t7t7R**0o#DgR4";
 
 interface AvatarProps {
   url?: string | null;
@@ -12,8 +17,35 @@ interface AvatarProps {
 
 export default function Avatar({ url, size = 40, className }: AvatarProps) {
   const { colors } = useTheme();
+  const [imageError, setImageError] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
-  if (!url) {
+  // Track if this component is mounted to avoid state updates after unmount
+  const isMounted = useRef(true);
+
+  // Create a stable URL reference that won't change with every render
+  // This prevents cache busting on every render, but still respects URL changes
+  const [stableUrl, setStableUrl] = useState<string | undefined>(undefined);
+
+  useEffect(() => {
+    isMounted.current = true;
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    // Only update the stable URL when the input URL changes
+    // Don't add cache busting here - only when the URL actually changes
+    if (url !== undefined && url !== null && url !== stableUrl?.split("?")[0]) {
+      setStableUrl(url);
+      // Reset error state when URL changes
+      setImageError(false);
+    }
+  }, [url]);
+
+  // If no URL or image fails to load, show default icon
+  if (!stableUrl || imageError) {
     return (
       <View
         className={cn(`bg-primary/20 items-center justify-center rounded-full`, className)}
@@ -26,7 +58,34 @@ export default function Avatar({ url, size = 40, className }: AvatarProps) {
 
   return (
     <View className={cn("rounded-full overflow-hidden", className)} style={{ width: size, height: size }}>
-      <Image source={{ uri: url }} style={{ width: size, height: size }} resizeMode="cover" />
+      {isLoading && (
+        <View className="absolute inset-0 flex-1 items-center justify-center bg-primary/10 z-10">
+          <ActivityIndicator size="small" color={colors.primary} />
+        </View>
+      )}
+      <Image
+        source={{ uri: stableUrl }}
+        style={{ width: size, height: size }}
+        contentFit="cover"
+        transition={100}
+        placeholder={AVATAR_PLACEHOLDER}
+        cachePolicy="memory-disk"
+        priority="high"
+        recyclingKey={stableUrl} // Use the URL as recycling key for better caching
+        onLoadStart={() => {
+          if (isMounted.current) setIsLoading(true);
+        }}
+        onLoad={() => {
+          if (isMounted.current) setIsLoading(false);
+        }}
+        onError={() => {
+          console.error("Failed to load image:", stableUrl);
+          if (isMounted.current) {
+            setImageError(true);
+            setIsLoading(false);
+          }
+        }}
+      />
     </View>
   );
 }

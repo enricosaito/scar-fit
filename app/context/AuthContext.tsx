@@ -7,6 +7,7 @@ import { createUserProfile, getUserProfile, updateUserProfile, UserProfile } fro
 import { signInWithGoogle } from "../lib/googleAuth";
 import { isAppleAuthAvailable, signInWithApple } from "../lib/appleAuth";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { preloadAvatarImage } from "../utils/imageUpload";
 
 const ONBOARDING_COMPLETED_KEY = "onboardingCompleted";
 
@@ -27,7 +28,7 @@ interface AuthContextType extends AuthState {
   signInWithApple: () => Promise<AuthResult>;
   isAppleAuthAvailable: () => Promise<boolean>;
   signOut: () => Promise<void>;
-  refreshProfile: () => Promise<void>;
+  refreshProfile: () => Promise<number | void>;
   setOnboardingCompleted: (completed: boolean) => void;
   loading: boolean;
   profileLoading: boolean;
@@ -54,6 +55,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const profile = await getUserProfile(userId);
       const hasMacros = !!(profile?.macros && Object.keys(profile.macros).length > 0);
+
+      // Preload the avatar image if it exists
+      if (profile?.avatar_url) {
+        preloadAvatarImage(profile.avatar_url).catch((err) => console.error("Error preloading avatar:", err));
+      }
 
       // Check stored onboarding status
       let storedOnboardingStatus = false;
@@ -170,7 +176,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const refreshProfile = async () => {
-    if (state.user) await fetchUserProfile(state.user.id);
+    if (!state.user) return;
+
+    setProfileLoading(true);
+    try {
+      // Force a new profile fetch to get updated data
+      const profile = await getUserProfile(state.user.id);
+      const hasMacros = !!(profile?.macros && Object.keys(profile.macros).length > 0);
+
+      // Preload the avatar image if it exists
+      if (profile?.avatar_url) {
+        preloadAvatarImage(profile.avatar_url).catch((err) => console.error("Error preloading avatar:", err));
+      }
+
+      setState((prev) => ({
+        ...prev,
+        userProfile: profile,
+        onboardingCompleted: hasMacros || prev.onboardingCompleted,
+      }));
+
+      // Return a timestamp to ensure components are updated
+      return Date.now();
+    } catch (error) {
+      console.error("Error refreshing user profile:", error);
+    } finally {
+      setProfileLoading(false);
+    }
   };
 
   const signUp = async (email: string, password: string): Promise<AuthResult> => {

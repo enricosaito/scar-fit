@@ -1,22 +1,97 @@
 // Updated app/screens/profile/profile.tsx
-import React, { useState } from "react";
-import { Text, View, SafeAreaView, Pressable, Alert, ScrollView, ActivityIndicator } from "react-native";
-import { useRouter } from "expo-router";
+import React, { useState, useEffect, useCallback } from "react";
+import {
+  Text,
+  View,
+  SafeAreaView,
+  Pressable,
+  Alert,
+  ScrollView,
+  ActivityIndicator,
+  RefreshControl,
+} from "react-native";
+import { useRouter, useFocusEffect } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import { useTheme } from "../../context/ThemeContext";
 import { useAuth } from "../../context/AuthContext";
 import { Goal, ActivityLevel } from "../../screens/onboarding/context/OnboardingContext";
 import Avatar from "../../components/ui/Avatar";
+import { getAvatarUrlWithCacheBusting, clearImageCache } from "../../utils/imageUpload";
 
 export default function Profile() {
   const router = useRouter();
   const { colors } = useTheme();
   const { user, signOut, userProfile, refreshProfile, loading, setOnboardingCompleted } = useAuth();
   const [logoutLoading, setLogoutLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const [avatarUrl, setAvatarUrl] = useState<string | undefined>(undefined);
+  const [avatarKey, setAvatarKey] = useState(Date.now().toString());
 
   // Golden colors for premium feature (consistent with existing PRO styling)
   const goldColor = "#F7B955";
   const goldBg = "rgba(247, 185, 85, 0.2)";
+
+  // Update avatar URL when profile changes
+  useEffect(() => {
+    if (userProfile?.avatar_url) {
+      // Use cache busting to ensure we get the latest avatar
+      const cacheBustedUrl = getAvatarUrlWithCacheBusting(userProfile.avatar_url);
+      setAvatarUrl(cacheBustedUrl);
+    } else {
+      setAvatarUrl(undefined);
+    }
+  }, [userProfile?.avatar_url, avatarKey]);
+
+  // Force refresh when the component comes into focus
+  useFocusEffect(
+    useCallback(() => {
+      // When the screen comes into focus, refresh the avatar
+      const refreshAvatar = async () => {
+        // Force re-render with a new key
+        setAvatarKey(Date.now().toString());
+
+        // Refresh the profile
+        await refreshProfile();
+
+        // Clear cache and update avatar URL if it exists
+        if (userProfile?.avatar_url) {
+          const cacheBustedUrl = getAvatarUrlWithCacheBusting(userProfile.avatar_url);
+          setAvatarUrl(cacheBustedUrl);
+        }
+      };
+
+      refreshAvatar().catch((err) => console.error("Error refreshing avatar:", err));
+
+      return () => {
+        // Cleanup function when component loses focus
+      };
+    }, [])
+  );
+
+  // Pull to refresh functionality
+  const onRefresh = async () => {
+    setRefreshing(true);
+    try {
+      // Clear the image cache
+      await clearImageCache();
+
+      // Refresh the profile
+      await refreshProfile();
+
+      // Generate a new key to force re-render
+      setAvatarKey(Date.now().toString());
+
+      // Update avatar URL if it exists
+      if (userProfile?.avatar_url) {
+        const cacheBustedUrl = getAvatarUrlWithCacheBusting(userProfile.avatar_url);
+        setAvatarUrl(cacheBustedUrl);
+      }
+    } catch (error) {
+      console.error("Error refreshing:", error);
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   const handleLogout = () => {
     Alert.alert(
@@ -101,7 +176,17 @@ export default function Profile() {
         </Pressable>
       </View>
 
-      <ScrollView className="flex-1">
+      <ScrollView
+        className="flex-1"
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={[colors.primary]}
+            tintColor={colors.primary}
+          />
+        }
+      >
         <View className="p-6 items-center">
           {user && !loading ? (
             <>
@@ -110,7 +195,7 @@ export default function Profile() {
                 className={`mb-4 ${isPremium ? "border-2" : ""}`}
                 style={isPremium ? { borderColor: goldColor, borderRadius: 9999 } : {}}
               >
-                <Avatar url={userProfile?.avatar_url} size={96} />
+                <Avatar url={avatarUrl} size={96} key={`profile-avatar-${avatarKey}`} />
                 {isPremium && (
                   <View
                     className="absolute -bottom-1 -right-1 px-2 py-0.5 rounded-full"
