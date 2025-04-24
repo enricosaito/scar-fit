@@ -303,6 +303,23 @@ export const batchPreloadAvatarImages = async (urls: (string | undefined | null)
   }
 };
 
+/**
+ * Clears the image cache and forces a refresh of the avatar URL
+ * Combines clearImageCache and forceRefreshAvatarUrl for convenience
+ */
+export async function forceClearAndRefreshAvatar(url: string | null | undefined): Promise<string | undefined> {
+  try {
+    // First clear the image cache
+    await clearImageCache();
+    
+    // Then force refresh the URL
+    return forceRefreshAvatarUrl(url);
+  } catch (error) {
+    console.error('Error clearing cache and refreshing avatar:', error);
+    return undefined;
+  }
+}
+
 // Define the default export
 const imageUploadUtils = {
   bucketExists,
@@ -315,7 +332,8 @@ const imageUploadUtils = {
   forceRefreshAvatarUrl,
   preloadAvatarImage,
   batchPreloadAvatarImages,
-  clearImageCache
+  clearImageCache,
+  forceClearAndRefreshAvatar
 };
 
 export default imageUploadUtils; 
