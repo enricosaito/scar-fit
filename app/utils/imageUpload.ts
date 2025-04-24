@@ -218,6 +218,21 @@ export const preloadAvatarImage = async (url?: string | null): Promise<void> => 
   }
 };
 
+/**
+ * Clears the image cache
+ * This is useful for troubleshooting image loading issues
+ */
+export const clearImageCache = async (): Promise<void> => {
+  try {
+    // Clear the expo-image cache
+    await Image.clearMemoryCache();
+    await Image.clearDiskCache();
+    console.log('Image cache cleared');
+  } catch (error) {
+    console.error('Error clearing image cache:', error);
+  }
+};
+
 // Define the default export
 const imageUploadUtils = {
   bucketExists,
@@ -227,7 +242,8 @@ const imageUploadUtils = {
   uploadProfileImage,
   removeProfileImage,
   getAvatarUrlWithCacheBusting,
-  preloadAvatarImage
+  preloadAvatarImage,
+  clearImageCache
 };
 
 export default imageUploadUtils; 
