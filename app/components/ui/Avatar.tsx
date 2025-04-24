@@ -1,8 +1,9 @@
-import React from "react";
+import React, { useState } from "react";
 import { View, Image, StyleSheet } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { useTheme } from "../../context/ThemeContext";
 import { cn } from "../../lib/utils";
+import { getAvatarUrlWithCacheBusting } from "../../utils/imageUpload";
 
 interface AvatarProps {
   url?: string | null;
@@ -12,8 +13,13 @@ interface AvatarProps {
 
 export default function Avatar({ url, size = 40, className }: AvatarProps) {
   const { colors } = useTheme();
+  const [imageError, setImageError] = useState(false);
 
-  if (!url) {
+  // Use cache-busting URL to ensure avatar is refreshed after updates
+  const cacheBustingUrl = getAvatarUrlWithCacheBusting(url);
+
+  // If no URL or image fails to load, show default icon
+  if (!cacheBustingUrl || imageError) {
     return (
       <View
         className={cn(`bg-primary/20 items-center justify-center rounded-full`, className)}
@@ -26,7 +32,12 @@ export default function Avatar({ url, size = 40, className }: AvatarProps) {
 
   return (
     <View className={cn("rounded-full overflow-hidden", className)} style={{ width: size, height: size }}>
-      <Image source={{ uri: url }} style={{ width: size, height: size }} resizeMode="cover" />
+      <Image
+        source={{ uri: cacheBustingUrl }}
+        style={{ width: size, height: size }}
+        resizeMode="cover"
+        onError={() => setImageError(true)}
+      />
     </View>
   );
 }
