@@ -1,9 +1,13 @@
 import React, { useState } from "react";
-import { View, Image, StyleSheet } from "react-native";
+import { View } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { useTheme } from "../../context/ThemeContext";
 import { cn } from "../../lib/utils";
 import { getAvatarUrlWithCacheBusting } from "../../utils/imageUpload";
+import { Image } from "expo-image";
+
+// Define a placeholder blurhash for smooth loading
+const AVATAR_PLACEHOLDER = "L6PZfSi_.AyE_3t7t7R**0o#DgR4";
 
 interface AvatarProps {
   url?: string | null;
@@ -35,7 +39,10 @@ export default function Avatar({ url, size = 40, className }: AvatarProps) {
       <Image
         source={{ uri: cacheBustingUrl }}
         style={{ width: size, height: size }}
-        resizeMode="cover"
+        contentFit="cover"
+        transition={200}
+        placeholder={AVATAR_PLACEHOLDER}
+        cachePolicy="memory-disk"
         onError={() => setImageError(true)}
       />
     </View>
