@@ -1,17 +1,21 @@
 // app/auth/register.tsx
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Text, View, SafeAreaView, TouchableOpacity, ActivityIndicator, ScrollView, Image } from "react-native";
 import { useRouter } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
 import Button from "../components/ui/Button";
+import AppleSignInButton from "../components/ui/AppleSignInButton";
 import FormField from "../components/ui/FormField";
 
 export default function Register() {
   const router = useRouter();
   const { colors } = useTheme();
-  const { signUp, signIn, signInWithGoogle, loading } = useAuth();
+  const { signUp, signIn, signInWithGoogle, signInWithApple, isAppleAuthAvailable, loading } = useAuth();
+
+  const [appleAuthAvailable, setAppleAuthAvailable] = useState(false);
+  const [appleLoading, setAppleLoading] = useState(false);
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -51,6 +55,15 @@ export default function Register() {
     return isValid;
   };
 
+  useEffect(() => {
+    const checkAppleAuth = async () => {
+      const available = await isAppleAuthAvailable();
+      setAppleAuthAvailable(available);
+    };
+
+    checkAppleAuth();
+  }, []);
+
   const handleRegister = async () => {
     // Reset error message
     setErrorMessage("");
@@ -78,6 +91,26 @@ export default function Register() {
       }
     } catch (error: any) {
       setErrorMessage(error.message || "Ocorreu um erro inesperado. Tente novamente.");
+    }
+  };
+
+  const handleAppleSignUp = async () => {
+    try {
+      setErrorMessage("");
+      setAppleLoading(true);
+
+      const { error } = await signInWithApple();
+
+      if (error) {
+        setErrorMessage(error.message || "Erro ao se cadastrar com Apple. Tente novamente.");
+      } else {
+        // Redirect to onboarding
+        router.replace("/screens/onboarding");
+      }
+    } catch (error: any) {
+      setErrorMessage(error.message || "Ocorreu um erro inesperado. Tente novamente.");
+    } finally {
+      setAppleLoading(false);
     }
   };
 
@@ -168,6 +201,11 @@ export default function Register() {
           />
           <Text className="text-foreground font-medium ml-2">Continuar com Google</Text>
         </TouchableOpacity>
+
+        {/* Apple Sign-up Button */}
+        {appleAuthAvailable && (
+          <AppleSignInButton onPress={handleAppleSignUp} loading={appleLoading} text="Continuar com Apple" />
+        )}
 
         <View className="flex-row justify-center items-center">
           <Text className="text-muted-foreground">Já tem uma conta? </Text>

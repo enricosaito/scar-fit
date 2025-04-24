@@ -1,34 +1,38 @@
 // app/auth/login.tsx
-import React, { useState } from "react";
-import {
-  Text,
-  View,
-  SafeAreaView,
-  TouchableOpacity,
-  ActivityIndicator,
-  ScrollView,
-  Image,
-  StyleSheet,
-} from "react-native";
+import React, { useState, useEffect } from "react";
+import { Text, View, SafeAreaView, TouchableOpacity, ActivityIndicator, ScrollView, Image } from "react-native";
 import { useRouter } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
 import Button from "../components/ui/Button";
+import AppleSignInButton from "../components/ui/AppleSignInButton";
 import FormField from "../components/ui/FormField";
 import { supabase } from "../lib/supabase";
 
 export default function Login() {
   const router = useRouter();
   const { colors } = useTheme();
-  const { signIn, signInWithGoogle } = useAuth();
+  const { signIn, signInWithGoogle, signInWithApple, isAppleAuthAvailable } = useAuth();
 
   const [loginLoading, setLoginLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
 
+  const [appleAuthAvailable, setAppleAuthAvailable] = useState(false);
+  const [appleLoading, setAppleLoading] = useState(false);
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
+
+  useEffect(() => {
+    const checkAppleAuth = async () => {
+      const available = await isAppleAuthAvailable();
+      setAppleAuthAvailable(available);
+    };
+
+    checkAppleAuth();
+  }, []);
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -48,6 +52,25 @@ export default function Login() {
       setErrorMessage(error.message || "Ocorreu um erro inesperado. Tente novamente.");
     } finally {
       setLoginLoading(false);
+    }
+  };
+
+  const handleAppleLogin = async () => {
+    try {
+      setErrorMessage("");
+      setAppleLoading(true);
+
+      const { error } = await signInWithApple();
+
+      if (error) {
+        console.error("Apple login error:", error);
+        setErrorMessage(error.message || "Erro ao fazer login com Apple. Tente novamente.");
+      }
+    } catch (error) {
+      console.error("Unexpected error:", error);
+      setErrorMessage("Ocorreu um erro inesperado. Tente novamente.");
+    } finally {
+      setAppleLoading(false);
     }
   };
 
@@ -142,6 +165,9 @@ export default function Login() {
               {googleLoading ? "Processando..." : "Entrar com Google"}
             </Text>
           </TouchableOpacity>
+
+          {/* Apple Sign-in Button */}
+          {appleAuthAvailable && <AppleSignInButton onPress={handleAppleLogin} loading={appleLoading} />}
 
           <View className="flex-row justify-center items-center">
             <Text className="text-muted-foreground">Não tem uma conta? </Text>

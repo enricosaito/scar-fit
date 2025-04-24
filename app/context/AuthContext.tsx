@@ -5,6 +5,7 @@ import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "../lib/supabase";
 import { createUserProfile, getUserProfile, updateUserProfile, UserProfile } from "../models/user";
 import { signInWithGoogle } from "../lib/googleAuth";
+import { isAppleAuthAvailable, signInWithApple } from "../lib/appleAuth";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const ONBOARDING_COMPLETED_KEY = "onboardingCompleted";
@@ -23,6 +24,8 @@ interface AuthContextType extends AuthState {
   signUp: (email: string, password: string) => Promise<AuthResult>;
   signIn: (email: string, password: string) => Promise<AuthResult>;
   signInWithGoogle: () => Promise<AuthResult>;
+  signInWithApple: () => Promise<AuthResult>;
+  isAppleAuthAvailable: () => Promise<boolean>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
   setOnboardingCompleted: (completed: boolean) => void;
@@ -196,6 +199,81 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  // Inside AuthProvider component
+  const handleAppleSignIn = async (): Promise<AuthResult> => {
+    setAuthLoading(true);
+    try {
+      const { data, error } = await signInWithApple();
+      if (error) {
+        const err =
+          error instanceof Error
+            ? error
+            : new Error(
+                typeof error === "object" && error !== null && "message" in error
+                  ? (error as any).message
+                  : "Erro desconhecido"
+              );
+        return { error: err };
+      }
+      if (!data?.session) {
+        return { error: new Error("Falha na autenticação. Tente novamente.") };
+      }
+
+      const { session } = data;
+      const user = session.user;
+      let profile = await getUserProfile(user.id);
+
+      if (!profile) {
+        await createUserProfile(user.id, user.email || "");
+
+        // Set full name if provided by Apple
+        const fullName =
+          user.user_metadata?.name ||
+          ((user.user_metadata?.first_name || "") + " " + (user.user_metadata?.last_name || "")).trim();
+
+        if (fullName) await updateUserProfile(user.id, { full_name: fullName });
+        profile = await getUserProfile(user.id);
+      }
+
+      // Same logic as in handleGoogleSignIn for onboarding status
+      let storedOnboardingStatus = false;
+      try {
+        const storedValue = await AsyncStorage.getItem(ONBOARDING_COMPLETED_KEY);
+        storedOnboardingStatus = storedValue === "true";
+      } catch (error) {
+        console.error("Error reading onboarding status:", error);
+      }
+
+      const hasMacros = !!(profile?.macros && Object.keys(profile.macros).length > 0);
+      const onboardingCompleted = hasMacros || storedOnboardingStatus;
+
+      setState((prev) => ({
+        ...prev,
+        user,
+        session,
+        userProfile: profile,
+        initialized: true,
+        onboardingCompleted,
+      }));
+
+      // Save onboarding status if user has macros
+      if (hasMacros && !storedOnboardingStatus) {
+        try {
+          await AsyncStorage.setItem(ONBOARDING_COMPLETED_KEY, "true");
+        } catch (error) {
+          console.error("Error saving onboarding status:", error);
+        }
+      }
+
+      return { error: null };
+    } catch (err: any) {
+      return { error: err instanceof Error ? err : new Error("Erro inesperado") };
+    } finally {
+      setAuthLoading(false);
+      setProfileLoading(false);
+    }
+  };
+
   const handleGoogleSignIn = async (): Promise<AuthResult> => {
     setAuthLoading(true);
     try {
@@ -284,6 +362,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       signUp,
       signIn,
       signInWithGoogle: handleGoogleSignIn,
+      signInWithApple: handleAppleSignIn,
+      isAppleAuthAvailable,
       signOut,
       refreshProfile,
       setOnboardingCompleted,
