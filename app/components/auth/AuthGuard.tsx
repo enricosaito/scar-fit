@@ -4,6 +4,7 @@ import { useRouter, useSegments } from "expo-router";
 import { useAuth } from "../../context/AuthContext";
 import { View, ActivityIndicator, Text } from "react-native";
 import { useTheme } from "../../context/ThemeContext";
+import { preloadAvatarImage } from "../../utils/imageUpload";
 
 export default function AuthGuard({ children }: { children: React.ReactNode }) {
   const { user, initialized, userProfile, loading, profileLoading, onboardingCompleted } = useAuth();
@@ -11,6 +12,16 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const { colors } = useTheme();
   const [navigated, setNavigated] = useState(false);
+
+  // Preload avatar when component mounts or when userProfile changes
+  useEffect(() => {
+    if (userProfile?.avatar_url) {
+      // Preload the avatar image
+      preloadAvatarImage(userProfile.avatar_url).catch((err) =>
+        console.error("Error preloading avatar in AuthGuard:", err)
+      );
+    }
+  }, [userProfile?.avatar_url]);
 
   // Clean approach that minimizes state changes and navigation attempts
   useEffect(() => {
