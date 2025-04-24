@@ -17,6 +17,11 @@ module.exports = {
       NSCameraUsageDescription: "Este aplicativo usa a câmera para escanear códigos de barras de alimentos.",
       UIBackgroundModes: ["audio"],
       ITSAppUsesNonExemptEncryption: false,
+      CFBundleURLTypes: [
+        {
+          CFBundleURLSchemes: ["scarfit"],
+        },
+      ],
     },
   },
   android: {
