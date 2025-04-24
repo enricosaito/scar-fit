@@ -73,6 +73,7 @@ export const pickImage = async (useCamera = false): Promise<ImagePicker.ImagePic
       return null;
     }
 
+    // Use ImagePicker.MediaTypeOptions but ignore the deprecation warning for now
     const result = useCamera
       ? await ImagePicker.launchCameraAsync({
           mediaTypes: ImagePicker.MediaTypeOptions.Images,
@@ -126,8 +127,10 @@ export const uploadProfileImage = async (
         throw error;
       }
 
+      // Add a cache-busting timestamp query parameter to the URL
+      const timestamp = Date.now();
       return {
-        url: `${(supabase as any).supabaseUrl}/storage/v1/object/public/avatars/${data.path}`,
+        url: `${(supabase as any).supabaseUrl}/storage/v1/object/public/avatars/${data.path}?t=${timestamp}`,
       };
     } 
     // For native platforms, we read as base64 and convert to ArrayBuffer
@@ -147,12 +150,61 @@ export const uploadProfileImage = async (
         throw error;
       }
 
+      // Add a cache-busting timestamp query parameter to the URL
+      const timestamp = Date.now();
       return {
-        url: `${(supabase as any).supabaseUrl}/storage/v1/object/public/avatars/${data.path}`,
+        url: `${(supabase as any).supabaseUrl}/storage/v1/object/public/avatars/${data.path}?t=${timestamp}`,
       };
     }
   } catch (error) {
     console.error("Error uploading profile image:", error);
     return null;
   }
-}; 
+};
+
+/**
+ * Removes a user's profile image from Supabase storage
+ */
+export const removeProfileImage = async (userId: string): Promise<boolean> => {
+  try {
+    // Delete the file from Supabase storage (this will remove all files in the user's folder)
+    const { error } = await supabase.storage
+      .from("avatars")
+      .remove([`${userId}/profile.png`, `${userId}/profile.jpg`, `${userId}/profile.jpeg`]);
+    
+    if (error) {
+      console.error("Error removing profile image:", error);
+      return false;
+    }
+    
+    return true;
+  } catch (error) {
+    console.error("Error removing profile image:", error);
+    return false;
+  }
+};
+
+/**
+ * Gets a cache-busting URL for an avatar
+ * This is useful to force the UI to refresh the image after updates
+ */
+export const getAvatarUrlWithCacheBusting = (url?: string | null): string | undefined => {
+  if (!url) return undefined;
+  
+  // Add a timestamp to bust the cache
+  const separator = url.includes('?') ? '&' : '?';
+  return `${url}${separator}t=${Date.now()}`;
+};
+
+// Define the default export
+const imageUploadUtils = {
+  bucketExists,
+  ensureAvatarsBucketExists,
+  requestMediaPermissions,
+  pickImage,
+  uploadProfileImage,
+  removeProfileImage,
+  getAvatarUrlWithCacheBusting
+};
+
+export default imageUploadUtils; 
