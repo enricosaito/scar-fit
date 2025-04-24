@@ -1,14 +1,27 @@
 // app/profile/edit.tsx (updated to include password change)
 import React, { useState, useEffect } from "react";
-import { Text, View, SafeAreaView, TextInput, Pressable, ActivityIndicator, ScrollView, Alert } from "react-native";
+import {
+  Text,
+  View,
+  SafeAreaView,
+  TextInput,
+  Pressable,
+  ActivityIndicator,
+  ScrollView,
+  Alert,
+  Image,
+} from "react-native";
 import { useRouter } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import { useTheme } from "../../context/ThemeContext";
 import { useAuth } from "../../context/AuthContext";
-import { updateUserProfile } from "../../models/user";
+import { updateUserProfile, updateUserAvatar } from "../../models/user";
 import Button from "../../components/ui/Button";
+import Avatar from "../../components/ui/Avatar";
 import { supabase } from "../../lib/supabase";
 import FormField from "../../components/ui/FormField";
+import { pickImage } from "../../utils/imageUpload";
+import * as ImagePicker from "expo-image-picker";
 
 export default function ProfileEdit() {
   const router = useRouter();
@@ -20,6 +33,8 @@ export default function ProfileEdit() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [isError, setIsError] = useState(false);
+  const [avatarUrl, setAvatarUrl] = useState<string | undefined>(undefined);
+  const [avatarUploading, setAvatarUploading] = useState(false);
 
   // Password change state
   const [showPasswordChange, setShowPasswordChange] = useState(false);
@@ -34,6 +49,7 @@ export default function ProfileEdit() {
   useEffect(() => {
     if (userProfile) {
       setFullName(userProfile.full_name || "");
+      setAvatarUrl(userProfile.avatar_url);
     }
   }, [userProfile]);
 
@@ -58,6 +74,58 @@ export default function ProfileEdit() {
       setIsError(true);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleAvatarPress = async () => {
+    if (!user) return;
+
+    Alert.alert("Alterar foto de perfil", "Escolha uma opção", [
+      {
+        text: "Cancelar",
+        style: "cancel",
+      },
+      {
+        text: "Câmera",
+        onPress: () => pickAndUploadAvatar(true),
+      },
+      {
+        text: "Galeria",
+        onPress: () => pickAndUploadAvatar(false),
+      },
+    ]);
+  };
+
+  const pickAndUploadAvatar = async (useCamera: boolean) => {
+    if (!user) return;
+
+    try {
+      setAvatarUploading(true);
+
+      // Pick image from camera or gallery
+      const result = await pickImage(useCamera);
+
+      if (!result) {
+        setAvatarUploading(false);
+        return;
+      }
+
+      // Upload the image and update the profile
+      const updatedProfile = await updateUserAvatar(user.id, result.uri);
+
+      if (updatedProfile) {
+        setAvatarUrl(updatedProfile.avatar_url);
+        await refreshProfile();
+
+        setMessage("Foto de perfil atualizada com sucesso!");
+        setIsError(false);
+      }
+    } catch (error: any) {
+      console.error("Error updating avatar:", error);
+      setMessage(error.message || "Erro ao atualizar foto de perfil");
+      setIsError(true);
+    } finally {
+      setAvatarUploading(false);
     }
   };
 
@@ -153,12 +221,20 @@ export default function ProfileEdit() {
         ) : null}
 
         <View className="mb-6 items-center">
-          <View className="w-24 h-24 bg-primary/20 rounded-full items-center justify-center mb-4">
-            <Feather name="user" size={40} color={colors.primary} />
-          </View>
-          <Pressable>
-            <Text className="text-primary">Alterar foto</Text>
+          <Pressable onPress={handleAvatarPress} className="relative mb-4" disabled={avatarUploading}>
+            <Avatar url={avatarUrl} size={96} />
+
+            {avatarUploading ? (
+              <View className="absolute inset-0 bg-foreground/30 rounded-full items-center justify-center">
+                <ActivityIndicator size="small" color={colors.background} />
+              </View>
+            ) : (
+              <View className="absolute bottom-0 right-0 bg-primary rounded-full w-8 h-8 items-center justify-center">
+                <Feather name="camera" size={16} color={colors.background} />
+              </View>
+            )}
           </Pressable>
+          <Text className="text-primary">{avatarUploading ? "Enviando..." : "Alterar foto"}</Text>
         </View>
 
         <View className="mb-4">
