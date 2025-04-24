@@ -1,5 +1,5 @@
 // app/components/auth/AuthGuard.tsx
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useRouter, useSegments } from "expo-router";
 import { useAuth } from "../../context/AuthContext";
 import { View, ActivityIndicator, Text } from "react-native";
@@ -13,13 +13,24 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
   const { colors } = useTheme();
   const [navigated, setNavigated] = useState(false);
 
+  // Using a ref to track the last preloaded avatar URL to avoid redundant preloads
+  const lastPreloadedUrl = useRef<string | undefined | null>(null);
+
   // Preload avatar when component mounts or when userProfile changes
+  // Use a small delay to let the UI load first
   useEffect(() => {
-    if (userProfile?.avatar_url) {
-      // Preload the avatar image
-      preloadAvatarImage(userProfile.avatar_url).catch((err) =>
-        console.error("Error preloading avatar in AuthGuard:", err)
-      );
+    if (userProfile?.avatar_url && userProfile.avatar_url !== lastPreloadedUrl.current) {
+      // Set a small delay to let the UI load first
+      const timer = setTimeout(() => {
+        // Preload the avatar image
+        preloadAvatarImage(userProfile.avatar_url)
+          .then(() => {
+            lastPreloadedUrl.current = userProfile.avatar_url;
+          })
+          .catch((err) => console.error("Error preloading avatar in AuthGuard:", err));
+      }, 200);
+
+      return () => clearTimeout(timer);
     }
   }, [userProfile?.avatar_url]);
 
