@@ -8,6 +8,9 @@ import { Image } from "expo-image";
 // Cache timestamps to avoid excessive refreshing
 const urlTimestamps = new Map<string, string>();
 
+// Keep track of which images we've preloaded
+const preloadedImages = new Set<string>();
+
 /**
  * Checks if a bucket exists in Supabase storage
  */
@@ -267,6 +270,41 @@ export const clearImageCache = async (): Promise<void> => {
   }
 };
 
+/**
+ * Preload multiple avatar images for better performance
+ * @param urls Array of avatar URLs to preload
+ */
+export const batchPreloadAvatarImages = async (urls: (string | undefined | null)[]): Promise<void> => {
+  if (!urls || urls.length === 0) return;
+  
+  try {
+    // Filter out nulls, undefineds, and already preloaded images
+    const validUrls = urls
+      .filter((url): url is string => 
+        typeof url === 'string' && !preloadedImages.has(url)
+      )
+      .map(url => {
+        // Get a stable URL with cache busting
+        const baseUrl = url.split('?')[0];
+        preloadedImages.add(baseUrl);
+        return getAvatarUrlWithCacheBusting(url);
+      })
+      .filter((url): url is string => typeof url === 'string');
+    
+    if (validUrls.length === 0) return;
+    
+    // Preload all images in parallel
+    console.log(`Batch preloading ${validUrls.length} avatar images`);
+    await Image.prefetch(validUrls, {
+      cachePolicy: 'memory-disk'
+    });
+    
+    console.log('Avatar images preloaded successfully');
+  } catch (error) {
+    console.error('Error batch preloading avatar images:', error);
+  }
+};
+
 // Define the default export
 const imageUploadUtils = {
   bucketExists,
@@ -278,6 +316,7 @@ const imageUploadUtils = {
   getAvatarUrlWithCacheBusting,
   forceRefreshAvatarUrl,
   preloadAvatarImage,
+  batchPreloadAvatarImages,
   clearImageCache
 };
 
