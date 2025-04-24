@@ -3,6 +3,7 @@ import * as FileSystem from "expo-file-system";
 import { Platform } from "react-native";
 import { supabase } from "../lib/supabase";
 import { decode } from "base64-arraybuffer";
+import { Image } from "expo-image";
 
 /**
  * Checks if a bucket exists in Supabase storage
@@ -196,6 +197,27 @@ export const getAvatarUrlWithCacheBusting = (url?: string | null): string | unde
   return `${url}${separator}t=${Date.now()}`;
 };
 
+/**
+ * Preloads an avatar image to ensure it's available in the cache
+ */
+export const preloadAvatarImage = async (url?: string | null): Promise<void> => {
+  if (!url) return;
+  
+  try {
+    // Add cache-busting to ensure we get the latest version
+    const cacheBustingUrl = getAvatarUrlWithCacheBusting(url);
+    
+    // Ensure we have a valid URL before prefetching
+    if (cacheBustingUrl) {
+      // Preload the image
+      await Image.prefetch(cacheBustingUrl);
+      console.log('Avatar image preloaded:', cacheBustingUrl);
+    }
+  } catch (error) {
+    console.error('Error preloading avatar image:', error);
+  }
+};
+
 // Define the default export
 const imageUploadUtils = {
   bucketExists,
@@ -204,7 +226,8 @@ const imageUploadUtils = {
   pickImage,
   uploadProfileImage,
   removeProfileImage,
-  getAvatarUrlWithCacheBusting
+  getAvatarUrlWithCacheBusting,
+  preloadAvatarImage
 };
 
 export default imageUploadUtils; 
