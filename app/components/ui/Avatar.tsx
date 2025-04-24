@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View } from "react-native";
+import { View, ActivityIndicator } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { useTheme } from "../../context/ThemeContext";
 import { cn } from "../../lib/utils";
@@ -18,6 +18,7 @@ interface AvatarProps {
 export default function Avatar({ url, size = 40, className }: AvatarProps) {
   const { colors } = useTheme();
   const [imageError, setImageError] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   // Use cache-busting URL to ensure avatar is refreshed after updates
   const cacheBustingUrl = getAvatarUrlWithCacheBusting(url);
@@ -36,6 +37,11 @@ export default function Avatar({ url, size = 40, className }: AvatarProps) {
 
   return (
     <View className={cn("rounded-full overflow-hidden", className)} style={{ width: size, height: size }}>
+      {isLoading && (
+        <View className="absolute inset-0 flex-1 items-center justify-center bg-primary/10 z-10">
+          <ActivityIndicator size="small" color={colors.primary} />
+        </View>
+      )}
       <Image
         source={{ uri: cacheBustingUrl }}
         style={{ width: size, height: size }}
@@ -43,7 +49,12 @@ export default function Avatar({ url, size = 40, className }: AvatarProps) {
         transition={200}
         placeholder={AVATAR_PLACEHOLDER}
         cachePolicy="memory-disk"
-        onError={() => setImageError(true)}
+        onLoadStart={() => setIsLoading(true)}
+        onLoad={() => setIsLoading(false)}
+        onError={() => {
+          setImageError(true);
+          setIsLoading(false);
+        }}
       />
     </View>
   );
