@@ -1,7 +1,7 @@
 // app/(tabs)/index.tsx (partial update to implement the new component)
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Text, View, Pressable, SafeAreaView, ScrollView, ActivityIndicator, RefreshControl } from "react-native";
-import { useRouter } from "expo-router";
+import { useRouter, useFocusEffect } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import { useTheme } from "../context/ThemeContext";
 import { useAuth } from "../context/AuthContext";
@@ -11,15 +11,38 @@ import type { FoodPortion } from "../models/food";
 import Header from "../components/ui/Header";
 import { MacroData } from "../models/user";
 import { DailyLog, getUserDailyLog } from "../models/tracking";
+import { clearImageCache } from "../utils/imageUpload";
+
+// Create a reference to the Header component
+let headerRef: React.RefObject<typeof Header> = { current: null };
 
 export default function Home() {
   const router = useRouter();
   const { colors } = useTheme();
-  const { userProfile, user } = useAuth();
+  const { userProfile, user, refreshProfile } = useAuth();
   const [dailyLog, setDailyLog] = useState<DailyLog | null>(null);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [showMacroDetails, setShowMacroDetails] = useState(true); // State for toggling macro details
+
+  // Generate a unique key for the Header component to force re-rendering
+  const [headerKey, setHeaderKey] = useState(Date.now().toString());
+
+  // Force refresh when the component comes into focus
+  useFocusEffect(
+    React.useCallback(() => {
+      // When the screen comes into focus, refresh the header
+      // This ensures the avatar is up-to-date when navigating back to this screen
+      setHeaderKey(Date.now().toString());
+
+      // Also refresh the profile in the background
+      refreshProfile().catch((err) => console.error("Error refreshing profile:", err));
+
+      return () => {
+        // Cleanup function when component loses focus
+      };
+    }, [])
+  );
 
   // Check if user has saved macros
   const hasMacros = userProfile?.macros && Object.keys(userProfile?.macros || {}).length > 0;
@@ -48,8 +71,21 @@ export default function Home() {
   // Pull to refresh function
   const onRefresh = async () => {
     setRefreshing(true);
-    await loadTodaysLog();
-    setRefreshing(false);
+
+    try {
+      // Load the daily log
+      await loadTodaysLog();
+
+      // Force refresh the profile to get the latest avatar
+      await refreshProfile();
+
+      // Force re-render the Header component with a new key
+      setHeaderKey(Date.now().toString());
+    } catch (error) {
+      console.error("Error refreshing:", error);
+    } finally {
+      setRefreshing(false);
+    }
   };
 
   // Load data when component mounts
@@ -110,9 +146,19 @@ export default function Home() {
 
   return (
     <SafeAreaView className="flex-1 bg-background">
-      <Header title="Scar Fit ⚡️" />
+      <Header title="Scar Fit ⚡️" key={headerKey} />
 
-      <ScrollView className="flex-1" refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
+      <ScrollView
+        className="flex-1"
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={[colors.primary]}
+            tintColor={colors.primary}
+          />
+        }
+      >
         <View className="px-4 py-3 mt-3">
           <Text className="text-2xl font-bold text-foreground mb-5">
             Olá, {userProfile?.full_name?.split(" ")[0] || user?.user_metadata?.name || "Usuário"}!
