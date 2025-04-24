@@ -3,7 +3,7 @@ import React from "react";
 import { TouchableOpacity, Text, ActivityIndicator, StyleSheet, View, Platform } from "react-native";
 import * as AppleAuthentication from "expo-apple-authentication";
 import { useTheme } from "../../context/ThemeContext";
-import { Feather } from "@expo/vector-icons";
+import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
 
 interface AppleSignInButtonProps {
   onPress: () => Promise<void>;
@@ -38,7 +38,7 @@ const AppleSignInButton = ({ onPress, loading = false, text = "Continuar com App
       {loading ? (
         <ActivityIndicator size="small" color="#FFF" style={{ marginRight: 8 }} />
       ) : (
-        <Feather name="apple" size={20} color="#FFF" />
+        <MaterialCommunityIcons name="apple-ios" size={20} color="#FFF" />
       )}
       <Text className="text-white font-medium ml-2">{loading ? "Processando..." : text}</Text>
     </TouchableOpacity>
