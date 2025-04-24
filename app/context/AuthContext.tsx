@@ -27,7 +27,7 @@ interface AuthContextType extends AuthState {
   signInWithApple: () => Promise<AuthResult>;
   isAppleAuthAvailable: () => Promise<boolean>;
   signOut: () => Promise<void>;
-  refreshProfile: () => Promise<void>;
+  refreshProfile: () => Promise<number | void>;
   setOnboardingCompleted: (completed: boolean) => void;
   loading: boolean;
   profileLoading: boolean;
@@ -170,7 +170,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const refreshProfile = async () => {
-    if (state.user) await fetchUserProfile(state.user.id);
+    if (!state.user) return;
+
+    setProfileLoading(true);
+    try {
+      // Force a new profile fetch to get updated data
+      const profile = await getUserProfile(state.user.id);
+      const hasMacros = !!(profile?.macros && Object.keys(profile.macros).length > 0);
+
+      setState((prev) => ({
+        ...prev,
+        userProfile: profile,
+        onboardingCompleted: hasMacros || prev.onboardingCompleted,
+      }));
+
+      // Return a timestamp to ensure components are updated
+      return Date.now();
+    } catch (error) {
+      console.error("Error refreshing user profile:", error);
+    } finally {
+      setProfileLoading(false);
+    }
   };
 
   const signUp = async (email: string, password: string): Promise<AuthResult> => {
