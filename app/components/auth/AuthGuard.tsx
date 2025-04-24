@@ -4,7 +4,7 @@ import { useRouter, useSegments } from "expo-router";
 import { useAuth } from "../../context/AuthContext";
 import { View, ActivityIndicator, Text } from "react-native";
 import { useTheme } from "../../context/ThemeContext";
-import { preloadAvatarImage } from "../../utils/imageUpload";
+import { batchPreloadAvatarImages } from "../../utils/imageUpload";
 
 export default function AuthGuard({ children }: { children: React.ReactNode }) {
   const { user, initialized, userProfile, loading, profileLoading, onboardingCompleted } = useAuth();
@@ -22,8 +22,8 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
     if (userProfile?.avatar_url && userProfile.avatar_url !== lastPreloadedUrl.current) {
       // Set a small delay to let the UI load first
       const timer = setTimeout(() => {
-        // Preload the avatar image
-        preloadAvatarImage(userProfile.avatar_url)
+        // Batch preload the avatar image
+        batchPreloadAvatarImages([userProfile.avatar_url])
           .then(() => {
             lastPreloadedUrl.current = userProfile.avatar_url;
           })
