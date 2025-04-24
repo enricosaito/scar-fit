@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { View, ActivityIndicator } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { useTheme } from "../../context/ThemeContext";
@@ -18,13 +18,24 @@ interface AvatarProps {
 export default function Avatar({ url, size = 40, className }: AvatarProps) {
   const { colors } = useTheme();
   const [imageError, setImageError] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
 
-  // Use cache-busting URL to ensure avatar is refreshed after updates
-  const cacheBustingUrl = getAvatarUrlWithCacheBusting(url);
+  // Create a stable URL reference that won't change with every render
+  // This prevents cache busting on every render, but still respects URL changes
+  const [stableUrl, setStableUrl] = useState<string | undefined>(undefined);
+
+  useEffect(() => {
+    // Only update the stable URL when the input URL changes
+    // Don't add cache busting here - only when the URL actually changes
+    if (url !== undefined && url !== null && url !== stableUrl?.split("?")[0]) {
+      setStableUrl(url);
+      // Reset error state when URL changes
+      setImageError(false);
+    }
+  }, [url]);
 
   // If no URL or image fails to load, show default icon
-  if (!cacheBustingUrl || imageError) {
+  if (!stableUrl || imageError) {
     return (
       <View
         className={cn(`bg-primary/20 items-center justify-center rounded-full`, className)}
@@ -43,15 +54,17 @@ export default function Avatar({ url, size = 40, className }: AvatarProps) {
         </View>
       )}
       <Image
-        source={{ uri: cacheBustingUrl }}
+        source={{ uri: stableUrl }}
         style={{ width: size, height: size }}
         contentFit="cover"
-        transition={200}
+        transition={100}
         placeholder={AVATAR_PLACEHOLDER}
         cachePolicy="memory-disk"
+        recyclingKey={stableUrl} // Use the URL as recycling key for better caching
         onLoadStart={() => setIsLoading(true)}
         onLoad={() => setIsLoading(false)}
         onError={() => {
+          console.error("Failed to load image:", stableUrl);
           setImageError(true);
           setIsLoading(false);
         }}
