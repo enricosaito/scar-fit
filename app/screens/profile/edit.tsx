@@ -10,12 +10,13 @@ import {
   ScrollView,
   Alert,
   Image,
+  AlertButton,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import { useTheme } from "../../context/ThemeContext";
 import { useAuth } from "../../context/AuthContext";
-import { updateUserProfile, updateUserAvatar } from "../../models/user";
+import { updateUserProfile, updateUserAvatar, removeUserAvatar } from "../../models/user";
 import Button from "../../components/ui/Button";
 import Avatar from "../../components/ui/Avatar";
 import { supabase } from "../../lib/supabase";
@@ -80,7 +81,7 @@ export default function ProfileEdit() {
   const handleAvatarPress = async () => {
     if (!user) return;
 
-    Alert.alert("Alterar foto de perfil", "Escolha uma opção", [
+    const options: AlertButton[] = [
       {
         text: "Cancelar",
         style: "cancel",
@@ -93,7 +94,43 @@ export default function ProfileEdit() {
         text: "Galeria",
         onPress: () => pickAndUploadAvatar(false),
       },
-    ]);
+    ];
+
+    // Add remove option if user already has an avatar
+    if (avatarUrl) {
+      options.splice(1, 0, {
+        text: "Remover foto",
+        style: "destructive",
+        onPress: () => handleRemoveAvatar(),
+      });
+    }
+
+    Alert.alert("Alterar foto de perfil", "Escolha uma opção", options);
+  };
+
+  const handleRemoveAvatar = async () => {
+    if (!user) return;
+
+    try {
+      setAvatarUploading(true);
+
+      // Remove the avatar
+      const updatedProfile = await removeUserAvatar(user.id);
+
+      if (updatedProfile) {
+        setAvatarUrl(undefined);
+        await refreshProfile();
+
+        setMessage("Foto de perfil removida com sucesso!");
+        setIsError(false);
+      }
+    } catch (error: any) {
+      console.error("Error removing avatar:", error);
+      setMessage(error.message || "Erro ao remover foto de perfil");
+      setIsError(true);
+    } finally {
+      setAvatarUploading(false);
+    }
   };
 
   const pickAndUploadAvatar = async (useCamera: boolean) => {
@@ -114,7 +151,9 @@ export default function ProfileEdit() {
       const updatedProfile = await updateUserAvatar(user.id, result.uri);
 
       if (updatedProfile) {
+        // Update local state with the new avatar URL
         setAvatarUrl(updatedProfile.avatar_url);
+        // Force refresh the profile in the auth context
         await refreshProfile();
 
         setMessage("Foto de perfil atualizada com sucesso!");
