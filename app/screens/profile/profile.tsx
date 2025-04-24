@@ -6,6 +6,7 @@ import { Feather } from "@expo/vector-icons";
 import { useTheme } from "../../context/ThemeContext";
 import { useAuth } from "../../context/AuthContext";
 import { Goal, ActivityLevel } from "../../screens/onboarding/context/OnboardingContext";
+import Avatar from "../../components/ui/Avatar";
 
 export default function Profile() {
   const router = useRouter();
@@ -106,12 +107,10 @@ export default function Profile() {
             <>
               {/* User avatar with conditional gold border for premium users */}
               <View
-                className={`w-24 h-24 rounded-full items-center justify-center mb-4 ${
-                  isPremium ? "border-2" : "bg-primary/20"
-                }`}
-                style={isPremium ? { borderColor: goldColor, backgroundColor: `${goldColor}10` } : {}}
+                className={`mb-4 ${isPremium ? "border-2" : ""}`}
+                style={isPremium ? { borderColor: goldColor, borderRadius: 9999 } : {}}
               >
-                <Feather name="user" size={40} color={isPremium ? goldColor : colors.primary} />
+                <Avatar url={userProfile?.avatar_url} size={96} />
                 {isPremium && (
                   <View
                     className="absolute -bottom-1 -right-1 px-2 py-0.5 rounded-full"
