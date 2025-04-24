@@ -21,7 +21,7 @@ import Button from "../../components/ui/Button";
 import Avatar from "../../components/ui/Avatar";
 import { supabase } from "../../lib/supabase";
 import FormField from "../../components/ui/FormField";
-import { pickImage, forceRefreshAvatarUrl } from "../../utils/imageUpload";
+import { pickImage, forceRefreshAvatarUrl, forceClearAndRefreshAvatar, clearImageCache } from "../../utils/imageUpload";
 import * as ImagePicker from "expo-image-picker";
 
 export default function ProfileEdit() {
@@ -115,15 +115,19 @@ export default function ProfileEdit() {
       setAvatarUploading(true);
 
       // Remove the avatar
-      const updatedProfile = await removeUserAvatar(user.id);
+      await removeUserAvatar(user.id);
 
-      if (updatedProfile) {
-        setAvatarUrl(undefined);
-        await refreshProfile();
+      // Force clear the image cache
+      await clearImageCache();
 
-        setMessage("Foto de perfil removida com sucesso!");
-        setIsError(false);
-      }
+      // Update local state
+      setAvatarUrl(undefined);
+
+      // Force refresh the profile in the auth context
+      await refreshProfile();
+
+      setMessage("Foto de perfil removida com sucesso!");
+      setIsError(false);
     } catch (error: any) {
       console.error("Error removing avatar:", error);
       setMessage(error.message || "Erro ao remover foto de perfil");
@@ -151,8 +155,8 @@ export default function ProfileEdit() {
       const updatedProfile = await updateUserAvatar(user.id, result.uri);
 
       if (updatedProfile && updatedProfile.avatar_url) {
-        // Force refresh the URL cache for this avatar
-        const refreshedUrl = forceRefreshAvatarUrl(updatedProfile.avatar_url);
+        // Force clear the cache and refresh the avatar URL
+        const refreshedUrl = await forceClearAndRefreshAvatar(updatedProfile.avatar_url);
 
         // Update local state with the refreshed URL
         setAvatarUrl(refreshedUrl);
