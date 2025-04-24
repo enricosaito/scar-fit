@@ -1,9 +1,8 @@
-// app/lib/appleAuth.ts
 import * as AppleAuthentication from 'expo-apple-authentication';
 import { supabase } from './supabase';
 import * as Crypto from 'expo-crypto';
-import * as WebBrowser from "expo-web-browser";
-import * as AuthSession from "expo-auth-session";
+import * as WebBrowser from 'expo-web-browser';
+import * as AuthSession from 'expo-auth-session';
 
 // Ensure browser closes after authentication
 WebBrowser.maybeCompleteAuthSession();
@@ -15,7 +14,7 @@ export const isAppleAuthAvailable = async (): Promise<boolean> => {
 
 export const signInWithApple = async () => {
   try {
-    // Generate a random state string for CSRF protection
+    // Generate a random nonce for CSRF protection
     const rawNonce = Crypto.randomUUID();
     const state = Crypto.randomUUID();
 
@@ -29,12 +28,18 @@ export const signInWithApple = async () => {
       nonce: rawNonce,
     });
 
-    // If there's no identity token, throw an error
     if (!credential.identityToken) {
       throw new Error('No identity token provided');
     }
 
-    // Call Supabase auth to sign in with Apple
+    const tokenParts = credential.identityToken.split('.');
+    const payload = JSON.parse(atob(tokenParts[1])); // Replaces Buffer
+
+    console.log('Apple token audience:', payload.aud);
+
+    // Skip dev logic for now (you're not using Apple sign-in in dev anyway)
+
+    // Production flow
     const { data, error } = await supabase.auth.signInWithIdToken({
       provider: 'apple',
       token: credential.identityToken,
@@ -47,15 +52,21 @@ export const signInWithApple = async () => {
     }
 
     return { data, error: null };
-  } catch (error) {
+  } catch (err) {
+    const error = err as Error & { code?: string }; // 👈 Fix TS error type
+
     console.error('Apple sign in error:', error);
-    // If the user canceled the sign-in, don't throw an error
+
     if (error.code === 'ERR_CANCELED') {
-      return { data: null, error: { message: 'Autenticação com Apple cancelada' } };
+      return {
+        data: null,
+        error: { message: 'Autenticação com Apple cancelada' },
+      };
     }
+
     return {
       data: null,
-      error,
+      error: { message: error.message || 'Erro desconhecido ao autenticar com Apple' },
     };
   }
 };
