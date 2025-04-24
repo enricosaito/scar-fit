@@ -21,7 +21,7 @@ import Button from "../../components/ui/Button";
 import Avatar from "../../components/ui/Avatar";
 import { supabase } from "../../lib/supabase";
 import FormField from "../../components/ui/FormField";
-import { pickImage } from "../../utils/imageUpload";
+import { pickImage, forceRefreshAvatarUrl } from "../../utils/imageUpload";
 import * as ImagePicker from "expo-image-picker";
 
 export default function ProfileEdit() {
@@ -150,9 +150,13 @@ export default function ProfileEdit() {
       // Upload the image and update the profile
       const updatedProfile = await updateUserAvatar(user.id, result.uri);
 
-      if (updatedProfile) {
-        // Update local state with the new avatar URL
-        setAvatarUrl(updatedProfile.avatar_url);
+      if (updatedProfile && updatedProfile.avatar_url) {
+        // Force refresh the URL cache for this avatar
+        const refreshedUrl = forceRefreshAvatarUrl(updatedProfile.avatar_url);
+
+        // Update local state with the refreshed URL
+        setAvatarUrl(refreshedUrl);
+
         // Force refresh the profile in the auth context
         await refreshProfile();
 
