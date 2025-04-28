@@ -74,19 +74,19 @@ export default function RootLayout() {
                 <AddMenu />
                 <Stack screenOptions={{ headerShown: false }}>
                   <Stack.Screen name="(tabs)" />
-                  <Stack.Screen name="screens/profile/profile" />
-                  <Stack.Screen name="screens/profile/edit" />
-                  <Stack.Screen name="screens/profile/password" />
-                  <Stack.Screen name="screens/profile/custom-goal" />
-                  <Stack.Screen name="screens/notifications" />
-                  <Stack.Screen name="screens/manage-meals" options={{ presentation: "modal" }} />
-                  <Stack.Screen name="screens/add-food-search" />
-                  <Stack.Screen name="screens/add-food-voice" />
-                  <Stack.Screen name="screens/add-food-barcode" options={{ headerShown: false }} />
-                  <Stack.Screen name="screens/barcode-scanner" options={{ headerShown: false }} />
-                  <Stack.Screen name="screens/pro-subscription" />
+                  <Stack.Screen name="screens/profile/ViewProfile" />
+                  <Stack.Screen name="screens/profile/EditProfile" />
+                  <Stack.Screen name="screens/profile/ForgotPassword" />
+                  <Stack.Screen name="screens/profile/CustomGoal" />
+                  <Stack.Screen name="screens/NotificationsTab" />
+                  <Stack.Screen name="screens/ManageMeals" options={{ presentation: "modal" }} />
+                  <Stack.Screen name="screens/AddFoodSearch" />
+                  <Stack.Screen name="screens/AddFoodVoice" />
+                  <Stack.Screen name="screens/AddFoodBarcode" options={{ headerShown: false }} />
+                  <Stack.Screen name="screens/BarcodeScanner" options={{ headerShown: false }} />
+                  <Stack.Screen name="screens/ProSubscription" />
                   <Stack.Screen name="screens/onboarding/index" />
-                  <Stack.Screen name="screens/exercise" />
+                  <Stack.Screen name="screens/LogExercise" />
                   <Stack.Screen name="auth" />
                 </Stack>
               </AuthGuard>

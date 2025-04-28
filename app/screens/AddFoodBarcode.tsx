@@ -135,7 +135,7 @@ export default function BarcodeProductScreen() {
   };
 
   const handleScanAgain = () => {
-    router.replace("/screens/barcode-scanner");
+    router.replace("/screens/BarcodeScanner");
   };
 
   return (
@@ -160,7 +160,7 @@ export default function BarcodeProductScreen() {
           <Button className="mb-4" onPress={handleScanAgain}>
             Escanear Novamente
           </Button>
-          <Button variant="outline" onPress={() => router.push("/screens/add-food-search")}>
+          <Button variant="outline" onPress={() => router.push("/screens/AddFoodSearch")}>
             Buscar Manualmente
           </Button>
         </View>
