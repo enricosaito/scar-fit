@@ -200,26 +200,29 @@ export default function VoiceFoodLogger() {
         </Text>
       </View>
 
-      <Animated.View className="flex-1 px-4" style={{ opacity: fadeAnim }}>
+      <Animated.View className="flex-1" style={{ opacity: fadeAnim }}>
         {step === "recording" && (
           <VoiceRecorder onRecordingComplete={handleRecordingComplete} onCancel={resetAndGoBack} />
         )}
 
         {step === "processing" && (
-          <View className="flex-1 justify-center items-center">
+          <View className="flex-1 justify-center items-center px-6">
             <ActivityIndicator size="large" color={colors.primary} />
-            <Text className="text-foreground mt-4 text-center">Processando o áudio...</Text>
+            <Text className="text-foreground mt-6 text-center text-lg font-medium">Processando seu áudio...</Text>
+            <Text className="text-muted-foreground mt-2 text-center">
+              Estamos identificando os alimentos que você mencionou
+            </Text>
           </View>
         )}
 
         {error && (
-          <View className="mt-4 p-4 bg-red-500/10 border border-red-500/30 rounded-lg">
+          <View className="m-6 p-4 bg-red-500/10 border border-red-500/30 rounded-lg">
             <Text className="text-red-500">{error}</Text>
           </View>
         )}
 
         {step === "reviewing" && (
-          <ScrollView className="flex-1 py-4">
+          <ScrollView className="flex-1 py-4 px-4">
             <View className="bg-card rounded-lg border border-border p-4 mb-4">
               <Text className="text-foreground font-medium mb-2">Transcrição:</Text>
               <Text className="text-muted-foreground">{transcription}</Text>
@@ -280,11 +283,11 @@ export default function VoiceFoodLogger() {
               </View>
             )}
 
-            <View className="flex-row justify-end mt-4 mb-8">
-              <Button variant="outline" className="mr-2" onPress={restartRecording}>
+            <View className="flex-row justify-between mt-6 mb-8">
+              <Button variant="outline" className="flex-1 mr-2" onPress={restartRecording}>
                 Regravar
               </Button>
-              <Button onPress={handleSaveItems} disabled={extractedItems.length === 0}>
+              <Button className="flex-1 ml-2" onPress={handleSaveItems} disabled={extractedItems.length === 0}>
                 Adicionar Alimentos
               </Button>
             </View>
@@ -294,7 +297,7 @@ export default function VoiceFoodLogger() {
         {step === "saving" && (
           <View className="flex-1 justify-center items-center">
             <ActivityIndicator size="large" color={colors.primary} />
-            <Text className="text-foreground mt-4">Salvando alimentos...</Text>
+            <Text className="text-foreground mt-4 text-lg">Salvando alimentos...</Text>
           </View>
         )}
       </Animated.View>
