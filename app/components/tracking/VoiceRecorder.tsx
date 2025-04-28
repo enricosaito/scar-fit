@@ -5,6 +5,7 @@ import { Feather } from "@expo/vector-icons";
 import { Audio, InterruptionModeIOS, InterruptionModeAndroid } from "expo-av";
 import { useTheme } from "../../context/ThemeContext";
 import Button from "../ui/Button";
+import * as Haptics from "expo-haptics";
 
 interface VoiceRecorderProps {
   onRecordingComplete: (uri: string) => void;
@@ -119,6 +120,9 @@ const VoiceRecorder = ({ onRecordingComplete, onCancel }: VoiceRecorderProps) =>
 
   const startRecording = async () => {
     try {
+      // Trigger haptic feedback
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+
       // Animate button grow
       Animated.timing(buttonSizeAnim, {
         toValue: 1.1,
@@ -144,6 +148,9 @@ const VoiceRecorder = ({ onRecordingComplete, onCancel }: VoiceRecorderProps) =>
 
   const stopRecording = async () => {
     if (!recording) return;
+
+    // Trigger haptic feedback
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
     // Animate button shrink
     Animated.timing(buttonSizeAnim, {
@@ -171,6 +178,9 @@ const VoiceRecorder = ({ onRecordingComplete, onCancel }: VoiceRecorderProps) =>
 
   const handleCancel = async () => {
     if (isRecording) {
+      // Light haptic feedback when canceling
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+
       try {
         await recording?.stopAndUnloadAsync();
       } catch (e) {
@@ -198,7 +208,7 @@ const VoiceRecorder = ({ onRecordingComplete, onCancel }: VoiceRecorderProps) =>
 
   const handlePressOut = () => {
     setIsHolding(false);
-    if (isRecording) {
+    if (isRecording && isHolding) {
       stopRecording();
     }
   };
@@ -215,7 +225,8 @@ const VoiceRecorder = ({ onRecordingComplete, onCancel }: VoiceRecorderProps) =>
   };
 
   return (
-    <View className="flex-1 justify-between">
+    <View className="flex-1">
+      {/* Top Instructions Area */}
       <View className="items-center px-6 pt-6">
         <Text className="text-xl font-bold text-foreground mb-4">Detectar por Áudio</Text>
         {isRecording ? (
@@ -238,63 +249,53 @@ const VoiceRecorder = ({ onRecordingComplete, onCancel }: VoiceRecorderProps) =>
         )}
       </View>
 
-      {/* Centered record button with improved layout */}
-      <View className="items-center justify-center flex-1">
-        {isRecording ? (
-          <View className="items-center">
+      {/* Absolutely positioned record button - this prevents layout shifts */}
+      <View className="flex-1 items-center" style={{ position: "relative" }}>
+        <View
+          style={{
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: [{ translateX: -64 }, { translateY: -80 }],
+            alignItems: "center",
+          }}
+        >
+          {isRecording ? (
             <Text className="text-red-500 font-medium mb-6">
               {isHolding ? "Solte para parar de gravar" : "Toque para parar de gravar"}
             </Text>
-
-            <Animated.View
-              style={{
-                transform: [{ scale: pulseAnim }, { scale: buttonSizeAnim }],
-                shadowColor: "#EF4444",
-                shadowOffset: { width: 0, height: 3 },
-                shadowOpacity: 0.3,
-                shadowRadius: 8,
-                elevation: 5,
-              }}
-            >
-              <Pressable
-                onPress={handleTap}
-                onPressIn={handlePressIn}
-                onPressOut={handlePressOut}
-                className="w-32 h-32 rounded-full bg-red-500/20 items-center justify-center"
-              >
-                <View className="w-24 h-24 rounded-full bg-red-500 items-center justify-center">
-                  <Feather name="mic" size={48} color="white" />
-                </View>
-              </Pressable>
-            </Animated.View>
-          </View>
-        ) : (
-          <View className="items-center">
+          ) : (
             <Text className="text-primary font-medium mb-6">Toque ou segure para começar a gravar</Text>
+          )}
 
-            <Animated.View
-              style={{
-                transform: [{ scale: buttonSizeAnim }],
-                shadowColor: colors.primary,
-                shadowOffset: { width: 0, height: 3 },
-                shadowOpacity: 0.2,
-                shadowRadius: 8,
-                elevation: 5,
-              }}
+          <Animated.View
+            style={{
+              transform: [{ scale: Animated.multiply(pulseAnim, buttonSizeAnim) }],
+              shadowColor: isRecording ? "#EF4444" : colors.primary,
+              shadowOffset: { width: 0, height: 3 },
+              shadowOpacity: 0.3,
+              shadowRadius: 8,
+              elevation: 5,
+            }}
+          >
+            <Pressable
+              onPress={handleTap}
+              onPressIn={handlePressIn}
+              onPressOut={handlePressOut}
+              className={`w-32 h-32 rounded-full items-center justify-center ${
+                isRecording ? "bg-red-500/20" : "bg-primary/20"
+              }`}
             >
-              <Pressable
-                onPress={handleTap}
-                onPressIn={handlePressIn}
-                onPressOut={handlePressOut}
-                className="w-32 h-32 rounded-full bg-primary/20 items-center justify-center"
+              <View
+                className={`w-24 h-24 rounded-full items-center justify-center ${
+                  isRecording ? "bg-red-500" : "bg-primary"
+                }`}
               >
-                <View className="w-24 h-24 rounded-full bg-primary items-center justify-center">
-                  <Feather name="mic" size={48} color="white" />
-                </View>
-              </Pressable>
-            </Animated.View>
-          </View>
-        )}
+                <Feather name="mic" size={48} color="white" />
+              </View>
+            </Pressable>
+          </Animated.View>
+        </View>
       </View>
 
       {/* Cancel button at bottom */}
