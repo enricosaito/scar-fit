@@ -225,9 +225,9 @@ const VoiceRecorder = ({ onRecordingComplete, onCancel }: VoiceRecorderProps) =>
   };
 
   return (
-    <View className="flex-1">
+    <View className="flex-1 relative">
       {/* Top Instructions Area */}
-      <View className="items-center px-6 pt-6">
+      <View className="items-center px-6 pt-6 z-10">
         <Text className="text-xl font-bold text-foreground mb-4">Detectar por Áudio</Text>
         {isRecording ? (
           <>
@@ -249,24 +249,16 @@ const VoiceRecorder = ({ onRecordingComplete, onCancel }: VoiceRecorderProps) =>
         )}
       </View>
 
-      {/* Absolutely positioned record button - this prevents layout shifts */}
-      <View className="flex-1 items-center" style={{ position: "relative" }}>
-        <View
-          style={{
-            position: "absolute",
-            top: "50%",
-            left: "50%",
-            transform: [{ translateX: -64 }, { translateY: -80 }],
-            alignItems: "center",
-          }}
-        >
-          {isRecording ? (
-            <Text className="text-red-500 font-medium mb-6">
-              {isHolding ? "Solte para parar de gravar" : "Toque para parar de gravar"}
-            </Text>
-          ) : (
-            <Text className="text-primary font-medium mb-6">Toque ou segure para começar a gravar</Text>
-          )}
+      {/* Absolutely positioned record button in the center of the screen */}
+      <View className="absolute inset-0 flex items-center justify-center">
+        <View className="items-center">
+          <Text className={`mb-6 text-center ${isRecording ? "text-red-500" : "text-primary"} font-medium`}>
+            {isRecording
+              ? isHolding
+                ? "Solte para parar de gravar"
+                : "Toque para parar de gravar"
+              : "Toque ou segure para começar a gravar"}
+          </Text>
 
           <Animated.View
             style={{
@@ -299,7 +291,7 @@ const VoiceRecorder = ({ onRecordingComplete, onCancel }: VoiceRecorderProps) =>
       </View>
 
       {/* Cancel button at bottom */}
-      <View className="items-center justify-center pb-12">
+      <View className="absolute bottom-0 left-0 right-0 items-center justify-center pb-12">
         <Button variant="outline" onPress={handleCancel} className="px-8">
           Cancelar
         </Button>
