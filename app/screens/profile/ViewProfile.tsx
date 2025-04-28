@@ -1,4 +1,4 @@
-// Updated app/screens/profile/profile.tsx
+// Updated app/screens/profile/Profile.tsx
 import React, { useState, useEffect, useCallback } from "react";
 import {
   Text,
@@ -14,7 +14,7 @@ import { useRouter, useFocusEffect } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import { useTheme } from "../../context/ThemeContext";
 import { useAuth } from "../../context/AuthContext";
-import { Goal, ActivityLevel } from "../../screens/onboarding/context/OnboardingContext";
+import { Goal, ActivityLevel } from "../onboarding/context/OnboardingContext";
 import Avatar from "../../components/ui/Avatar";
 import { getAvatarUrlWithCacheBusting, clearImageCache } from "../../utils/imageUpload";
 

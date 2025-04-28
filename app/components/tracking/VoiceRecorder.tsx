@@ -1,10 +1,11 @@
 // app/components/tracking/VoiceRecorder.tsx
-import React, { useState, useEffect } from "react";
-import { View, Text, Pressable, ActivityIndicator, Alert } from "react-native";
+import React, { useState, useEffect, useRef } from "react";
+import { View, Text, Pressable, ActivityIndicator, Alert, Animated, Easing } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { Audio, InterruptionModeIOS, InterruptionModeAndroid } from "expo-av";
 import { useTheme } from "../../context/ThemeContext";
 import Button from "../ui/Button";
+import * as Haptics from "expo-haptics";
 
 interface VoiceRecorderProps {
   onRecordingComplete: (uri: string) => void;
@@ -16,67 +17,121 @@ const VoiceRecorder = ({ onRecordingComplete, onCancel }: VoiceRecorderProps) =>
   const [recording, setRecording] = useState<Audio.Recording | null>(null);
   const [isRecording, setIsRecording] = useState(false);
   const [recordingDuration, setRecordingDuration] = useState(0);
+  const [isHolding, setIsHolding] = useState(false);
 
-  // Remove auto permission check from useEffect
+  // Animation values
+  const pulseAnim = useRef(new Animated.Value(1)).current;
+  const buttonSizeAnim = useRef(new Animated.Value(1)).current;
 
+  // Configure audio recording
   useEffect(() => {
     let interval: NodeJS.Timeout;
     if (isRecording) {
       interval = setInterval(() => setRecordingDuration((prev) => prev + 1), 1000);
+
+      // Start pulse animation
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(pulseAnim, {
+            toValue: 1.1,
+            duration: 1000,
+            useNativeDriver: true,
+            easing: Easing.inOut(Easing.ease),
+          }),
+          Animated.timing(pulseAnim, {
+            toValue: 1,
+            duration: 1000,
+            useNativeDriver: true,
+            easing: Easing.inOut(Easing.ease),
+          }),
+        ])
+      ).start();
+    } else {
+      // Reset animation
+      pulseAnim.setValue(1);
     }
-    return () => clearInterval(interval);
+
+    return () => {
+      if (interval) clearInterval(interval);
+    };
   }, [isRecording]);
+
+  // Permission and setup
+  const checkPermission = async (): Promise<boolean> => {
+    // Check permissions first
+    const { status: existingStatus } = await Audio.getPermissionsAsync();
+    let finalStatus = existingStatus;
+
+    if (existingStatus !== "granted") {
+      const { status } = await Audio.requestPermissionsAsync();
+      finalStatus = status;
+    }
+
+    if (finalStatus !== "granted") {
+      Alert.alert("Permissão Negada", "É necessário permitir o acesso ao microfone para usar esta funcionalidade.", [
+        { text: "OK" },
+      ]);
+      return false;
+    }
+
+    return true;
+  };
+
+  const prepareRecording = async () => {
+    const hasPermission = await checkPermission();
+    if (!hasPermission) return null;
+
+    // Configure audio
+    await Audio.setAudioModeAsync({
+      allowsRecordingIOS: true,
+      playsInSilentModeIOS: true,
+      staysActiveInBackground: true,
+      interruptionModeIOS: InterruptionModeIOS.DoNotMix,
+      interruptionModeAndroid: InterruptionModeAndroid.DoNotMix,
+    });
+
+    // Create and prepare recording
+    const newRecording = new Audio.Recording();
+    await newRecording.prepareToRecordAsync({
+      android: {
+        extension: ".m4a",
+        outputFormat: Audio.AndroidOutputFormat.MPEG_4,
+        audioEncoder: Audio.AndroidAudioEncoder.AAC,
+        sampleRate: 44100,
+        numberOfChannels: 1,
+        bitRate: 128000,
+      },
+      ios: {
+        extension: ".m4a",
+        outputFormat: Audio.IOSOutputFormat.MPEG4AAC,
+        audioQuality: Audio.IOSAudioQuality.HIGH,
+        sampleRate: 44100,
+        numberOfChannels: 1,
+        bitRate: 128000,
+      },
+      web: {
+        mimeType: "audio/webm",
+        bitsPerSecond: 128000,
+      },
+    });
+
+    return newRecording;
+  };
 
   const startRecording = async () => {
     try {
-      // Check permissions first
-      const { status: existingStatus } = await Audio.getPermissionsAsync();
-      let finalStatus = existingStatus;
+      // Trigger haptic feedback
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
 
-      if (existingStatus !== "granted") {
-        const { status } = await Audio.requestPermissionsAsync();
-        finalStatus = status;
-      }
+      // Animate button grow
+      Animated.timing(buttonSizeAnim, {
+        toValue: 1.1,
+        duration: 200,
+        useNativeDriver: true,
+      }).start();
 
-      if (finalStatus !== "granted") {
-        Alert.alert("Permissão Negada", "É necessário permitir o acesso ao microfone para usar esta funcionalidade.", [
-          { text: "OK" },
-        ]);
-        return;
-      }
-
-      // Continue with recording
-      await Audio.setAudioModeAsync({
-        allowsRecordingIOS: true,
-        playsInSilentModeIOS: true,
-        staysActiveInBackground: true,
-        interruptionModeIOS: InterruptionModeIOS.DoNotMix,
-        interruptionModeAndroid: InterruptionModeAndroid.DoNotMix,
-      });
-
-      const newRecording = new Audio.Recording();
-      await newRecording.prepareToRecordAsync({
-        android: {
-          extension: ".m4a",
-          outputFormat: Audio.AndroidOutputFormat.MPEG_4,
-          audioEncoder: Audio.AndroidAudioEncoder.AAC,
-          sampleRate: 44100,
-          numberOfChannels: 1,
-          bitRate: 128000,
-        },
-        ios: {
-          extension: ".m4a",
-          outputFormat: Audio.IOSOutputFormat.MPEG4AAC,
-          audioQuality: Audio.IOSAudioQuality.HIGH,
-          sampleRate: 44100,
-          numberOfChannels: 1,
-          bitRate: 128000,
-        },
-        web: {
-          mimeType: "audio/webm",
-          bitsPerSecond: 128000,
-        },
-      });
+      const newRecording = await prepareRecording();
+      if (!newRecording) return;
 
       await newRecording.startAsync();
       setRecording(newRecording);
@@ -93,6 +148,17 @@ const VoiceRecorder = ({ onRecordingComplete, onCancel }: VoiceRecorderProps) =>
 
   const stopRecording = async () => {
     if (!recording) return;
+
+    // Trigger haptic feedback
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+
+    // Animate button shrink
+    Animated.timing(buttonSizeAnim, {
+      toValue: 1,
+      duration: 200,
+      useNativeDriver: true,
+    }).start();
+
     setIsRecording(false);
     try {
       await recording.stopAndUnloadAsync();
@@ -112,6 +178,9 @@ const VoiceRecorder = ({ onRecordingComplete, onCancel }: VoiceRecorderProps) =>
 
   const handleCancel = async () => {
     if (isRecording) {
+      // Light haptic feedback when canceling
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+
       try {
         await recording?.stopAndUnloadAsync();
       } catch (e) {
@@ -129,10 +198,36 @@ const VoiceRecorder = ({ onRecordingComplete, onCancel }: VoiceRecorderProps) =>
     return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
   };
 
-  // Regular UI without permission checks
+  // For touch support
+  const handlePressIn = () => {
+    setIsHolding(true);
+    if (!isRecording) {
+      startRecording();
+    }
+  };
+
+  const handlePressOut = () => {
+    setIsHolding(false);
+    if (isRecording && isHolding) {
+      stopRecording();
+    }
+  };
+
+  const handleTap = () => {
+    // Toggle recording on tap (for users who prefer tap instead of hold)
+    if (isHolding) return; // Ignore if this was part of a hold action
+
+    if (isRecording) {
+      stopRecording();
+    } else {
+      startRecording();
+    }
+  };
+
   return (
-    <View className="flex-1 justify-between">
-      <View className="items-center justify-center px-6 pt-6">
+    <View className="flex-1 relative">
+      {/* Top Instructions Area */}
+      <View className="items-center px-6 pt-6 z-10">
         <Text className="text-xl font-bold text-foreground mb-4">Detectar por Áudio</Text>
         {isRecording ? (
           <>
@@ -154,47 +249,52 @@ const VoiceRecorder = ({ onRecordingComplete, onCancel }: VoiceRecorderProps) =>
         )}
       </View>
 
-      <View className="items-center justify-center pb-10">
-        {isRecording ? (
-          <>
+      {/* Absolutely positioned record button in the center of the screen */}
+      <View className="absolute inset-0 flex items-center justify-center">
+        <View className="items-center">
+          <Text className={`mb-6 text-center ${isRecording ? "text-red-500" : "text-primary"} font-medium`}>
+            {isRecording
+              ? isHolding
+                ? "Solte para parar de gravar"
+                : "Toque para parar de gravar"
+              : "Toque ou segure para começar a gravar"}
+          </Text>
+
+          <Animated.View
+            style={{
+              transform: [{ scale: Animated.multiply(pulseAnim, buttonSizeAnim) }],
+              shadowColor: isRecording ? "#EF4444" : colors.primary,
+              shadowOffset: { width: 0, height: 3 },
+              shadowOpacity: 0.3,
+              shadowRadius: 8,
+              elevation: 5,
+            }}
+          >
             <Pressable
-              onPress={stopRecording}
-              className="w-24 h-24 rounded-full bg-red-500/20 items-center justify-center shadow-md"
-              style={{
-                shadowColor: "#EF4444",
-                shadowOffset: { width: 0, height: 3 },
-                shadowOpacity: 0.2,
-                shadowRadius: 5,
-                elevation: 3,
-              }}
+              onPress={handleTap}
+              onPressIn={handlePressIn}
+              onPressOut={handlePressOut}
+              className={`w-40 h-40 rounded-full items-center justify-center ${
+                isRecording ? "bg-red-500/20" : "bg-primary/20"
+              }`}
             >
-              <Feather name="stop-circle" size={40} color="#EF4444" />
+              <View
+                className={`w-32 h-32 rounded-full items-center justify-center ${
+                  isRecording ? "bg-red-500" : "bg-primary"
+                }`}
+              >
+                <Feather name="mic" size={60} color="white" />
+              </View>
             </Pressable>
-            <Button variant="outline" onPress={handleCancel} className="mt-8">
-              Cancelar
-            </Button>
-          </>
-        ) : (
-          <>
-            <Text className="text-primary font-medium mb-4">Toque para começar a gravar</Text>
-            <Pressable
-              onPress={startRecording}
-              className="w-24 h-24 rounded-full bg-primary/20 items-center justify-center shadow-md"
-              style={{
-                shadowColor: colors.primary,
-                shadowOffset: { width: 0, height: 3 },
-                shadowOpacity: 0.2,
-                shadowRadius: 5,
-                elevation: 3,
-              }}
-            >
-              <Feather name="mic" size={40} color={colors.primary} />
-            </Pressable>
-            <Button variant="outline" onPress={handleCancel} className="mt-8">
-              Cancelar
-            </Button>
-          </>
-        )}
+          </Animated.View>
+        </View>
+      </View>
+
+      {/* Cancel button at bottom */}
+      <View className="absolute bottom-0 left-0 right-0 items-center justify-center pb-12">
+        <Button variant="outline" onPress={handleCancel} className="px-8">
+          Cancelar
+        </Button>
       </View>
     </View>
   );
