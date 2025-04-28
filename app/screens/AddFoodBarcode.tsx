@@ -1,4 +1,4 @@
-// app/screens/add-food-barcode.tsx
+// app/screens/AddFoodBarcode.tsx
 import React, { useState, useEffect } from "react";
 import { Text, View, SafeAreaView, Pressable, ActivityIndicator, Image, ScrollView, Alert } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
