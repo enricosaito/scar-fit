@@ -79,14 +79,12 @@ export default function Register() {
       if (error) {
         setErrorMessage(error.message || "Erro ao criar conta. Tente novamente.");
       } else {
-        // On success, sign in automatically and redirect to onboarding
         const signInResult = await signIn(email, password);
 
         if (!signInResult.error) {
           router.replace("/screens/onboarding");
         } else {
-          // If sign in fails, just go to login screen
-          router.replace("/auth/login");
+          router.replace("/auth/LoginScreen");
         }
       }
     } catch (error: any) {
@@ -209,7 +207,7 @@ export default function Register() {
 
         <View className="flex-row justify-center items-center">
           <Text className="text-muted-foreground">Já tem uma conta? </Text>
-          <TouchableOpacity onPress={() => router.push("/auth/login")}>
+          <TouchableOpacity onPress={() => router.push("/auth/LoginScreen")}>
             <Text className="text-primary font-medium">Entrar</Text>
           </TouchableOpacity>
         </View>

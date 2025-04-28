@@ -93,7 +93,7 @@ export default function ForgotPassword() {
           
           <TouchableOpacity 
             className="flex-row justify-center items-center" 
-            onPress={() => router.push("/auth/login")}
+            onPress={() => router.push("/auth/LoginScreen")}
           >
             <Feather name="arrow-left" size={16} color={colors.primary} />
             <Text className="text-primary font-medium ml-1">Voltar para o Login</Text>

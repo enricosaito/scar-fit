@@ -50,7 +50,7 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
 
     // Determine if we need to navigate
     if (!user && !inAuthGroup) {
-      shouldNavigateTo = "/auth/login";
+      shouldNavigateTo = "/auth/LoginScreen";
     } else if (user && inAuthGroup) {
       shouldNavigateTo = "/(tabs)";
     } else if (user && !hasMacros && !inOnboarding && !onboardingCompleted && !inAuthGroup) {

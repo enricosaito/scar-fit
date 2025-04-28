@@ -1,4 +1,4 @@
-// app/auth/login.tsx
+// app/auth/LoginScreen.tsx
 import React, { useState, useEffect } from "react";
 import { Text, View, SafeAreaView, TouchableOpacity, ActivityIndicator, ScrollView, Image } from "react-native";
 import { useRouter } from "expo-router";
@@ -135,7 +135,7 @@ export default function Login() {
             {loginLoading ? <ActivityIndicator size="small" color="white" /> : "Entrar"}
           </Button>
 
-          <TouchableOpacity className="mb-6" onPress={() => router.push("/auth/forgot-password")}>
+          <TouchableOpacity className="mb-6" onPress={() => router.push("/auth/ForgotPassword")}>
             <Text className="text-primary text-center">Esqueci minha senha</Text>
           </TouchableOpacity>
 
@@ -171,7 +171,7 @@ export default function Login() {
 
           <View className="flex-row justify-center items-center">
             <Text className="text-muted-foreground">Não tem uma conta? </Text>
-            <TouchableOpacity onPress={() => router.push("/auth/register")}>
+            <TouchableOpacity onPress={() => router.push("/auth/RegisterScreen")}>
               <Text className="text-primary font-medium">Registre-se</Text>
             </TouchableOpacity>
           </View>
