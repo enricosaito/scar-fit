@@ -32,7 +32,7 @@ export default function Workouts() {
             title="Em Desenvolvimento"
             description="Estamos trabalhando para trazer treinos personalizados para você em breve!"
             buttonText="Explorar Exercícios"
-            onButtonPress={() => router.push("/screens/exercise")}
+            onButtonPress={() => router.push("/screens/LogExercise")}
           />
 
           <View className="mt-8">
@@ -42,7 +42,7 @@ export default function Workouts() {
                 <Pressable
                   key={category.id}
                   className="bg-card w-[48%] rounded-xl border border-border p-4 mb-4 items-center"
-                  onPress={() => router.push("/screens/exercise")}
+                  onPress={() => router.push("/screens/LogExercise")}
                 >
                   <View className="w-12 h-12 rounded-full bg-primary/10 items-center justify-center mb-2">
                     <Feather name={category.icon as keyof typeof Feather.glyphMap} size={24} color={colors.primary} />

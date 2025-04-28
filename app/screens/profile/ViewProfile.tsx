@@ -148,10 +148,10 @@ export default function Profile() {
   const handleCustomGoalPress = () => {
     // Check if user is on free plan
     if (userProfile?.plan !== "premium") {
-      router.push("/screens/pro-subscription");
+      router.push("/screens/ProSubscription");
     } else {
       // If user is premium, navigate to custom goal screen
-      router.push("/screens/profile/custom-goal");
+      router.push("/screens/profile/CustomGoal");
     }
   };
 
@@ -215,7 +215,7 @@ export default function Profile() {
 
               <Pressable
                 className="w-full bg-primary py-2 px-4 rounded-lg mb-4"
-                onPress={() => router.push("/screens/profile/edit")}
+                onPress={() => router.push("/screens/profile/EditProfile")}
               >
                 <Text className="text-white text-center font-medium">Editar Perfil</Text>
               </Pressable>
@@ -365,7 +365,7 @@ export default function Profile() {
                 <Pressable
                   className="py-1 px-3 rounded-full"
                   style={{ backgroundColor: goldBg }}
-                  onPress={() => router.push("/screens/pro-subscription")}
+                  onPress={() => router.push("/screens/ProSubscription")}
                 >
                   <Text className="text-xs font-medium" style={{ color: goldColor }}>
                     Fazer Upgrade

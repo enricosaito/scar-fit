@@ -72,7 +72,7 @@ export default function More() {
       icon: "zap",
       title: "ScarFit",
       route: "/screens/pro-subscription",
-      action: () => router.push("/screens/pro-subscription"),
+      action: () => router.push("/screens/ProSubscription"),
       isPro: true,
     },
     {
@@ -119,7 +119,7 @@ export default function More() {
                   Membro desde {new Date(user.created_at || Date.now()).toLocaleDateString("pt-BR")}
                 </Text>
               </View>
-              <Pressable onPress={() => router.push("/screens/profile/profile")}>
+              <Pressable onPress={() => router.push("/screens/profile/ViewProfile")}>
                 <Feather name="chevron-right" size={20} color={colors.mutedForeground} />
               </Pressable>
             </View>

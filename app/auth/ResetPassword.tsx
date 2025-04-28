@@ -1,4 +1,4 @@
-// app/auth/reset-password.tsx
+// app/auth/ResetPassword.tsx
 import React, { useState, useEffect } from "react";
 import { Text, View, SafeAreaView, TouchableOpacity, ActivityIndicator, ScrollView } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
@@ -74,7 +74,7 @@ export default function ResetPassword() {
         
         // Redirect to login after success
         setTimeout(() => {
-          router.replace("/auth/login");
+          router.replace("/auth/LoginScreen");
         }, 2000);
       }
     } catch (error: any) {
@@ -136,7 +136,7 @@ export default function ResetPassword() {
         
         <TouchableOpacity 
           className="flex-row justify-center items-center" 
-          onPress={() => router.push("/auth/login")}
+          onPress={() => router.push("/auth/LoginScreen")}
         >
           <Text className="text-primary font-medium">Voltar para o Login</Text>
         </TouchableOpacity>

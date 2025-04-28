@@ -63,7 +63,7 @@ export default function AddMenu() {
       title: "Procurar Alimento",
       action: () => {
         hideMenu();
-        router.push("/screens/add-food-search");
+        router.push("/screens/AddFoodSearch");
       },
       color: colors.primary,
       isPro: false,
@@ -76,7 +76,7 @@ export default function AddMenu() {
       title: "Escanear Código",
       action: () => {
         hideMenu();
-        router.push("/screens/barcode-scanner");
+        router.push("/screens/BarcodeScanner");
       },
       color: "#ef4444",
       isPro: false,
@@ -89,7 +89,7 @@ export default function AddMenu() {
       title: "Detectar por Áudio",
       action: () => {
         hideMenu();
-        router.push("/screens/add-food-voice");
+        router.push("/screens/AddFoodVoice");
       },
       color: goldColor,
       isPro: true,
@@ -102,7 +102,7 @@ export default function AddMenu() {
       title: "Detectar por Foto",
       action: () => {
         hideMenu();
-        router.push("/screens/pro-subscription");
+        router.push("/screens/ProSubscription");
       },
       color: goldColor,
       isPro: true,
