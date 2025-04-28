@@ -274,16 +274,16 @@ const VoiceRecorder = ({ onRecordingComplete, onCancel }: VoiceRecorderProps) =>
               onPress={handleTap}
               onPressIn={handlePressIn}
               onPressOut={handlePressOut}
-              className={`w-32 h-32 rounded-full items-center justify-center ${
+              className={`w-40 h-40 rounded-full items-center justify-center ${
                 isRecording ? "bg-red-500/20" : "bg-primary/20"
               }`}
             >
               <View
-                className={`w-24 h-24 rounded-full items-center justify-center ${
+                className={`w-32 h-32 rounded-full items-center justify-center ${
                   isRecording ? "bg-red-500" : "bg-primary"
                 }`}
               >
-                <Feather name="mic" size={48} color="white" />
+                <Feather name="mic" size={60} color="white" />
               </View>
             </Pressable>
           </Animated.View>
