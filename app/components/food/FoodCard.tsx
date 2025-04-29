@@ -10,6 +10,7 @@ interface FoodCardProps {
   food: Food;
   showMacros?: boolean;
   onPress?: () => void;
+  imageUrl?: string;
 }
 
 /**
@@ -17,8 +18,9 @@ interface FoodCardProps {
  * @param food - The food object to display
  * @param showMacros - Whether to show macro nutrient information
  * @param onPress - Optional callback when the card is pressed
+ * @param imageUrl - Optional URL for the food image
  */
-export const FoodCard: React.FC<FoodCardProps> = ({ food, showMacros = true, onPress }) => {
+export const FoodCard: React.FC<FoodCardProps> = ({ food, showMacros = true, onPress, imageUrl }) => {
   const { colors } = useTheme();
 
   const macroColors = {
@@ -30,9 +32,13 @@ export const FoodCard: React.FC<FoodCardProps> = ({ food, showMacros = true, onP
   return (
     <View className="bg-card rounded-lg border border-border p-4 mb-6" onTouchEnd={onPress}>
       <View className="flex-row mb-4">
-        <View className="w-24 h-24 bg-muted rounded-md mr-4 items-center justify-center">
-          <Feather name="image" size={24} color={colors.mutedForeground} />
-        </View>
+        {imageUrl ? (
+          <Image source={{ uri: imageUrl }} className="w-24 h-24 rounded-md mr-4" resizeMode="contain" />
+        ) : (
+          <View className="w-24 h-24 bg-muted rounded-md mr-4 items-center justify-center">
+            <Feather name="image" size={24} color={colors.mutedForeground} />
+          </View>
+        )}
         <View className="flex-1">
           <Text className="text-xl font-semibold text-foreground">{food.description}</Text>
           <Text className="text-muted-foreground mb-2">{food.category}</Text>
