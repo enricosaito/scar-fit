@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text } from "react-native";
+import { View, Text, Image } from "react-native";
 import { Food } from "../../models/food";
 import { getFoodEmoji } from "../../utils/foodEmojis";
 
@@ -43,6 +43,8 @@ interface FoodCardProps {
   food: Food;
   showMacros?: boolean;
   quantity?: number;
+  imageUrl?: string;
+  isBarcode?: boolean;
 }
 
 /**
@@ -50,8 +52,10 @@ interface FoodCardProps {
  * @param food - The food object to display
  * @param showMacros - Whether to show macro nutrient information
  * @param quantity - The quantity of the food to display (default is 100g)
+ * @param imageUrl - Optional URL for the food image (used for barcode products)
+ * @param isBarcode - Whether this is a barcode product (affects display style)
  */
-export function FoodCard({ food, showMacros = true, quantity = 100 }: FoodCardProps) {
+export function FoodCard({ food, showMacros = true, quantity = 100, imageUrl, isBarcode = false }: FoodCardProps) {
   // Macro tag colors - softer, more modern palette
   const macroColors = {
     protein: "#9333ea80", // Softer purple with transparency
@@ -66,7 +70,11 @@ export function FoodCard({ food, showMacros = true, quantity = 100 }: FoodCardPr
   return (
     <View className="bg-card rounded-xl border border-border p-4">
       <View className="flex-row items-center">
-        <Text className="text-3xl mr-3">{getFoodEmoji(food.description)}</Text>
+        {isBarcode && imageUrl ? (
+          <Image source={{ uri: imageUrl }} className="w-16 h-16 rounded-md mr-3" resizeMode="contain" />
+        ) : (
+          <Text className="text-3xl mr-3">{getFoodEmoji(food.description)}</Text>
+        )}
         <View className="flex-1">
           <Text className="text-lg font-semibold text-foreground">{food.description}</Text>
           <Text className="text-muted-foreground text-sm">{food.category}</Text>
