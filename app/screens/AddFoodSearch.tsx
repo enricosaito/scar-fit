@@ -68,6 +68,7 @@ export default function FoodTracker() {
   const [searchResults, setSearchResults] = useState<Food[]>([]);
   const [searchLoading, setSearchLoading] = useState(false);
   const [recentSearches, setRecentSearches] = useState<Food[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
 
   // Add food state
   const [selectedFood, setSelectedFood] = useState<Food | null>(null);
@@ -152,11 +153,14 @@ export default function FoodTracker() {
     // Could load recent searches from storage here
   }, [user]);
 
-  // Handle food search
+  // Handle food search with debounce
   const handleSearch = async (query: string) => {
     setSearchQuery(query);
+    setIsSearching(true);
+
     if (query.length < 2) {
       setSearchResults([]);
+      setIsSearching(false);
       return;
     }
 
@@ -166,8 +170,10 @@ export default function FoodTracker() {
       setSearchResults(results);
     } catch (error) {
       console.error("Error searching foods:", error);
+      showToast("Erro ao pesquisar alimentos", "error");
     } finally {
       setSearchLoading(false);
+      setIsSearching(false);
     }
   };
 
@@ -222,45 +228,27 @@ export default function FoodTracker() {
     handleSearch(foodName);
   };
 
-  // Render a food item in search results
-  const renderFoodItem = (item: Food) => {
-    return (
-      <Pressable className="bg-card rounded-lg border border-border p-3 mb-3" onPress={() => handleSelectFood(item)}>
-        <Text className="text-foreground font-medium mb-1">{item.description}</Text>
-        <Text className="text-muted-foreground text-xs mb-2">{item.category}</Text>
-
-        {/* Macro tags row */}
-        <View className="flex-row flex-wrap">
-          <CalorieTag calories={item.kcal} />
-          <MacroTag value={item.protein_g} color={macroColors.protein} label="prot." />
-          <MacroTag value={item.carbs_g} color={macroColors.carbs} label="carb." />
-          <MacroTag value={item.fat_g} color={macroColors.fat} label="gord." />
-        </View>
-      </Pressable>
-    );
-  };
-
   return (
     <SafeAreaView className="flex-1 bg-background">
-      {/* Header */}
-      <View className="flex-row items-center py-3 px-4 border-b border-border">
-        <Pressable onPress={() => router.back()} className="p-2 mr-3">
+      {/* Header with improved styling */}
+      <View className="flex-row items-center py-4 px-4 border-b border-border bg-card">
+        <Pressable onPress={() => router.back()} className="p-2 mr-3 rounded-full bg-background">
           <Feather name="arrow-left" size={24} color={colors.foreground} />
         </Pressable>
-        <Text className="text-lg font-semibold text-foreground flex-1">Adicionar Alimentos</Text>
+        <Text className="text-xl font-bold text-foreground flex-1">Adicionar Alimentos</Text>
       </View>
 
-      {/* Search Bar - Always visible at top */}
-      <View className="px-4 py-3">
-        <View className="flex-row items-center bg-card rounded-lg border border-border px-3 py-3">
+      {/* Search Bar with improved styling */}
+      <View className="px-4 py-3 bg-background">
+        <View className="flex-row items-center bg-card rounded-xl border border-border px-4 py-3 shadow-sm">
           <Feather name="search" size={20} color={colors.mutedForeground} />
           <TextInput
-            className="ml-2 flex-1 text-foreground"
+            className="ml-3 flex-1 text-foreground text-base"
             placeholder="Procurar alimentos..."
             placeholderTextColor={colors.mutedForeground}
             value={searchQuery}
             onChangeText={handleSearch}
-            autoFocus={false}
+            autoFocus={true}
           />
           {searchQuery.length > 0 && (
             <Pressable
@@ -268,6 +256,7 @@ export default function FoodTracker() {
                 setSearchQuery("");
                 setSearchResults([]);
               }}
+              className="p-2 rounded-full bg-background"
             >
               <Feather name="x" size={20} color={colors.mutedForeground} />
             </Pressable>
@@ -276,133 +265,94 @@ export default function FoodTracker() {
       </View>
 
       {/* Main Content */}
-      {searchQuery.length >= 2 ? (
-        // Search Results with improved styling
-        <View className="flex-1 px-4 py-2">
-          {searchLoading ? (
-            <View className="py-4 items-center">
-              <ActivityIndicator size="large" color={colors.primary} />
-            </View>
-          ) : (
-            <>
-              {searchResults.length > 0 ? (
-                <FlatList
-                  data={searchResults}
-                  keyExtractor={(item) => item.id.toString()}
-                  renderItem={({ item }) => renderFoodItem(item)}
-                  contentContainerStyle={{ paddingBottom: 20 }}
-                />
-              ) : (
-                <View className="items-center py-8">
-                  <Feather name="search" size={48} color={colors.mutedForeground} />
-                  <Text className="text-muted-foreground mt-2">Nenhum resultado encontrado</Text>
+      <ScrollView className="flex-1 px-4">
+        {isSearching ? (
+          <View className="py-8 items-center">
+            <ActivityIndicator size="large" color={colors.primary} />
+            <Text className="text-muted-foreground mt-4">Pesquisando alimentos...</Text>
+          </View>
+        ) : searchResults.length > 0 ? (
+          <FlatList
+            data={searchResults}
+            keyExtractor={(item) => item.id.toString()}
+            renderItem={({ item }) => (
+              <Pressable
+                className="bg-card rounded-xl border border-border p-4 mb-3 shadow-sm"
+                onPress={() => handleSelectFood(item)}
+              >
+                <View className="flex-row justify-between items-start">
+                  <View className="flex-1">
+                    <Text className="text-lg font-semibold text-foreground mb-1">{item.description}</Text>
+                    <Text className="text-muted-foreground text-sm mb-3">{item.category}</Text>
+                  </View>
+                  <View className="bg-primary/10 rounded-full px-3 py-1">
+                    <Text className="text-primary font-medium">{item.kcal} kcal</Text>
+                  </View>
                 </View>
-              )}
-            </>
-          )}
-        </View>
-      ) : (
-        // Common Foods and Categories
-        <ScrollView className="flex-1 px-4">
-          {/* Recent Searches */}
-          {recentSearches.length > 0 && (
-            <View className="mb-6">
-              <Text className="text-lg font-bold text-foreground mb-3">Pesquisas Recentes</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                {recentSearches.map((food) => (
-                  <Pressable
-                    key={food.id}
-                    className="bg-card rounded-lg border border-border p-3 mr-3 min-w-[150px]"
-                    onPress={() => handleSelectFood(food)}
-                  >
-                    <Text className="text-foreground font-medium mb-1" numberOfLines={1}>
-                      {food.description}
-                    </Text>
-                    <Text className="text-primary text-xs">{food.kcal} kcal/100g</Text>
-                  </Pressable>
-                ))}
-              </ScrollView>
-            </View>
-          )}
-
-          {/* Common Foods Categories */}
-          {commonFoodCategories.map((category, index) => (
-            <View key={index} className="mb-6">
-              <View className="flex-row items-center mb-3">
-                <View className="w-8 h-8 rounded-full bg-primary/10 items-center justify-center mr-2">
-                  <Feather name={category.icon as keyof typeof Feather.glyphMap} size={18} color={colors.primary} />
+                <View className="flex-row flex-wrap mt-2">
+                  <MacroTag value={item.protein_g} color={macroColors.protein} label="prot." />
+                  <MacroTag value={item.carbs_g} color={macroColors.carbs} label="carb." />
+                  <MacroTag value={item.fat_g} color={macroColors.fat} label="gord." />
                 </View>
-                <Text className="text-lg font-bold text-foreground">{category.name}</Text>
+              </Pressable>
+            )}
+            contentContainerStyle={{ paddingBottom: 20 }}
+          />
+        ) : (
+          <>
+            {/* Recent Searches with improved styling */}
+            {recentSearches.length > 0 && (
+              <View className="mb-8">
+                <Text className="text-lg font-bold text-foreground mb-4">Pesquisas Recentes</Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                  {recentSearches.map((food) => (
+                    <Pressable
+                      key={food.id}
+                      className="bg-card rounded-xl border border-border p-4 mr-3 min-w-[180px] shadow-sm"
+                      onPress={() => handleSelectFood(food)}
+                    >
+                      <Text className="text-foreground font-semibold mb-2" numberOfLines={1}>
+                        {food.description}
+                      </Text>
+                      <View className="flex-row items-center">
+                        <View className="bg-primary/10 rounded-full px-2 py-1">
+                          <Text className="text-primary text-xs">{food.kcal} kcal</Text>
+                        </View>
+                      </View>
+                    </Pressable>
+                  ))}
+                </ScrollView>
               </View>
+            )}
 
-              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                {category.foods.map((food) => (
-                  <Pressable
-                    key={food.id}
-                    className="bg-card rounded-lg border border-border py-3 px-4 mr-3"
-                    onPress={() => handleQuickSearch(food.name)}
-                  >
-                    <Text className="text-foreground">{food.name}</Text>
-                  </Pressable>
-                ))}
-              </ScrollView>
-            </View>
-          ))}
+            {/* Common Foods Categories with improved styling */}
+            {commonFoodCategories.map((category, index) => (
+              <View key={index} className="mb-8">
+                <View className="flex-row items-center mb-4">
+                  <View className="w-10 h-10 rounded-full bg-primary/10 items-center justify-center mr-3">
+                    <Feather name={category.icon as keyof typeof Feather.glyphMap} size={20} color={colors.primary} />
+                  </View>
+                  <Text className="text-xl font-bold text-foreground">{category.name}</Text>
+                </View>
 
-          {/* Quick Search Section */}
-          <View className="mb-6">
-            <Text className="text-lg font-bold text-foreground mb-3">Pesquisa Rápida</Text>
-            <View className="flex-row flex-wrap">
-              <Pressable
-                className="bg-card rounded-lg border border-border py-2 px-4 mr-2 mb-2"
-                onPress={() => handleQuickSearch("Arroz")}
-              >
-                <Text className="text-foreground">Arroz</Text>
-              </Pressable>
-              <Pressable
-                className="bg-card rounded-lg border border-border py-2 px-4 mr-2 mb-2"
-                onPress={() => handleQuickSearch("Feijão")}
-              >
-                <Text className="text-foreground">Feijão</Text>
-              </Pressable>
-              <Pressable
-                className="bg-card rounded-lg border border-border py-2 px-4 mr-2 mb-2"
-                onPress={() => handleQuickSearch("Frango")}
-              >
-                <Text className="text-foreground">Frango</Text>
-              </Pressable>
-              <Pressable
-                className="bg-card rounded-lg border border-border py-2 px-4 mr-2 mb-2"
-                onPress={() => handleQuickSearch("Pão")}
-              >
-                <Text className="text-foreground">Pão</Text>
-              </Pressable>
-              <Pressable
-                className="bg-card rounded-lg border border-border py-2 px-4 mr-2 mb-2"
-                onPress={() => handleQuickSearch("Ovo")}
-              >
-                <Text className="text-foreground">Ovo</Text>
-              </Pressable>
-              <Pressable
-                className="bg-card rounded-lg border border-border py-2 px-4 mr-2 mb-2"
-                onPress={() => handleQuickSearch("Leite")}
-              >
-                <Text className="text-foreground">Leite</Text>
-              </Pressable>
-            </View>
-          </View>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                  {category.foods.map((food) => (
+                    <Pressable
+                      key={food.id}
+                      className="bg-card rounded-xl border border-border py-3 px-4 mr-3 shadow-sm"
+                      onPress={() => handleQuickSearch(food.name)}
+                    >
+                      <Text className="text-foreground font-medium">{food.name}</Text>
+                    </Pressable>
+                  ))}
+                </ScrollView>
+              </View>
+            ))}
+          </>
+        )}
+      </ScrollView>
 
-          {/* Tip */}
-          <View className="mb-6 bg-accent rounded-xl p-6">
-            <Text className="text-lg font-semibold text-accent-foreground mb-2">Dica do Dia</Text>
-            <Text className="text-accent-foreground">
-              Prefira alimentos não processados e ricos em nutrientes para uma dieta balanceada e saudável.
-            </Text>
-          </View>
-        </ScrollView>
-      )}
-
-      {/* Add Food Modal - Simplified & Better Styled */}
+      {/* Add Food Modal with improved styling */}
       <Modal
         visible={addFoodVisible}
         animationType="slide"
@@ -410,23 +360,25 @@ export default function FoodTracker() {
         onRequestClose={() => setAddFoodVisible(false)}
       >
         <SafeAreaView className="flex-1 bg-background">
-          <View className="flex-row items-center p-4 border-b border-border">
-            <Pressable onPress={() => setAddFoodVisible(false)} className="p-2">
+          <View className="flex-row items-center py-4 px-4 border-b border-border bg-card">
+            <Pressable onPress={() => setAddFoodVisible(false)} className="p-2 mr-3 rounded-full bg-background">
               <Feather name="x" size={24} color={colors.foreground} />
             </Pressable>
-            <Text className="text-lg font-medium flex-1 text-center text-foreground mr-8">Adicionar Alimento</Text>
+            <Text className="text-xl font-bold text-foreground flex-1">Adicionar Alimento</Text>
           </View>
 
           {selectedFood && (
             <ScrollView className="p-4">
-              {/* Food details - simplified header */}
-              <View className="bg-card rounded-xl border border-border p-4 mb-6">
-                <Text className="text-xl font-medium text-foreground mb-1">{selectedFood.description}</Text>
-                <Text className="text-muted-foreground mb-2">{selectedFood.category}</Text>
+              {/* Food details with improved styling */}
+              <View className="bg-card rounded-xl border border-border p-4 mb-6 shadow-sm">
+                <Text className="text-xl font-bold text-foreground mb-1">{selectedFood.description}</Text>
+                <Text className="text-muted-foreground mb-3">{selectedFood.category}</Text>
 
                 {/* Macro tags for per 100g */}
                 <View className="flex-row flex-wrap mt-2">
-                  <CalorieTag calories={selectedFood.kcal} />
+                  <View className="bg-primary/10 rounded-full px-3 py-1 mr-2">
+                    <Text className="text-primary font-medium">{selectedFood.kcal} kcal</Text>
+                  </View>
                   <MacroTag value={selectedFood.protein_g} color={macroColors.protein} label="prot." />
                   <MacroTag value={selectedFood.carbs_g} color={macroColors.carbs} label="carb." />
                   <MacroTag value={selectedFood.fat_g} color={macroColors.fat} label="gord." />
@@ -434,11 +386,11 @@ export default function FoodTracker() {
                 <Text className="text-xs text-muted-foreground mt-2">Valores por 100g</Text>
               </View>
 
-              {/* Quantity selection */}
-              <Text className="font-medium text-foreground mb-2">Quantidade (g)</Text>
-              <View className="flex-row items-center mb-4">
+              {/* Quantity selection with improved styling */}
+              <Text className="font-semibold text-foreground mb-2">Quantidade (g)</Text>
+              <View className="flex-row items-center mb-6">
                 <TextInput
-                  className="flex-1 border border-border bg-card text-foreground rounded-md px-3 py-2"
+                  className="flex-1 border border-border bg-card text-foreground rounded-xl px-4 py-3 text-lg"
                   keyboardType="numeric"
                   value={quantity}
                   onChangeText={setQuantity}
@@ -446,122 +398,57 @@ export default function FoodTracker() {
                   placeholderTextColor={colors.mutedForeground}
                 />
 
-                {/* Quick quantity buttons */}
-                <View className="flex-row ml-2">
+                {/* Quick quantity buttons with improved styling */}
+                <View className="flex-row ml-3">
                   <Pressable
-                    className="bg-card border border-border rounded-md px-3 py-2 mr-1"
+                    className="bg-card border border-border rounded-xl px-4 py-3 mr-2"
                     onPress={() => setQuantity("50")}
                   >
-                    <Text className="text-foreground">50g</Text>
+                    <Text className="text-foreground font-medium">50g</Text>
                   </Pressable>
                   <Pressable
-                    className="bg-card border border-border rounded-md px-3 py-2 mr-1"
+                    className="bg-card border border-border rounded-xl px-4 py-3 mr-2"
                     onPress={() => setQuantity("100")}
                   >
-                    <Text className="text-foreground">100g</Text>
+                    <Text className="text-foreground font-medium">100g</Text>
                   </Pressable>
                   <Pressable
-                    className="bg-card border border-border rounded-md px-3 py-2"
+                    className="bg-card border border-border rounded-xl px-4 py-3"
                     onPress={() => setQuantity("200")}
                   >
-                    <Text className="text-foreground">200g</Text>
+                    <Text className="text-foreground font-medium">200g</Text>
                   </Pressable>
                 </View>
               </View>
 
-              {/* Meal type selection */}
-              <Text className="font-medium text-foreground mb-2">Refeição</Text>
-              <View className="flex-row mb-3">
-                <Pressable
-                  onPress={() => setSelectedMealType("breakfast")}
-                  className={`flex-1 py-2 px-3 rounded-md mr-2 ${
-                    selectedMealType === "breakfast" ? "bg-primary" : "bg-card border border-border"
-                  }`}
-                >
-                  <Text
-                    className={
-                      selectedMealType === "breakfast" ? "text-white text-center" : "text-foreground text-center"
-                    }
+              {/* Meal type selection with improved styling */}
+              <Text className="font-semibold text-foreground mb-2">Refeição</Text>
+              <View className="flex-row flex-wrap mb-6">
+                {["breakfast", "lunch", "dinner", "snack"].map((meal) => (
+                  <Pressable
+                    key={meal}
+                    className={`rounded-xl px-4 py-3 mr-2 mb-2 ${
+                      selectedMealType === meal ? "bg-primary" : "bg-card border border-border"
+                    }`}
+                    onPress={() => setSelectedMealType(meal as any)}
                   >
-                    Café da Manhã
-                  </Text>
-                </Pressable>
-                <Pressable
-                  onPress={() => setSelectedMealType("lunch")}
-                  className={`flex-1 py-2 px-3 rounded-md mr-2 ${
-                    selectedMealType === "lunch" ? "bg-primary" : "bg-card border border-border"
-                  }`}
-                >
-                  <Text
-                    className={selectedMealType === "lunch" ? "text-white text-center" : "text-foreground text-center"}
-                  >
-                    Almoço
-                  </Text>
-                </Pressable>
+                    <Text className={`font-medium ${selectedMealType === meal ? "text-white" : "text-foreground"}`}>
+                      {meal === "breakfast"
+                        ? "Café da Manhã"
+                        : meal === "lunch"
+                        ? "Almoço"
+                        : meal === "dinner"
+                        ? "Jantar"
+                        : "Lanche"}
+                    </Text>
+                  </Pressable>
+                ))}
               </View>
 
-              <View className="flex-row mb-6">
-                <Pressable
-                  onPress={() => setSelectedMealType("dinner")}
-                  className={`flex-1 py-2 px-3 rounded-md mr-2 ${
-                    selectedMealType === "dinner" ? "bg-primary" : "bg-card border border-border"
-                  }`}
-                >
-                  <Text
-                    className={selectedMealType === "dinner" ? "text-white text-center" : "text-foreground text-center"}
-                  >
-                    Jantar
-                  </Text>
-                </Pressable>
-                <Pressable
-                  onPress={() => setSelectedMealType("snack")}
-                  className={`flex-1 py-2 px-3 rounded-md ${
-                    selectedMealType === "snack" ? "bg-primary" : "bg-card border border-border"
-                  }`}
-                >
-                  <Text
-                    className={selectedMealType === "snack" ? "text-white text-center" : "text-foreground text-center"}
-                  >
-                    Lanche
-                  </Text>
-                </Pressable>
-              </View>
-
-              {/* Preview - Simplified with "<quantity>g de <food>" format */}
-              <View className="bg-card rounded-xl border border-border p-4 mb-6">
-                <Text className="font-medium text-foreground mb-2">Você está adicionando:</Text>
-
-                {/* Display format: "<quantity>g de <food>" */}
-                <Text className="text-foreground text-lg mb-3">
-                  <Text className="text-muted-foreground">{quantity}g de </Text>
-                  {selectedFood.description}
-                </Text>
-
-                {/* Macro tags for selected quantity */}
-                <View className="flex-row flex-wrap">
-                  <CalorieTag calories={Math.round((selectedFood.kcal * parseFloat(quantity || "0")) / 100)} />
-
-                  <MacroTag
-                    value={Math.round((selectedFood.protein_g * parseFloat(quantity || "0")) / 100)}
-                    color={macroColors.protein}
-                    label="prot."
-                  />
-
-                  <MacroTag
-                    value={Math.round((selectedFood.carbs_g * parseFloat(quantity || "0")) / 100)}
-                    color={macroColors.carbs}
-                    label="carb."
-                  />
-
-                  <MacroTag
-                    value={Math.round((selectedFood.fat_g * parseFloat(quantity || "0")) / 100)}
-                    color={macroColors.fat}
-                    label="gord."
-                  />
-                </View>
-              </View>
-
-              <Button onPress={handleAddFood}>Adicionar à Refeição</Button>
+              {/* Add button with improved styling */}
+              <Button onPress={handleAddFood} className="bg-primary rounded-xl py-4">
+                <Text className="text-white font-bold text-lg">Adicionar Alimento</Text>
+              </Button>
             </ScrollView>
           )}
         </SafeAreaView>
