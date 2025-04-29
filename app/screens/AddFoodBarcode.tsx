@@ -1,6 +1,6 @@
 // app/screens/AddFoodBarcode.tsx
 import React, { useState, useEffect } from "react";
-import { Text, View, SafeAreaView, Pressable, ActivityIndicator, Image, ScrollView, Alert } from "react-native";
+import { Text, View, SafeAreaView, Pressable, ActivityIndicator, ScrollView, Alert } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import { useTheme } from "../context/ThemeContext";
@@ -10,6 +10,9 @@ import Button from "../components/ui/Button";
 import { fetchProductByBarcode, Product } from "../lib/openFoodFactsApi";
 import { addFoodToLog } from "../models/tracking";
 import { Food } from "../models/food";
+import { FoodCard } from "../components/food/FoodCard";
+import { MealTypeSelector } from "../components/food/MealTypeSelector";
+import { QuantityInput } from "../components/food/QuantityInput";
 
 // Components for displaying macros with consistent styling
 const MacroTag = ({
@@ -98,7 +101,7 @@ export default function BarcodeProductScreen() {
 
       // Convert OpenFoodFacts product to our app's Food format
       const food: Food = {
-        id: parseInt(barcode as string) || 0,
+        id: (barcode as string).toString(),
         description: product.product_name || "Produto Desconhecido",
         category: product.categories || "Outros",
         kcal: product.nutriments.energy_kcal || 0,
@@ -123,7 +126,6 @@ export default function BarcodeProductScreen() {
         date: today,
       });
 
-      // Show toast and navigate to dashboard
       showToast(`${food.description} adicionado ao diário`, "success");
       router.replace("/(tabs)");
     } catch (err) {
@@ -167,125 +169,28 @@ export default function BarcodeProductScreen() {
       ) : product ? (
         <ScrollView className="flex-1 p-4">
           {/* Product info */}
-          <View className="bg-card rounded-lg border border-border p-4 mb-6">
-            <View className="flex-row mb-4">
-              {product.image_url ? (
-                <Image source={{ uri: product.image_url }} className="w-24 h-24 rounded-md mr-4" resizeMode="contain" />
-              ) : (
-                <View className="w-24 h-24 bg-muted rounded-md mr-4 items-center justify-center">
-                  <Feather name="image" size={24} color={colors.mutedForeground} />
-                </View>
-              )}
-              <View className="flex-1">
-                <Text className="text-xl font-semibold text-foreground">
-                  {product.product_name || "Produto Desconhecido"}
-                </Text>
-                <Text className="text-muted-foreground mb-2">{product.brands || "Marca desconhecida"}</Text>
-                <Text className="text-xs text-muted-foreground">{barcode}</Text>
-              </View>
-            </View>
-
-            {/* Nutrition info per 100g */}
-            <View className="border-t border-border pt-3">
-              <Text className="text-foreground font-medium mb-2">Informação Nutricional (por 100g)</Text>
-              <View className="flex-row flex-wrap">
-                <CalorieTag calories={product.nutriments.energy_kcal || 0} />
-                <MacroTag value={product.nutriments.proteins || 0} color={macroColors.protein} label="prot." />
-                <MacroTag value={product.nutriments.carbohydrates || 0} color={macroColors.carbs} label="carb." />
-                <MacroTag value={product.nutriments.fat || 0} color={macroColors.fat} label="gord." />
-              </View>
-            </View>
-          </View>
+          <FoodCard
+            food={{
+              id: (barcode as string).toString(),
+              description: product.product_name || "Produto Desconhecido",
+              category: product.categories || "Outros",
+              kcal: product.nutriments.energy_kcal || 0,
+              protein_g: product.nutriments.proteins || 0,
+              carbs_g: product.nutriments.carbohydrates || 0,
+              fat_g: product.nutriments.fat || 0,
+            }}
+            imageUrl={product.image_url}
+          />
 
           {/* Add to diary form */}
           <View className="bg-card rounded-lg border border-border p-4 mb-6">
             <Text className="text-foreground font-medium mb-4">Adicionar ao Diário</Text>
 
             {/* Quantity */}
-            <View className="mb-4">
-              <Text className="text-foreground text-sm mb-2">Quantidade (g)</Text>
-              <View className="flex-row">
-                <Pressable
-                  className="bg-muted px-3 py-2 rounded-l-md"
-                  onPress={() => setQuantity((prev) => Math.max(1, parseInt(prev) - 10).toString())}
-                >
-                  <Feather name="minus" size={20} color={colors.foreground} />
-                </Pressable>
-                <View className="flex-1 bg-card border-t border-b border-border">
-                  <Text className="text-center text-foreground py-2">{quantity}g</Text>
-                </View>
-                <Pressable
-                  className="bg-muted px-3 py-2 rounded-r-md"
-                  onPress={() => setQuantity((prev) => (parseInt(prev) + 10).toString())}
-                >
-                  <Feather name="plus" size={20} color={colors.foreground} />
-                </Pressable>
-              </View>
-              <View className="flex-row justify-center mt-2">
-                <Pressable className="bg-muted mx-1 px-3 py-1 rounded-md" onPress={() => setQuantity("50")}>
-                  <Text className="text-foreground">50g</Text>
-                </Pressable>
-                <Pressable className="bg-muted mx-1 px-3 py-1 rounded-md" onPress={() => setQuantity("100")}>
-                  <Text className="text-foreground">100g</Text>
-                </Pressable>
-                <Pressable className="bg-muted mx-1 px-3 py-1 rounded-md" onPress={() => setQuantity("200")}>
-                  <Text className="text-foreground">200g</Text>
-                </Pressable>
-              </View>
-            </View>
+            <QuantityInput quantity={quantity} onQuantityChange={setQuantity} />
 
             {/* Meal type */}
-            <Text className="text-foreground text-sm mb-2">Refeição</Text>
-            <View className="flex-row mb-3">
-              <Pressable
-                onPress={() => setSelectedMealType("breakfast")}
-                className={`flex-1 py-2 px-3 rounded-md mr-2 ${
-                  selectedMealType === "breakfast" ? "bg-primary" : "bg-muted"
-                }`}
-              >
-                <Text
-                  className={
-                    selectedMealType === "breakfast" ? "text-white text-center" : "text-foreground text-center"
-                  }
-                >
-                  Café
-                </Text>
-              </Pressable>
-              <Pressable
-                onPress={() => setSelectedMealType("lunch")}
-                className={`flex-1 py-2 px-3 rounded-md ${selectedMealType === "lunch" ? "bg-primary" : "bg-muted"}`}
-              >
-                <Text
-                  className={selectedMealType === "lunch" ? "text-white text-center" : "text-foreground text-center"}
-                >
-                  Almoço
-                </Text>
-              </Pressable>
-            </View>
-            <View className="flex-row mb-6">
-              <Pressable
-                onPress={() => setSelectedMealType("dinner")}
-                className={`flex-1 py-2 px-3 rounded-md mr-2 ${
-                  selectedMealType === "dinner" ? "bg-primary" : "bg-muted"
-                }`}
-              >
-                <Text
-                  className={selectedMealType === "dinner" ? "text-white text-center" : "text-foreground text-center"}
-                >
-                  Jantar
-                </Text>
-              </Pressable>
-              <Pressable
-                onPress={() => setSelectedMealType("snack")}
-                className={`flex-1 py-2 px-3 rounded-md ${selectedMealType === "snack" ? "bg-primary" : "bg-muted"}`}
-              >
-                <Text
-                  className={selectedMealType === "snack" ? "text-white text-center" : "text-foreground text-center"}
-                >
-                  Lanche
-                </Text>
-              </Pressable>
-            </View>
+            <MealTypeSelector selectedMealType={selectedMealType} onSelectMealType={setSelectedMealType} />
 
             {/* Add button */}
             <Button onPress={handleAddToLog} disabled={addingToLog}>
