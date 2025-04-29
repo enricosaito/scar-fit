@@ -13,6 +13,7 @@ import {
   Alert,
 } from "react-native";
 import { Feather } from "@expo/vector-icons";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useTheme } from "../context/ThemeContext";
 import { useAuth } from "../context/AuthContext";
@@ -312,8 +313,9 @@ export default function FoodTracker() {
                     </View>
                     <View className="flex-row items-center mt-1">
                       <Text className="text-muted-foreground text-sm">{item.category}</Text>
-                      <View className="ml-2 bg-green-100 rounded-full px-2 py-0.5">
-                        <Text className="text-green-700 text-xs">TACO</Text>
+                      <View className="ml-2 bg-primary/10 rounded-full px-2 py-0.5 flex-row items-center">
+                        <MaterialCommunityIcons name="shield-check" size={12} color={colors.primary} />
+                        <Text className="text-primary text-xs ml-1">TACO</Text>
                       </View>
                     </View>
                   </View>
@@ -375,11 +377,9 @@ export default function FoodTracker() {
                             {food.description}
                           </Text>
                           <View className="flex-row items-center">
-                            <View className="bg-primary/10 rounded-full px-2 py-0.5">
-                              <Text className="text-primary text-xs">{food.kcal} kcal</Text>
-                            </View>
-                            <View className="ml-2 bg-green-100 rounded-full px-2 py-0.5">
-                              <Text className="text-green-700 text-xs">TACO</Text>
+                            <View className="bg-primary/10 rounded-full px-2 py-0.5 flex-row items-center">
+                              <MaterialCommunityIcons name="shield-check" size={12} color={colors.primary} />
+                              <Text className="text-primary text-xs ml-1">TACO</Text>
                             </View>
                           </View>
                         </View>
@@ -419,8 +419,9 @@ export default function FoodTracker() {
                     <Text className="text-xl font-bold text-foreground">{selectedFood.description}</Text>
                     <View className="flex-row items-center mt-1">
                       <Text className="text-muted-foreground">{selectedFood.category}</Text>
-                      <View className="ml-2 bg-green-100 rounded-full px-2 py-0.5">
-                        <Text className="text-green-700 text-xs">TACO</Text>
+                      <View className="ml-2 bg-primary/10 rounded-full px-2 py-0.5 flex-row items-center">
+                        <MaterialCommunityIcons name="shield-check" size={12} color={colors.primary} />
+                        <Text className="text-primary text-xs ml-1">TACO</Text>
                       </View>
                     </View>
                   </View>
