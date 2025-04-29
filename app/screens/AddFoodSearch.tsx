@@ -21,6 +21,7 @@ import { useToast } from "../context/ToastContext";
 import { Food, FoodPortion, searchFoods } from "../models/food";
 import { DailyLog, addFoodToLog, getUserDailyLog } from "../models/tracking";
 import Button from "../components/ui/Button";
+import { getFoodEmoji } from "../utils/foodEmojis";
 
 // MacroTag Component
 const MacroTag = ({
@@ -56,28 +57,6 @@ const CalorieTag = ({ calories }: { calories: number }) => {
       <Text className="text-xs font-medium text-white">{calories} kcal</Text>
     </View>
   );
-};
-
-// Get emoji for food category
-const getFoodEmoji = (category: string): string => {
-  const emojiMap: { [key: string]: string } = {
-    "Cereais e derivados": "🌾",
-    "Verduras, hortaliças e derivados": "🥦",
-    "Frutas e derivados": "🍉",
-    "Gorduras e óleos": "🥑",
-    "Pescados e frutos do mar": "🐟",
-    "Carnes e derivados": "🥩",
-    "Leite e derivados": "🥛",
-    "Bebidas (alcoólicas e não alcoólicas)": "🍹",
-    "Ovos e derivados": "🥚",
-    "Produtos açucarados": "🍰",
-    Miscelâneas: "🫙",
-    "Outros alimentos industrializados": "🥫",
-    "Alimentos preparados": "🍲",
-    "Leguminosas e derivados": "🫘",
-    "Nozes e sementes": "🥜",
-  };
-  return emojiMap[category] || "🍽️";
 };
 
 export default function FoodTracker() {
