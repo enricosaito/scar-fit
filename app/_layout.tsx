@@ -76,7 +76,6 @@ export default function RootLayout() {
                   <Stack.Screen name="(tabs)" />
                   <Stack.Screen name="screens/profile/ViewProfile" />
                   <Stack.Screen name="screens/profile/EditProfile" />
-                  <Stack.Screen name="screens/profile/ForgotPassword" />
                   <Stack.Screen name="screens/profile/CustomGoal" />
                   <Stack.Screen name="screens/NotificationsTab" />
                   <Stack.Screen name="screens/ManageMeals" options={{ presentation: "modal" }} />
