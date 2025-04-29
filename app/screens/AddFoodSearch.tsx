@@ -283,7 +283,7 @@ export default function FoodTracker() {
             >
               <View className="flex-row items-center justify-between">
                 <View className="flex-row items-center flex-1">
-                  <Text className="text-2xl mr-3">{getFoodEmoji(item.category)}</Text>
+                  <Text className="text-2xl mr-3">{getFoodEmoji(item.description)}</Text>
                   <View className="flex-1">
                     <View className="flex-row items-center">
                       <Text className="text-lg font-semibold text-foreground flex-1">{item.description}</Text>
@@ -351,7 +351,7 @@ export default function FoodTracker() {
                       onPress={() => handleSelectFood(food)}
                     >
                       <View className="flex-row items-center">
-                        <Text className="text-2xl mr-2">{getFoodEmoji(food.category)}</Text>
+                        <Text className="text-2xl mr-2">{getFoodEmoji(food.description)}</Text>
                         <View className="flex-1">
                           <Text className="text-foreground font-semibold mb-1" numberOfLines={1}>
                             {food.description}
@@ -394,7 +394,7 @@ export default function FoodTracker() {
               {/* Food details with improved styling */}
               <View className="bg-card rounded-xl border border-border p-4 mb-6 shadow-sm">
                 <View className="flex-row items-center mb-3">
-                  <Text className="text-3xl mr-3">{getFoodEmoji(selectedFood.category)}</Text>
+                  <Text className="text-3xl mr-3">{getFoodEmoji(selectedFood.description)}</Text>
                   <View className="flex-1">
                     <Text className="text-xl font-bold text-foreground">{selectedFood.description}</Text>
                     <View className="flex-row items-center mt-1">
