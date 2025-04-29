@@ -1,11 +1,13 @@
 // Add to app/models/tracking.ts
 import { supabase } from "../lib/supabase";
-import { FoodPortion } from "./food";
+import { Food, FoodPortion } from "./food";
+
+export type MealType = "breakfast" | "lunch" | "dinner" | "snack";
 
 export interface DailyLog {
-  id?: string;
+  id: string;
   user_id: string;
-  date: string; // ISO date string (YYYY-MM-DD)
+  date: string;
   items: FoodPortion[];
   total_calories: number;
   total_protein: number;
@@ -13,107 +15,204 @@ export interface DailyLog {
   total_fat: number;
 }
 
-export async function getUserDailyLog(userId: string, date: string): Promise<DailyLog | null> {
-  const { data, error } = await supabase.from("daily_logs").select("*").eq("user_id", userId).eq("date", date).single();
+// Get user's daily log for a specific date
+export async function getUserDailyLog(userId: string, date: string): Promise<DailyLog> {
+  try {
+    // First try to get existing log
+    const { data: existingLog, error: fetchError } = await supabase
+      .from("daily_logs")
+      .select("*")
+      .eq("user_id", userId)
+      .eq("date", date)
+      .single();
 
-  if (error && error.code !== "PGRST116") {
-    // PGRST116 is "no rows found" error
-    console.error("Error fetching daily log:", error);
-    return null;
-  }
+    if (fetchError && fetchError.code !== "PGRST116") {
+      throw fetchError;
+    }
 
-  // If no log exists for this date, create a new empty one
-  if (!data) {
+    // If log exists, return it
+    if (existingLog) {
+      return {
+        ...existingLog,
+        items: existingLog.items || [],
+        total_calories: existingLog.total_calories || 0,
+        total_protein: existingLog.total_protein || 0,
+        total_carbs: existingLog.total_carbs || 0,
+        total_fat: existingLog.total_fat || 0,
+      };
+    }
+
+    // If no log exists, create a new one
+    const { data: newLog, error: createError } = await supabase
+      .from("daily_logs")
+      .insert([
+        {
+          user_id: userId,
+          date,
+          items: [],
+          total_calories: 0,
+          total_protein: 0,
+          total_carbs: 0,
+          total_fat: 0,
+        },
+      ])
+      .select()
+      .single();
+
+    if (createError) throw createError;
+
     return {
-      user_id: userId,
-      date,
+      ...newLog,
       items: [],
       total_calories: 0,
       total_protein: 0,
       total_carbs: 0,
       total_fat: 0,
     };
+  } catch (error) {
+    console.error("Error getting/creating daily log:", error);
+    throw error;
   }
-
-  return data;
 }
 
-export async function saveDailyLog(log: DailyLog): Promise<DailyLog | null> {
-  const { data, error } = await supabase.from("daily_logs").upsert(log).select().single();
+// Add food to daily log
+export async function addFoodToLog(
+  userId: string,
+  date: string,
+  foodPortion: FoodPortion
+): Promise<DailyLog> {
+  try {
+    // Get current log
+    const currentLog = await getUserDailyLog(userId, date);
 
-  if (error) {
-    console.error("Error saving daily log:", error);
-    return null;
+    // Calculate new totals
+    const quantity = foodPortion.quantity;
+    const food = foodPortion.food;
+    const multiplier = quantity / 100;
+
+    const newItem = {
+      ...foodPortion,
+      food: {
+        ...food,
+        kcal: Math.round(food.kcal * multiplier),
+        protein_g: Math.round(food.protein_g * multiplier * 10) / 10,
+        carbs_g: Math.round(food.carbs_g * multiplier * 10) / 10,
+        fat_g: Math.round(food.fat_g * multiplier * 10) / 10,
+      },
+    };
+
+    // Update log with new item and totals
+    const updatedItems = [...currentLog.items, newItem];
+    const updatedLog = {
+      ...currentLog,
+      items: updatedItems,
+      total_calories: Math.round(
+        updatedItems.reduce((sum, item) => sum + item.food.kcal, 0)
+      ),
+      total_protein: Math.round(
+        updatedItems.reduce((sum, item) => sum + item.food.protein_g, 0) * 10
+      ) / 10,
+      total_carbs: Math.round(
+        updatedItems.reduce((sum, item) => sum + item.food.carbs_g, 0) * 10
+      ) / 10,
+      total_fat: Math.round(
+        updatedItems.reduce((sum, item) => sum + item.food.fat_g, 0) * 10
+      ) / 10,
+    };
+
+    // Save to database
+    const { error: updateError } = await supabase
+      .from("daily_logs")
+      .update(updatedLog)
+      .eq("id", currentLog.id);
+
+    if (updateError) throw updateError;
+
+    return updatedLog;
+  } catch (error) {
+    console.error("Error adding food to log:", error);
+    throw error;
   }
-
-  return data;
 }
 
-export async function addFoodToLog(userId: string, date: string, foodPortion: FoodPortion): Promise<DailyLog | null> {
-  // Get current log
-  const currentLog = await getUserDailyLog(userId, date);
+// Remove food from daily log
+export async function removeFoodFromLog(
+  userId: string,
+  date: string,
+  itemIndex: number
+): Promise<DailyLog> {
+  try {
+    // Get current log
+    const currentLog = await getUserDailyLog(userId, date);
 
-  if (!currentLog) return null;
+    // Remove item and update totals
+    const updatedItems = currentLog.items.filter((_, index) => index !== itemIndex);
+    const updatedLog = {
+      ...currentLog,
+      items: updatedItems,
+      total_calories: Math.round(
+        updatedItems.reduce((sum, item) => sum + item.food.kcal, 0)
+      ),
+      total_protein: Math.round(
+        updatedItems.reduce((sum, item) => sum + item.food.protein_g, 0) * 10
+      ) / 10,
+      total_carbs: Math.round(
+        updatedItems.reduce((sum, item) => sum + item.food.carbs_g, 0) * 10
+      ) / 10,
+      total_fat: Math.round(
+        updatedItems.reduce((sum, item) => sum + item.food.fat_g, 0) * 10
+      ) / 10,
+    };
 
-  // Calculate nutrition values based on portion
-  const portionMultiplier = foodPortion.quantity / 100; // Assuming data is per 100g
-  const calories = foodPortion.food.kcal * portionMultiplier;
-  const protein = foodPortion.food.protein_g * portionMultiplier;
-  const carbs = foodPortion.food.carbs_g * portionMultiplier;
-  const fat = foodPortion.food.fat_g * portionMultiplier;
+    // Save to database
+    const { error: updateError } = await supabase
+      .from("daily_logs")
+      .update(updatedLog)
+      .eq("id", currentLog.id);
 
-  // Add food to items and update totals
-  const updatedLog: DailyLog = {
-    ...currentLog,
-    items: [...(currentLog.items || []), foodPortion],
-    total_calories: (currentLog.total_calories || 0) + calories,
-    total_protein: (currentLog.total_protein || 0) + protein,
-    total_carbs: (currentLog.total_carbs || 0) + carbs,
-    total_fat: (currentLog.total_fat || 0) + fat,
-  };
+    if (updateError) throw updateError;
 
-  // Save updated log
-  return saveDailyLog(updatedLog);
+    return updatedLog;
+  } catch (error) {
+    console.error("Error removing food from log:", error);
+    throw error;
+  }
 }
 
-export async function removeFoodFromLog(userId: string, date: string, itemIndex: number): Promise<DailyLog | null> {
-  // Get current log
-  const currentLog = await getUserDailyLog(userId, date);
+// Get user's daily logs for a date range
+export async function getUserDailyLogs(
+  userId: string,
+  startDate: string,
+  endDate: string
+): Promise<DailyLog[]> {
+  try {
+    const { data: logs, error } = await supabase
+      .from("daily_logs")
+      .select("*")
+      .eq("user_id", userId)
+      .gte("date", startDate)
+      .lte("date", endDate)
+      .order("date", { ascending: true });
 
-  if (!currentLog || !currentLog.items || itemIndex >= currentLog.items.length) {
-    return null;
+    if (error) throw error;
+
+    return logs.map((log) => ({
+      ...log,
+      items: log.items || [],
+      total_calories: log.total_calories || 0,
+      total_protein: log.total_protein || 0,
+      total_carbs: log.total_carbs || 0,
+      total_fat: log.total_fat || 0,
+    }));
+  } catch (error) {
+    console.error("Error getting daily logs:", error);
+    throw error;
   }
-
-  // Get the item to remove
-  const itemToRemove = currentLog.items[itemIndex];
-
-  // Calculate nutrition values to subtract
-  const portionMultiplier = itemToRemove.quantity / 100;
-  const calories = itemToRemove.food.kcal * portionMultiplier;
-  const protein = itemToRemove.food.protein_g * portionMultiplier;
-  const carbs = itemToRemove.food.carbs_g * portionMultiplier;
-  const fat = itemToRemove.food.fat_g * portionMultiplier;
-
-  // Remove item and update totals
-  const updatedItems = [...currentLog.items];
-  updatedItems.splice(itemIndex, 1);
-
-  const updatedLog: DailyLog = {
-    ...currentLog,
-    items: updatedItems,
-    total_calories: Math.max(0, (currentLog.total_calories || 0) - calories),
-    total_protein: Math.max(0, (currentLog.total_protein || 0) - protein),
-    total_carbs: Math.max(0, (currentLog.total_carbs || 0) - carbs),
-    total_fat: Math.max(0, (currentLog.total_fat || 0) - fat),
-  };
-
-  // Save updated log
-  return saveDailyLog(updatedLog);
 }
 
 export default {
   getUserDailyLog,
-  saveDailyLog,
+  getUserDailyLogs,
   addFoodToLog,
   removeFoodFromLog,
 };
