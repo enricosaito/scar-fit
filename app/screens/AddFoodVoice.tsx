@@ -20,6 +20,7 @@ import VoiceRecorder from "../components/tracking/VoiceRecorder";
 import Button from "../components/ui/Button";
 import { transcribeAudio, extractFoodItems, matchWithDatabaseFoods } from "../lib/voiceProcessingService";
 import { addFoodToLog } from "../models/tracking";
+import { FoodCard } from "../components/food/FoodCard";
 
 // MacroTag Component
 const MacroTag = ({
@@ -232,50 +233,21 @@ export default function VoiceFoodLogger() {
 
             {extractedItems.length > 0 ? (
               extractedItems.map((item, index) => (
-                <View key={index} className="bg-card rounded-xl border border-border p-4 mb-3">
-                  {item.food && (
-                    <>
-                      <Text className="text-foreground font-medium mb-1">
-                        {item.food.description || "Alimento não encontrado"}
-                      </Text>
-                      <Text className="text-muted-foreground text-xs mb-2">{item.food.category}</Text>
-
-                      <View className="flex-row justify-between mt-2 mb-2">
-                        <Text className="text-muted-foreground">Quantidade: {item.quantity}g</Text>
-                        <Text className="text-muted-foreground">
-                          Refeição:{" "}
-                          {item.mealType === "breakfast"
-                            ? "Café da Manhã"
-                            : item.mealType === "lunch"
-                            ? "Almoço"
-                            : item.mealType === "dinner"
-                            ? "Jantar"
-                            : "Lanche"}
-                        </Text>
-                      </View>
-
-                      <View className="mt-2 pt-2 border-t border-border">
-                        <View className="flex-row flex-wrap mt-1.5">
-                          <CalorieTag calories={Math.round((item.food.kcal * item.quantity) / 100)} />
-                          <MacroTag
-                            value={Math.round((item.food.protein_g * item.quantity) / 100)}
-                            color={macroColors.protein}
-                            label="prot."
-                          />
-                          <MacroTag
-                            value={Math.round((item.food.carbs_g * item.quantity) / 100)}
-                            color={macroColors.carbs}
-                            label="carb."
-                          />
-                          <MacroTag
-                            value={Math.round((item.food.fat_g * item.quantity) / 100)}
-                            color={macroColors.fat}
-                            label="gord."
-                          />
-                        </View>
-                      </View>
-                    </>
-                  )}
+                <View key={index} className="mb-3">
+                  <FoodCard food={item.food} quantity={item.quantity} />
+                  <View className="flex-row justify-between mt-2 mb-2">
+                    <Text className="text-muted-foreground">Quantidade: {item.quantity}g</Text>
+                    <Text className="text-muted-foreground">
+                      Refeição:{" "}
+                      {item.mealType === "breakfast"
+                        ? "Café da Manhã"
+                        : item.mealType === "lunch"
+                        ? "Almoço"
+                        : item.mealType === "dinner"
+                        ? "Jantar"
+                        : "Lanche"}
+                    </Text>
+                  </View>
                 </View>
               ))
             ) : (

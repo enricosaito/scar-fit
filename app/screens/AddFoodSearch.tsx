@@ -393,31 +393,17 @@ export default function FoodTracker() {
           {selectedFood && (
             <ScrollView className="p-4">
               {/* Food details */}
-              <View className="bg-card rounded-xl border border-border p-4 mb-4">
-                <View className="flex-row items-center">
-                  <Text className="text-3xl mr-3">{getFoodEmoji(selectedFood.description)}</Text>
-                  <View className="flex-1">
-                    <Text className="text-lg font-semibold text-foreground">{selectedFood.description}</Text>
-                    <Text className="text-muted-foreground text-sm">{selectedFood.category}</Text>
-                  </View>
-                </View>
-                <View className="mt-3 flex-row flex-wrap">
-                  <CalorieTag calories={selectedFood.kcal} />
-                  <MacroTag value={selectedFood.protein_g} color={macroColors.protein} label="prot." />
-                  <MacroTag value={selectedFood.carbs_g} color={macroColors.carbs} label="carb." />
-                  <MacroTag value={selectedFood.fat_g} color={macroColors.fat} label="gord." />
-                </View>
-              </View>
+              <FoodCard food={selectedFood} quantity={parseFloat(quantity) || 100} />
 
               {/* Quantity selection */}
-              <Text className="font-semibold text-foreground mb-2">Quantidade (g)</Text>
+              <Text className="font-semibold text-foreground mb-2 mt-4">Quantidade (g)</Text>
               <QuantityInput quantity={quantity} onQuantityChange={setQuantity} />
 
               {/* Meal type selection */}
               <MealTypeSelector selectedMealType={selectedMealType} onSelectMealType={setSelectedMealType} />
 
               {/* Add button */}
-              <Button onPress={handleAddFood} className="bg-primary rounded-xl py-4">
+              <Button onPress={handleAddFood} className="bg-primary rounded-xl py-4 mt-4">
                 <Text className="text-white font-bold text-lg">Adicionar Alimento</Text>
               </Button>
             </ScrollView>
