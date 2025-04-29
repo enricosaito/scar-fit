@@ -57,6 +57,27 @@ const CalorieTag = ({ calories }: { calories: number }) => {
   );
 };
 
+// Get emoji for food category
+const getFoodEmoji = (category: string): string => {
+  const emojiMap: { [key: string]: string } = {
+    Proteínas: "🍗",
+    Carboidratos: "🍚",
+    Frutas: "🍎",
+    Vegetais: "🥦",
+    Laticínios: "🥛",
+    Carnes: "🥩",
+    Peixes: "🐟",
+    Ovos: "🥚",
+    Grãos: "🌾",
+    Nozes: "🥜",
+    Bebidas: "🥤",
+    Sobremesas: "🍰",
+    "Fast Food": "🍔",
+    Outros: "🍽️",
+  };
+  return emojiMap[category] || "🍽️";
+};
+
 export default function FoodTracker() {
   const router = useRouter();
   const { colors } = useTheme();
@@ -265,92 +286,113 @@ export default function FoodTracker() {
       </View>
 
       {/* Main Content */}
-      <ScrollView className="flex-1 px-4">
-        {isSearching ? (
-          <View className="py-8 items-center">
-            <ActivityIndicator size="large" color={colors.primary} />
-            <Text className="text-muted-foreground mt-4">Pesquisando alimentos...</Text>
-          </View>
-        ) : searchResults.length > 0 ? (
-          <FlatList
-            data={searchResults}
-            keyExtractor={(item) => item.id.toString()}
-            renderItem={({ item }) => (
-              <Pressable
-                className="bg-card rounded-xl border border-border p-4 mb-3 shadow-sm"
-                onPress={() => handleSelectFood(item)}
-              >
-                <View className="flex-row justify-between items-start">
+      {isSearching ? (
+        <View className="flex-1 items-center justify-center">
+          <ActivityIndicator size="large" color={colors.primary} />
+          <Text className="text-muted-foreground mt-4">Pesquisando alimentos...</Text>
+        </View>
+      ) : searchResults.length > 0 ? (
+        <FlatList
+          data={searchResults}
+          keyExtractor={(item) => item.id.toString()}
+          renderItem={({ item }) => (
+            <Pressable
+              className="bg-card rounded-xl border border-border p-4 mb-3 mx-4 shadow-sm"
+              onPress={() => handleSelectFood(item)}
+            >
+              <View className="flex-row items-center justify-between">
+                <View className="flex-row items-center flex-1">
+                  <Text className="text-2xl mr-3">{getFoodEmoji(item.category)}</Text>
                   <View className="flex-1">
-                    <Text className="text-lg font-semibold text-foreground mb-1">{item.description}</Text>
-                    <Text className="text-muted-foreground text-sm mb-3">{item.category}</Text>
-                  </View>
-                  <View className="bg-primary/10 rounded-full px-3 py-1">
-                    <Text className="text-primary font-medium">{item.kcal} kcal</Text>
+                    <View className="flex-row items-center">
+                      <Text className="text-lg font-semibold text-foreground flex-1">{item.description}</Text>
+                      <View className="bg-primary/10 rounded-full px-2 py-1">
+                        <Text className="text-primary font-medium">{item.kcal} kcal</Text>
+                      </View>
+                    </View>
+                    <View className="flex-row items-center mt-1">
+                      <Text className="text-muted-foreground text-sm">{item.category}</Text>
+                      <View className="ml-2 bg-green-100 rounded-full px-2 py-0.5">
+                        <Text className="text-green-700 text-xs">TACO</Text>
+                      </View>
+                    </View>
                   </View>
                 </View>
-                <View className="flex-row flex-wrap mt-2">
-                  <MacroTag value={item.protein_g} color={macroColors.protein} label="prot." />
-                  <MacroTag value={item.carbs_g} color={macroColors.carbs} label="carb." />
-                  <MacroTag value={item.fat_g} color={macroColors.fat} label="gord." />
+              </View>
+            </Pressable>
+          )}
+          contentContainerStyle={{ paddingVertical: 8 }}
+        />
+      ) : (
+        <FlatList
+          data={commonFoodCategories}
+          keyExtractor={(item) => item.name}
+          renderItem={({ item: category }) => (
+            <View className="mb-6 px-4">
+              <View className="flex-row items-center mb-4">
+                <View className="w-10 h-10 rounded-full bg-primary/10 items-center justify-center mr-3">
+                  <Text className="text-2xl">{getFoodEmoji(category.name)}</Text>
                 </View>
-              </Pressable>
-            )}
-            contentContainerStyle={{ paddingBottom: 20 }}
-          />
-        ) : (
-          <>
-            {/* Recent Searches with improved styling */}
-            {recentSearches.length > 0 && (
-              <View className="mb-8">
+                <Text className="text-xl font-bold text-foreground">{category.name}</Text>
+              </View>
+
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={{ paddingRight: 16 }}
+              >
+                {category.foods.map((food) => (
+                  <Pressable
+                    key={food.id}
+                    className="bg-card rounded-xl border border-border py-3 px-4 mr-3 shadow-sm"
+                    onPress={() => handleQuickSearch(food.name)}
+                  >
+                    <Text className="text-foreground font-medium">{food.name}</Text>
+                  </Pressable>
+                ))}
+              </ScrollView>
+            </View>
+          )}
+          ListHeaderComponent={
+            recentSearches.length > 0 ? (
+              <View className="mb-6 px-4">
                 <Text className="text-lg font-bold text-foreground mb-4">Pesquisas Recentes</Text>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={{ paddingRight: 16 }}
+                >
                   {recentSearches.map((food) => (
                     <Pressable
                       key={food.id}
                       className="bg-card rounded-xl border border-border p-4 mr-3 min-w-[180px] shadow-sm"
                       onPress={() => handleSelectFood(food)}
                     >
-                      <Text className="text-foreground font-semibold mb-2" numberOfLines={1}>
-                        {food.description}
-                      </Text>
                       <View className="flex-row items-center">
-                        <View className="bg-primary/10 rounded-full px-2 py-1">
-                          <Text className="text-primary text-xs">{food.kcal} kcal</Text>
+                        <Text className="text-2xl mr-2">{getFoodEmoji(food.category)}</Text>
+                        <View className="flex-1">
+                          <Text className="text-foreground font-semibold mb-1" numberOfLines={1}>
+                            {food.description}
+                          </Text>
+                          <View className="flex-row items-center">
+                            <View className="bg-primary/10 rounded-full px-2 py-0.5">
+                              <Text className="text-primary text-xs">{food.kcal} kcal</Text>
+                            </View>
+                            <View className="ml-2 bg-green-100 rounded-full px-2 py-0.5">
+                              <Text className="text-green-700 text-xs">TACO</Text>
+                            </View>
+                          </View>
                         </View>
                       </View>
                     </Pressable>
                   ))}
                 </ScrollView>
               </View>
-            )}
-
-            {/* Common Foods Categories with improved styling */}
-            {commonFoodCategories.map((category, index) => (
-              <View key={index} className="mb-8">
-                <View className="flex-row items-center mb-4">
-                  <View className="w-10 h-10 rounded-full bg-primary/10 items-center justify-center mr-3">
-                    <Feather name={category.icon as keyof typeof Feather.glyphMap} size={20} color={colors.primary} />
-                  </View>
-                  <Text className="text-xl font-bold text-foreground">{category.name}</Text>
-                </View>
-
-                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                  {category.foods.map((food) => (
-                    <Pressable
-                      key={food.id}
-                      className="bg-card rounded-xl border border-border py-3 px-4 mr-3 shadow-sm"
-                      onPress={() => handleQuickSearch(food.name)}
-                    >
-                      <Text className="text-foreground font-medium">{food.name}</Text>
-                    </Pressable>
-                  ))}
-                </ScrollView>
-              </View>
-            ))}
-          </>
-        )}
-      </ScrollView>
+            ) : null
+          }
+          contentContainerStyle={{ paddingVertical: 8 }}
+        />
+      )}
 
       {/* Add Food Modal with improved styling */}
       <Modal
@@ -371,11 +413,21 @@ export default function FoodTracker() {
             <ScrollView className="p-4">
               {/* Food details with improved styling */}
               <View className="bg-card rounded-xl border border-border p-4 mb-6 shadow-sm">
-                <Text className="text-xl font-bold text-foreground mb-1">{selectedFood.description}</Text>
-                <Text className="text-muted-foreground mb-3">{selectedFood.category}</Text>
+                <View className="flex-row items-center mb-3">
+                  <Text className="text-3xl mr-3">{getFoodEmoji(selectedFood.category)}</Text>
+                  <View className="flex-1">
+                    <Text className="text-xl font-bold text-foreground">{selectedFood.description}</Text>
+                    <View className="flex-row items-center mt-1">
+                      <Text className="text-muted-foreground">{selectedFood.category}</Text>
+                      <View className="ml-2 bg-green-100 rounded-full px-2 py-0.5">
+                        <Text className="text-green-700 text-xs">TACO</Text>
+                      </View>
+                    </View>
+                  </View>
+                </View>
 
                 {/* Macro tags for per 100g */}
-                <View className="flex-row flex-wrap mt-2">
+                <View className="flex-row items-center mt-2">
                   <View className="bg-primary/10 rounded-full px-3 py-1 mr-2">
                     <Text className="text-primary font-medium">{selectedFood.kcal} kcal</Text>
                   </View>
