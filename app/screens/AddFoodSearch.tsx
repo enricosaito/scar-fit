@@ -61,20 +61,21 @@ const CalorieTag = ({ calories }: { calories: number }) => {
 // Get emoji for food category
 const getFoodEmoji = (category: string): string => {
   const emojiMap: { [key: string]: string } = {
-    Proteínas: "🍗",
-    Carboidratos: "🍚",
-    Frutas: "🍎",
-    Vegetais: "🥦",
-    Laticínios: "🥛",
-    Carnes: "🥩",
-    Peixes: "🐟",
-    Ovos: "🥚",
-    Grãos: "🌾",
-    Nozes: "🥜",
-    Bebidas: "🥤",
-    Sobremesas: "🍰",
-    "Fast Food": "🍔",
-    Outros: "🍽️",
+    "Cereais e derivados": "🌾",
+    "Verduras, hortaliças e derivados": "🥦",
+    "Frutas e derivados": "🍉",
+    "Gorduras e óleos": "🥑",
+    "Pescados e frutos do mar": "🐟",
+    "Carnes e derivados": "🥩",
+    "Leite e derivados": "🥛",
+    "Bebidas (alcoólicas e não alcoólicas)": "🍹",
+    "Ovos e derivados": "🥚",
+    "Produtos açucarados": "🍰",
+    Miscelâneas: "🫙",
+    "Outros alimentos industrializados": "🥫",
+    "Alimentos preparados": "🍲",
+    "Leguminosas e derivados": "🫘",
+    "Nozes e sementes": "🥜",
   };
   return emojiMap[category] || "🍽️";
 };
