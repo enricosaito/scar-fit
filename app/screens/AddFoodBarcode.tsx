@@ -180,6 +180,7 @@ export default function BarcodeProductScreen() {
               fat_g: product.nutriments.fat || 0,
             }}
             imageUrl={product.image_url}
+            isBarcode={true}
           />
 
           {/* Add to diary form */}
