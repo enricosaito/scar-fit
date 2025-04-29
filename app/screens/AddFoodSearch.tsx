@@ -393,7 +393,21 @@ export default function FoodTracker() {
           {selectedFood && (
             <ScrollView className="p-4">
               {/* Food details */}
-              <FoodCard food={selectedFood} />
+              <View className="bg-card rounded-xl border border-border p-4 mb-4">
+                <View className="flex-row items-center">
+                  <Text className="text-3xl mr-3">{getFoodEmoji(selectedFood.description)}</Text>
+                  <View className="flex-1">
+                    <Text className="text-lg font-semibold text-foreground">{selectedFood.description}</Text>
+                    <Text className="text-muted-foreground text-sm">{selectedFood.category}</Text>
+                  </View>
+                </View>
+                <View className="mt-3 flex-row flex-wrap">
+                  <CalorieTag calories={selectedFood.kcal} />
+                  <MacroTag value={selectedFood.protein_g} color={macroColors.protein} label="prot." />
+                  <MacroTag value={selectedFood.carbs_g} color={macroColors.carbs} label="carb." />
+                  <MacroTag value={selectedFood.fat_g} color={macroColors.fat} label="gord." />
+                </View>
+              </View>
 
               {/* Quantity selection */}
               <Text className="font-semibold text-foreground mb-2">Quantidade (g)</Text>
