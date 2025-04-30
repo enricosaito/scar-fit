@@ -52,3 +52,5 @@ export const QuantityInput: React.FC<QuantityInputProps> = ({ quantity, onQuanti
     </View>
   );
 };
+
+export default QuantityInput;

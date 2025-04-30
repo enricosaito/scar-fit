@@ -27,3 +27,5 @@ export const MacroTag: React.FC<MacroTagProps> = ({ value, color, label, textCol
     </View>
   );
 };
+
+export default MacroTag;
