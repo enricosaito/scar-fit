@@ -6,7 +6,6 @@ import {
   SafeAreaView,
   TouchableOpacity,
   ActivityIndicator,
-  ScrollView,
   Image,
   TextInput,
   Keyboard,
@@ -205,139 +204,145 @@ export default function Login() {
       keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
     >
       <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
-        <ScrollView className="flex-1 px-4" contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled">
-          <View className="py-10 items-center mb-4">
+        <View className="flex-1 px-6" onTouchStart={Keyboard.dismiss}>
+          <View className="items-center pt-6 pb-4">
             <Image
               source={require("../../assets/images/SCARFIT_LOGO_W.png")}
-              style={{ width: 80, height: 80, marginBottom: 16 }}
+              style={{ width: 70, height: 70 }}
               resizeMode="contain"
               accessible={true}
               accessibilityLabel="Logo Scar Fit"
             />
-            <Text className="text-3xl font-bold text-foreground mb-2">Scar Fit</Text>
-            <Text className="text-muted-foreground text-center">Sua saúde em primeiro lugar</Text>
+            <Text className="text-2xl font-bold text-foreground mb-1">Scar Fit</Text>
+            <Text className="text-sm text-muted-foreground">Sua saúde em primeiro lugar</Text>
           </View>
 
-          <Text className="text-2xl font-bold text-foreground mb-6">Login</Text>
+          <View className="flex-1 justify-center">
+            <Text className="text-2xl font-bold text-foreground mb-4">Login</Text>
 
-          {errors.general ? <ErrorMessage message={errors.general} /> : null}
+            {errors.general ? <ErrorMessage message={errors.general} /> : null}
 
-          <FormField
-            label="Email"
-            value={form.email}
-            onChangeText={(text) => handleInputChange("email", text)}
-            placeholder="seu@email.com"
-            keyboardType="email-address"
-            autoCapitalize="none"
-            autoComplete="email"
-            textContentType="emailAddress"
-            returnKeyType="next"
-            onSubmitEditing={() => passwordRef.current?.focus()}
-            error={errors.email}
-            blurOnSubmit={false}
-            accessibilityLabel="Campo de email"
-            accessibilityHint="Digite seu endereço de email"
-          />
+            <FormField
+              label="Email"
+              value={form.email}
+              onChangeText={(text) => handleInputChange("email", text)}
+              placeholder="seu@email.com"
+              keyboardType="email-address"
+              autoCapitalize="none"
+              autoComplete="email"
+              textContentType="emailAddress"
+              returnKeyType="next"
+              onSubmitEditing={() => passwordRef.current?.focus()}
+              error={errors.email}
+              blurOnSubmit={false}
+              accessibilityLabel="Campo de email"
+              accessibilityHint="Digite seu endereço de email"
+            />
 
-          <FormField
-            ref={passwordRef}
-            label="Senha"
-            value={form.password}
-            onChangeText={(text) => handleInputChange("password", text)}
-            placeholder="Sua senha"
-            secureTextEntry
-            autoComplete="password"
-            textContentType="password"
-            returnKeyType="done"
-            onSubmitEditing={handleLogin}
-            error={errors.password}
-            accessibilityLabel="Campo de senha"
-            accessibilityHint="Digite sua senha"
-          />
+            <FormField
+              ref={passwordRef}
+              label="Senha"
+              value={form.password}
+              onChangeText={(text) => handleInputChange("password", text)}
+              placeholder="Sua senha"
+              secureTextEntry
+              autoComplete="password"
+              textContentType="password"
+              returnKeyType="done"
+              onSubmitEditing={handleLogin}
+              error={errors.password}
+              accessibilityLabel="Campo de senha"
+              accessibilityHint="Digite sua senha"
+            />
 
-          <Button
-            className="mb-4"
-            onPress={handleLogin}
-            disabled={loading.anyLoading}
-            accessibilityLabel="Botão de login"
-            accessibilityHint="Clique para entrar na sua conta"
-          >
-            {loading.login ? <ActivityIndicator size="small" color="white" /> : "Entrar"}
-          </Button>
+            <Button
+              className="mb-4"
+              onPress={handleLogin}
+              disabled={loading.anyLoading}
+              loading={loading.login}
+              loadingText="Entrando..."
+              accessibilityLabel="Entrar"
+              accessibilityHint="Clique para entrar na sua conta"
+            >
+              Entrar
+            </Button>
 
-          <TouchableOpacity
-            className="mb-6"
-            onPress={handleForgotPassword}
-            disabled={loading.anyLoading}
-            accessibilityLabel="Esqueci minha senha"
-            accessibilityRole="button"
-          >
-            <Text className="text-primary text-center">Esqueci minha senha</Text>
-          </TouchableOpacity>
+            <TouchableOpacity
+              className="mb-6"
+              onPress={handleForgotPassword}
+              disabled={loading.anyLoading}
+              accessibilityLabel="Esqueci minha senha"
+              accessibilityRole="button"
+            >
+              <Text className="text-primary text-center">Esqueci minha senha</Text>
+            </TouchableOpacity>
 
-          {/* Social Login Divider */}
-          <View className="flex-row items-center mb-6">
-            <View className="flex-1 h-px bg-border" />
-            <Text className="mx-4 text-muted-foreground">ou continue com</Text>
-            <View className="flex-1 h-px bg-border" />
-          </View>
+            {/* Social Login Divider */}
+            <View className="flex-row items-center mb-4">
+              <View className="flex-1 h-px bg-border" />
+              <Text className="mx-4 text-muted-foreground">ou continue com</Text>
+              <View className="flex-1 h-px bg-border" />
+            </View>
 
-          {/* Google Sign-in Button */}
-          <TouchableOpacity
-            className="flex-row items-center justify-center bg-card border border-border rounded-lg py-3 mb-6"
-            onPress={() => handleSocialLogin("google")}
-            disabled={loading.anyLoading}
-            accessibilityLabel="Entrar com Google"
-            accessibilityRole="button"
-          >
-            {loading.google ? (
-              <ActivityIndicator size="small" color={colors.foreground} style={{ marginRight: 8 }} />
-            ) : (
-              <Image
-                source={require("../../assets/images/google-logo.png")}
-                style={{ width: 20, height: 20 }}
-                resizeMode="contain"
+            {/* Google Sign-in Button */}
+            <TouchableOpacity
+              className="flex-row items-center justify-center bg-card border border-border rounded-lg py-3 mb-4"
+              onPress={() => handleSocialLogin("google")}
+              disabled={loading.anyLoading}
+              accessibilityLabel="Entrar com Google"
+              accessibilityRole="button"
+            >
+              {loading.google ? (
+                <ActivityIndicator size="small" color={colors.foreground} style={{ marginRight: 8 }} />
+              ) : (
+                <Image
+                  source={require("../../assets/images/google-logo.png")}
+                  style={{ width: 20, height: 20 }}
+                  resizeMode="contain"
+                />
+              )}
+              <Text className="text-foreground font-medium ml-2">
+                {loading.google ? "Processando..." : "Entrar com Google"}
+              </Text>
+            </TouchableOpacity>
+
+            {/* Apple Sign-in Button */}
+            {appleAuthAvailable && (
+              <AppleSignInButton
+                onPress={() => handleSocialLogin("apple")}
+                loading={loading.apple}
+                disabled={loading.anyLoading}
               />
             )}
-            <Text className="text-foreground font-medium ml-2">
-              {loading.google ? "Processando..." : "Entrar com Google"}
-            </Text>
-          </TouchableOpacity>
-
-          {/* Apple Sign-in Button */}
-          {appleAuthAvailable && (
-            <AppleSignInButton
-              onPress={() => handleSocialLogin("apple")}
-              loading={loading.apple}
-              disabled={loading.anyLoading}
-            />
-          )}
-
-          {/* Terms and Privacy Policy Agreement */}
-          <Text className="text-center text-muted-foreground text-xs mt-2 mb-6 px-4">
-            Ao continuar, você concorda com nossos Termos de Serviço e{" "}
-            <Text
-              className="text-primary"
-              onPress={() => router.push("/screens/PrivacyPolicy")}
-              accessibilityRole="link"
-            >
-              Política de Privacidade
-            </Text>
-            .
-          </Text>
-
-          <View className="flex-row justify-center items-center mb-4">
-            <Text className="text-muted-foreground">Não tem uma conta? </Text>
-            <TouchableOpacity
-              onPress={() => router.push("/auth/RegisterScreen")}
-              accessibilityLabel="Registre-se"
-              accessibilityRole="button"
-              disabled={loading.anyLoading}
-            >
-              <Text className="text-primary font-medium">Registre-se</Text>
-            </TouchableOpacity>
           </View>
-        </ScrollView>
+
+          <View className="pb-6">
+            {/* Terms and Privacy Policy Agreement */}
+            <Text className="text-center text-muted-foreground text-xs mb-4 px-4">
+              Ao continuar, você concorda com nossos Termos de Serviço e{" "}
+              <Text
+                className="text-primary"
+                onPress={() => router.push("/screens/PrivacyPolicy")}
+                accessibilityRole="link"
+              >
+                Política de Privacidade
+              </Text>
+              .
+            </Text>
+
+            <View className="flex-row justify-center items-center">
+              <Text className="text-muted-foreground">Não tem uma conta? </Text>
+              <TouchableOpacity
+                onPress={() => router.push("/auth/RegisterScreen")}
+                accessibilityLabel="Registre-se"
+                accessibilityRole="button"
+                disabled={loading.anyLoading}
+              >
+                <Text className="text-primary font-medium">Registre-se</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
       </SafeAreaView>
     </KeyboardAvoidingView>
   );
