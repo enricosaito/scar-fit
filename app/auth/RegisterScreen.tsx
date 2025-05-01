@@ -1,6 +1,16 @@
 // app/auth/register.tsx
-import React, { useState, useEffect } from "react";
-import { Text, View, SafeAreaView, TouchableOpacity, ActivityIndicator, ScrollView, Image } from "react-native";
+import React, { useState, useEffect, useCallback } from "react";
+import {
+  Text,
+  View,
+  SafeAreaView,
+  TouchableOpacity,
+  ActivityIndicator,
+  Image,
+  Keyboard,
+  KeyboardAvoidingView,
+  Platform,
+} from "react-native";
 import { useRouter } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import { useAuth } from "../context/AuthContext";
@@ -8,53 +18,43 @@ import { useTheme } from "../context/ThemeContext";
 import Button from "../components/ui/Button";
 import AppleSignInButton from "../components/ui/AppleSignInButton";
 import FormField from "../components/ui/FormField";
+import ErrorMessage from "../components/ui/ErrorMessage";
 
 export default function Register() {
   const router = useRouter();
   const { colors } = useTheme();
-  const { signUp, signIn, signInWithGoogle, signInWithApple, isAppleAuthAvailable, loading } = useAuth();
+  const { signUp, signIn, signInWithGoogle, signInWithApple, isAppleAuthAvailable } = useAuth();
 
   const [appleAuthAvailable, setAppleAuthAvailable] = useState(false);
-  const [appleLoading, setAppleLoading] = useState(false);
+  const [loading, setLoading] = useState({
+    register: false,
+    google: false,
+    apple: false,
+    anyLoading: false,
+  });
 
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [errorMessage, setErrorMessage] = useState("");
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [form, setForm] = useState({
+    email: "",
+    password: "",
+    confirmPassword: "",
+  });
 
-  const validate = () => {
-    const newErrors: Record<string, string> = {};
-    let isValid = true;
+  const [errors, setErrors] = useState({
+    email: "",
+    password: "",
+    confirmPassword: "",
+    general: "",
+  });
 
-    if (!email) {
-      newErrors.email = "O email é obrigatório";
-      isValid = false;
-    } else if (!/\S+@\S+\.\S+/.test(email)) {
-      newErrors.email = "Formato de email inválido";
-      isValid = false;
-    }
+  // Update loading.anyLoading when any specific loading state changes
+  useEffect(() => {
+    setLoading((prev) => ({
+      ...prev,
+      anyLoading: prev.register || prev.google || prev.apple,
+    }));
+  }, [loading.register, loading.google, loading.apple]);
 
-    if (!password) {
-      newErrors.password = "A senha é obrigatória";
-      isValid = false;
-    } else if (password.length < 6) {
-      newErrors.password = "A senha deve ter pelo menos 6 caracteres";
-      isValid = false;
-    }
-
-    if (!confirmPassword) {
-      newErrors.confirmPassword = "Confirme sua senha";
-      isValid = false;
-    } else if (password !== confirmPassword) {
-      newErrors.confirmPassword = "As senhas não coincidem";
-      isValid = false;
-    }
-
-    setErrors(newErrors);
-    return isValid;
-  };
-
+  // Check Apple authentication availability
   useEffect(() => {
     const checkAppleAuth = async () => {
       const available = await isAppleAuthAvailable();
@@ -64,22 +64,65 @@ export default function Register() {
     checkAppleAuth();
   }, []);
 
-  const handleRegister = async () => {
-    // Reset error message
-    setErrorMessage("");
+  const validate = useCallback((): boolean => {
+    let isValid = true;
+    const newErrors = {
+      email: "",
+      password: "",
+      confirmPassword: "",
+      general: "",
+    };
 
-    // Validation
-    if (!validate()) {
-      return;
+    if (!form.email.trim()) {
+      newErrors.email = "O email é obrigatório";
+      isValid = false;
+    } else if (!/\S+@\S+\.\S+/.test(form.email)) {
+      newErrors.email = "Formato de email inválido";
+      isValid = false;
     }
 
+    if (!form.password) {
+      newErrors.password = "A senha é obrigatória";
+      isValid = false;
+    } else if (form.password.length < 6) {
+      newErrors.password = "A senha deve ter pelo menos 6 caracteres";
+      isValid = false;
+    }
+
+    if (!form.confirmPassword) {
+      newErrors.confirmPassword = "Confirme sua senha";
+      isValid = false;
+    } else if (form.password !== form.confirmPassword) {
+      newErrors.confirmPassword = "As senhas não coincidem";
+      isValid = false;
+    }
+
+    setErrors(newErrors);
+    return isValid;
+  }, [form]);
+
+  const handleInputChange = useCallback((field: "email" | "password" | "confirmPassword", value: string) => {
+    setErrors((prev) => ({ ...prev, [field]: "", general: "" }));
+    setForm((prev) => ({ ...prev, [field]: value }));
+  }, []);
+
+  const handleRegister = useCallback(async () => {
+    Keyboard.dismiss();
+
+    if (!validate()) return;
+
+    setLoading((prev) => ({ ...prev, register: true }));
+
     try {
-      const { error } = await signUp(email, password);
+      const { error } = await signUp(form.email, form.password);
 
       if (error) {
-        setErrorMessage(error.message || "Erro ao criar conta. Tente novamente.");
+        setErrors((prev) => ({
+          ...prev,
+          general: error.message || "Erro ao criar conta. Tente novamente.",
+        }));
       } else {
-        const signInResult = await signIn(email, password);
+        const signInResult = await signIn(form.email, form.password);
 
         if (!signInResult.error) {
           router.replace("/screens/onboarding");
@@ -88,130 +131,171 @@ export default function Register() {
         }
       }
     } catch (error: any) {
-      setErrorMessage(error.message || "Ocorreu um erro inesperado. Tente novamente.");
-    }
-  };
-
-  const handleAppleSignUp = async () => {
-    try {
-      setErrorMessage("");
-      setAppleLoading(true);
-
-      const { error } = await signInWithApple();
-
-      if (error) {
-        setErrorMessage(error.message || "Erro ao se cadastrar com Apple. Tente novamente.");
-      } else {
-        // Redirect to onboarding
-        router.replace("/screens/onboarding");
-      }
-    } catch (error: any) {
-      setErrorMessage(error.message || "Ocorreu um erro inesperado. Tente novamente.");
+      setErrors((prev) => ({
+        ...prev,
+        general: error.message || "Ocorreu um erro inesperado. Tente novamente.",
+      }));
     } finally {
-      setAppleLoading(false);
+      setLoading((prev) => ({ ...prev, register: false }));
     }
-  };
+  }, [form, validate, signUp, signIn]);
 
-  const handleGoogleSignUp = async () => {
-    try {
-      setErrorMessage("");
-      const { error } = await signInWithGoogle();
+  const handleSocialRegister = useCallback(
+    async (provider: "google" | "apple") => {
+      Keyboard.dismiss();
 
-      if (error) {
-        setErrorMessage(error.message || "Erro ao se cadastrar com Google. Tente novamente.");
-      } else {
-        // Redirect to onboarding (or home with AuthGuard handling)
-        router.replace("/screens/onboarding");
+      setErrors((prev) => ({ ...prev, general: "" }));
+      setLoading((prev) => ({ ...prev, [provider]: true }));
+
+      try {
+        const { error } = provider === "google" ? await signInWithGoogle() : await signInWithApple();
+
+        if (error) {
+          setErrors((prev) => ({
+            ...prev,
+            general:
+              error.message ||
+              `Erro ao se cadastrar com ${provider === "google" ? "Google" : "Apple"}. Tente novamente.`,
+          }));
+        } else {
+          router.replace("/screens/onboarding");
+        }
+      } catch (error: any) {
+        setErrors((prev) => ({
+          ...prev,
+          general: error.message || "Ocorreu um erro inesperado. Tente novamente.",
+        }));
+      } finally {
+        setLoading((prev) => ({ ...prev, [provider]: false }));
       }
-    } catch (error: any) {
-      setErrorMessage(error.message || "Ocorreu um erro inesperado. Tente novamente.");
-    }
-  };
+    },
+    [signInWithGoogle, signInWithApple]
+  );
 
   return (
-    <SafeAreaView className="flex-1 bg-background">
-      <ScrollView className="flex-1 px-4">
-        <View className="py-10 items-center mb-6">
-          <Image
-            source={require("../../assets/images/SCARFIT_LOGO_W.png")}
-            style={{ width: 80, height: 80, marginBottom: 16 }}
-            resizeMode="contain"
-          />
-        </View>
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
+    >
+      <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
+        <View className="flex-1 px-6" onTouchStart={Keyboard.dismiss}>
+          <View className="py-6">
+            <TouchableOpacity onPress={() => router.back()} className="mb-4 p-2 w-10">
+              <Feather name="arrow-left" size={24} color={colors.foreground} />
+            </TouchableOpacity>
 
-        <Text className="text-2xl font-bold text-foreground mb-6">Criar Conta</Text>
+            <View className="items-center mb-6">
+              <Image
+                source={require("../../assets/images/SCARFIT_LOGO_W.png")}
+                style={{ width: 90, height: 90 }}
+                resizeMode="contain"
+                accessible={true}
+                accessibilityLabel="Logo Scar Fit"
+              />
+              <Text className="text-2xl font-bold text-foreground mb-2">Scar Fit</Text>
+              <Text className="text-sm text-muted-foreground text-center px-8">
+                Comece sua jornada fitness de forma inteligente
+              </Text>
+            </View>
 
-        {errorMessage ? (
-          <View className="mb-4 bg-red-500/10 p-3 rounded-lg border border-red-500/30">
-            <Text className="text-red-500">{errorMessage}</Text>
+            <Text className="text-2xl font-bold text-foreground mb-4">Criar Conta</Text>
+
+            {errors.general ? <ErrorMessage message={errors.general} /> : null}
+
+            <FormField
+              label="Email"
+              value={form.email}
+              onChangeText={(text) => handleInputChange("email", text)}
+              placeholder="seu@email.com"
+              keyboardType="email-address"
+              autoCapitalize="none"
+              autoComplete="email"
+              textContentType="emailAddress"
+              error={errors.email}
+              accessibilityLabel="Campo de email"
+              accessibilityHint="Digite seu endereço de email"
+            />
+
+            <FormField
+              label="Senha"
+              value={form.password}
+              onChangeText={(text) => handleInputChange("password", text)}
+              placeholder="Crie uma senha"
+              secureTextEntry
+              autoComplete="password"
+              textContentType="password"
+              error={errors.password}
+              accessibilityLabel="Campo de senha"
+              accessibilityHint="Digite sua senha"
+            />
+
+            <FormField
+              label="Confirmar Senha"
+              value={form.confirmPassword}
+              onChangeText={(text) => handleInputChange("confirmPassword", text)}
+              placeholder="Confirme sua senha"
+              secureTextEntry
+              autoComplete="password"
+              textContentType="password"
+              error={errors.confirmPassword}
+              accessibilityLabel="Campo de confirmação de senha"
+              accessibilityHint="Digite sua senha novamente"
+            />
+
+            <Button
+              className="mb-4"
+              onPress={handleRegister}
+              disabled={loading.anyLoading}
+              loading={loading.register}
+              loadingText="Criando conta..."
+              accessibilityLabel="Criar conta"
+              accessibilityHint="Clique para criar sua conta"
+            >
+              Criar Conta
+            </Button>
+
+            {/* Social Login Divider */}
+            <View className="flex-row items-center mb-4">
+              <View className="flex-1 h-px bg-border" />
+              <Text className="mx-4 text-muted-foreground">ou continue com</Text>
+              <View className="flex-1 h-px bg-border" />
+            </View>
+
+            {/* Google Sign-up Button */}
+            <TouchableOpacity
+              className="flex-row items-center justify-center bg-card border border-border rounded-lg py-3 mb-4"
+              onPress={() => handleSocialRegister("google")}
+              disabled={loading.anyLoading}
+              accessibilityLabel="Criar conta com Google"
+              accessibilityRole="button"
+            >
+              {loading.google ? (
+                <ActivityIndicator size="small" color={colors.foreground} style={{ marginRight: 8 }} />
+              ) : (
+                <Image
+                  source={require("../../assets/images/google-logo.png")}
+                  style={{ width: 20, height: 20 }}
+                  resizeMode="contain"
+                />
+              )}
+              <Text className="text-foreground font-medium ml-2">
+                {loading.google ? "Processando..." : "Continuar com Google"}
+              </Text>
+            </TouchableOpacity>
+
+            {/* Apple Sign-up Button */}
+            {appleAuthAvailable && (
+              <AppleSignInButton
+                onPress={() => handleSocialRegister("apple")}
+                loading={loading.apple}
+                disabled={loading.anyLoading}
+                text="Continuar com Apple"
+              />
+            )}
           </View>
-        ) : null}
-
-        <FormField
-          label="Email"
-          value={email}
-          onChangeText={setEmail}
-          placeholder="seu@email.com"
-          keyboardType="email-address"
-          autoCapitalize="none"
-          error={errors.email}
-        />
-
-        <FormField
-          label="Senha"
-          value={password}
-          onChangeText={setPassword}
-          placeholder="Crie uma senha"
-          secureTextEntry
-          error={errors.password}
-        />
-
-        <FormField
-          label="Confirmar Senha"
-          value={confirmPassword}
-          onChangeText={setConfirmPassword}
-          placeholder="Confirme sua senha"
-          secureTextEntry
-          error={errors.confirmPassword}
-        />
-
-        <Button className="mb-6" onPress={handleRegister} disabled={loading}>
-          {loading ? <ActivityIndicator size="small" color="white" /> : "Criar Conta"}
-        </Button>
-
-        {/* Social Login Divider */}
-        <View className="flex-row items-center mb-6">
-          <View className="flex-1 h-px bg-border" />
-          <Text className="mx-4 text-muted-foreground">ou continue com</Text>
-          <View className="flex-1 h-px bg-border" />
         </View>
-
-        {/* Google Sign-up Button */}
-        <TouchableOpacity
-          className="flex-row items-center justify-center bg-card border border-border rounded-lg py-3 mb-6"
-          onPress={handleGoogleSignUp}
-          disabled={loading}
-        >
-          <Image
-            source={require("../../assets/images/google-logo.png")}
-            style={{ width: 20, height: 20 }}
-            resizeMode="contain"
-          />
-          <Text className="text-foreground font-medium ml-2">Continuar com Google</Text>
-        </TouchableOpacity>
-
-        {/* Apple Sign-up Button */}
-        {appleAuthAvailable && (
-          <AppleSignInButton onPress={handleAppleSignUp} loading={appleLoading} text="Continuar com Apple" />
-        )}
-
-        <View className="flex-row justify-center items-center">
-          <Text className="text-muted-foreground">Já tem uma conta? </Text>
-          <TouchableOpacity onPress={() => router.push("/auth/LoginScreen")}>
-            <Text className="text-primary font-medium">Entrar</Text>
-          </TouchableOpacity>
-        </View>
-      </ScrollView>
-    </SafeAreaView>
+      </SafeAreaView>
+    </KeyboardAvoidingView>
   );
 }
