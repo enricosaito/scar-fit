@@ -132,11 +132,11 @@ export default function Register() {
     <SafeAreaView className="flex-1 bg-background">
       <ScrollView className="flex-1 px-4">
         <View className="py-10 items-center mb-6">
-          <View className="w-20 h-20 bg-primary rounded-full items-center justify-center mb-4">
-            <Feather name="activity" size={36} color="white" />
-          </View>
-          <Text className="text-3xl font-bold text-foreground mb-2">Scar Fit</Text>
-          <Text className="text-muted-foreground text-center">Sua saúde em primeiro lugar</Text>
+          <Image
+            source={require("../../assets/images/SCARFIT_LOGO_W.png")}
+            style={{ width: 80, height: 80, marginBottom: 16 }}
+            resizeMode="contain"
+          />
         </View>
 
         <Text className="text-2xl font-bold text-foreground mb-6">Criar Conta</Text>
