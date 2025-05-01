@@ -205,19 +205,25 @@ export default function Login() {
     >
       <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
         <View className="flex-1 px-6" onTouchStart={Keyboard.dismiss}>
-          <View className="items-center pt-6 pb-4">
-            <Image
-              source={require("../../assets/images/SCARFIT_LOGO_W.png")}
-              style={{ width: 70, height: 70 }}
-              resizeMode="contain"
-              accessible={true}
-              accessibilityLabel="Logo Scar Fit"
-            />
-            <Text className="text-2xl font-bold text-foreground mb-1">Scar Fit</Text>
-            <Text className="text-sm text-muted-foreground">Sua saúde em primeiro lugar</Text>
-          </View>
+          <View className="py-6">
+            <TouchableOpacity onPress={() => router.back()} className="mb-4 p-2 w-10">
+              <Feather name="arrow-left" size={24} color={colors.foreground} />
+            </TouchableOpacity>
 
-          <View className="flex-1 justify-center">
+            <View className="items-center mb-6">
+              <Image
+                source={require("../../assets/images/SCARFIT_LOGO_W.png")}
+                style={{ width: 90, height: 90 }}
+                resizeMode="contain"
+                accessible={true}
+                accessibilityLabel="Logo Scar Fit"
+              />
+              <Text className="text-2xl font-bold text-foreground mb-2">Scar Fit</Text>
+              <Text className="text-sm text-muted-foreground text-center px-8">
+                Comece sua jornada fitness de forma inteligente
+              </Text>
+            </View>
+
             <Text className="text-2xl font-bold text-foreground mb-4">Login</Text>
 
             {errors.general ? <ErrorMessage message={errors.general} /> : null}
@@ -314,33 +320,6 @@ export default function Login() {
                 disabled={loading.anyLoading}
               />
             )}
-          </View>
-
-          <View className="pb-6">
-            {/* Terms and Privacy Policy Agreement */}
-            <Text className="text-center text-muted-foreground text-xs mb-4 px-4">
-              Ao continuar, você concorda com nossos Termos de Serviço e{" "}
-              <Text
-                className="text-primary"
-                onPress={() => router.push("/screens/PrivacyPolicy")}
-                accessibilityRole="link"
-              >
-                Política de Privacidade
-              </Text>
-              .
-            </Text>
-
-            <View className="flex-row justify-center items-center">
-              <Text className="text-muted-foreground">Não tem uma conta? </Text>
-              <TouchableOpacity
-                onPress={() => router.push("/auth/RegisterScreen")}
-                accessibilityLabel="Registre-se"
-                accessibilityRole="button"
-                disabled={loading.anyLoading}
-              >
-                <Text className="text-primary font-medium">Registre-se</Text>
-              </TouchableOpacity>
-            </View>
           </View>
         </View>
       </SafeAreaView>
