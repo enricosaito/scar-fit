@@ -658,3 +658,5 @@ export const getFoodEmoji = (foodName: string): string => {
     return "🍽️"; // Default food emoji
   }
 }; 
+
+export default getFoodEmoji;
