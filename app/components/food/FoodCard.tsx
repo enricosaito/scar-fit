@@ -91,3 +91,5 @@ export function FoodCard({ food, showMacros = true, quantity = 100, imageUrl, is
     </View>
   );
 }
+
+export default FoodCard;

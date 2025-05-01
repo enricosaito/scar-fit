@@ -1,6 +1,17 @@
 // app/auth/LoginScreen.tsx
-import React, { useState, useEffect } from "react";
-import { Text, View, SafeAreaView, TouchableOpacity, ActivityIndicator, ScrollView, Image } from "react-native";
+import React, { useState, useCallback, useEffect, useRef } from "react";
+import {
+  Text,
+  View,
+  SafeAreaView,
+  TouchableOpacity,
+  ActivityIndicator,
+  Image,
+  TextInput,
+  Keyboard,
+  KeyboardAvoidingView,
+  Platform,
+} from "react-native";
 import { useRouter } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import { useAuth } from "../context/AuthContext";
@@ -8,23 +19,47 @@ import { useTheme } from "../context/ThemeContext";
 import Button from "../components/ui/Button";
 import AppleSignInButton from "../components/ui/AppleSignInButton";
 import FormField from "../components/ui/FormField";
-import { supabase } from "../lib/supabase";
+import ErrorMessage from "../components/ui/ErrorMessage";
 
 export default function Login() {
   const router = useRouter();
   const { colors } = useTheme();
   const { signIn, signInWithGoogle, signInWithApple, isAppleAuthAvailable } = useAuth();
+  const passwordRef = useRef<TextInput>(null);
 
-  const [loginLoading, setLoginLoading] = useState(false);
-  const [googleLoading, setGoogleLoading] = useState(false);
+  // Form state
+  const [form, setForm] = useState({
+    email: "",
+    password: "",
+  });
 
+  // Loading states centralized
+  const [loading, setLoading] = useState({
+    login: false,
+    google: false,
+    apple: false,
+    anyLoading: false, // Derived property for "any loading state active"
+  });
+
+  // Error states
+  const [errors, setErrors] = useState({
+    email: "",
+    password: "",
+    general: "",
+  });
+
+  // Platform feature availability
   const [appleAuthAvailable, setAppleAuthAvailable] = useState(false);
-  const [appleLoading, setAppleLoading] = useState(false);
 
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [errorMessage, setErrorMessage] = useState("");
+  // Update loading.anyLoading when any specific loading state changes
+  useEffect(() => {
+    setLoading((prev) => ({
+      ...prev,
+      anyLoading: prev.login || prev.google || prev.apple,
+    }));
+  }, [loading.login, loading.google, loading.apple]);
 
+  // Check Apple authentication availability
   useEffect(() => {
     const checkAppleAuth = async () => {
       const available = await isAppleAuthAvailable();
@@ -34,149 +69,260 @@ export default function Login() {
     checkAppleAuth();
   }, []);
 
-  const handleLogin = async () => {
-    if (!email || !password) {
-      setErrorMessage("Por favor, preencha todos os campos.");
-      return;
+  // Form input handlers with error clearing
+  const handleInputChange = useCallback((field: "email" | "password", value: string) => {
+    // Clear error for this field when user types
+    setErrors((prev) => ({ ...prev, [field]: "", general: "" }));
+    setForm((prev) => ({ ...prev, [field]: value }));
+  }, []);
+
+  // Validate email format
+  const validateEmail = useCallback((email: string): boolean => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  }, []);
+
+  // Validate form before submission
+  const validateForm = useCallback((): boolean => {
+    let isValid = true;
+    const newErrors = { email: "", password: "", general: "" };
+
+    // Check email
+    if (!form.email.trim()) {
+      newErrors.email = "Email é obrigatório";
+      isValid = false;
+    } else if (!validateEmail(form.email)) {
+      newErrors.email = "Formato de email inválido";
+      isValid = false;
     }
 
-    setLoginLoading(true);
+    // Check password
+    if (!form.password) {
+      newErrors.password = "Senha é obrigatória";
+      isValid = false;
+    } else if (form.password.length < 6) {
+      newErrors.password = "Senha deve ter pelo menos 6 caracteres";
+      isValid = false;
+    }
+
+    setErrors(newErrors);
+    return isValid;
+  }, [form, validateEmail]);
+
+  // Login handler with validation
+  const handleLogin = useCallback(async () => {
+    Keyboard.dismiss();
+
+    if (!validateForm()) return;
+
+    setLoading((prev) => ({ ...prev, login: true }));
+
     try {
-      const { error } = await signIn(email, password);
+      const { error } = await signIn(form.email, form.password);
 
       if (error) {
-        setErrorMessage(error.message || "Erro ao fazer login. Tente novamente.");
+        // Determine the appropriate error message
+        if (error.message?.includes("Invalid login credentials")) {
+          setErrors({
+            email: "",
+            password: "",
+            general: "Email ou senha incorretos. Tente novamente.",
+          });
+        } else {
+          setErrors({
+            email: "",
+            password: "",
+            general: error.message || "Erro ao fazer login. Tente novamente.",
+          });
+        }
       }
       // Don't redirect here - let AuthGuard handle it
     } catch (error: any) {
-      setErrorMessage(error.message || "Ocorreu um erro inesperado. Tente novamente.");
+      setErrors({
+        email: "",
+        password: "",
+        general: error.message || "Ocorreu um erro inesperado. Tente novamente.",
+      });
     } finally {
-      setLoginLoading(false);
+      setLoading((prev) => ({ ...prev, login: false }));
     }
-  };
+  }, [form, validateForm, signIn]);
 
-  const handleAppleLogin = async () => {
-    try {
-      setErrorMessage("");
-      setAppleLoading(true);
+  // Generic social login handler
+  const handleSocialLogin = useCallback(
+    async (provider: "google" | "apple") => {
+      Keyboard.dismiss();
 
-      const { error } = await signInWithApple();
+      // Clear any previous errors
+      setErrors({ email: "", password: "", general: "" });
 
-      if (error) {
-        console.error("Apple login error:", error);
-        setErrorMessage(error.message || "Erro ao fazer login com Apple. Tente novamente.");
+      // Set the appropriate loading state
+      setLoading((prev) => ({
+        ...prev,
+        [provider]: true,
+      }));
+
+      try {
+        const { error } = provider === "google" ? await signInWithGoogle() : await signInWithApple();
+
+        if (error) {
+          console.error(`${provider} login error:`, error);
+          setErrors({
+            email: "",
+            password: "",
+            general:
+              error.message ||
+              `Erro ao fazer login com ${provider === "google" ? "Google" : "Apple"}. Tente novamente.`,
+          });
+        }
+        // Don't redirect or check session - let AuthGuard handle navigation
+      } catch (error: any) {
+        console.error("Unexpected error:", error);
+        setErrors({
+          email: "",
+          password: "",
+          general: "Ocorreu um erro inesperado. Tente novamente.",
+        });
+      } finally {
+        setLoading((prev) => ({
+          ...prev,
+          [provider]: false,
+        }));
       }
-    } catch (error) {
-      console.error("Unexpected error:", error);
-      setErrorMessage("Ocorreu um erro inesperado. Tente novamente.");
-    } finally {
-      setAppleLoading(false);
-    }
-  };
+    },
+    [signInWithGoogle, signInWithApple]
+  );
 
-  const handleGoogleLogin = async () => {
-    try {
-      setErrorMessage("");
-      setGoogleLoading(true);
-
-      const { error } = await signInWithGoogle();
-
-      if (error) {
-        console.error("Google login error:", error);
-        setErrorMessage(error.message || "Erro ao fazer login com Google. Tente novamente.");
-      }
-      // Don't redirect or check session - let AuthGuard handle navigation
-    } catch (error) {
-      console.error("Unexpected error:", error);
-      setErrorMessage("Ocorreu um erro inesperado. Tente novamente.");
-    } finally {
-      setGoogleLoading(false);
-    }
-  };
+  const handleForgotPassword = useCallback(() => {
+    router.push("/auth/ForgotPassword");
+  }, [router]);
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.background }}>
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
+    >
       <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
-        <ScrollView className="flex-1 px-4">
-          <View className="py-10 items-center mb-6">
-            <View className="w-20 h-20 bg-primary rounded-full items-center justify-center mb-4">
-              <Feather name="zap" size={36} color="white" />
-            </View>
-            <Text className="text-3xl font-bold text-foreground mb-2">Scar Fit</Text>
-            <Text className="text-muted-foreground text-center">Sua saúde em primeiro lugar</Text>
-          </View>
+        <View className="flex-1 px-6" onTouchStart={Keyboard.dismiss}>
+          <View className="py-6">
+            <TouchableOpacity onPress={() => router.back()} className="mb-4 p-2 w-10">
+              <Feather name="arrow-left" size={24} color={colors.foreground} />
+            </TouchableOpacity>
 
-          <Text className="text-2xl font-bold text-foreground mb-6">Login</Text>
-
-          {errorMessage ? (
-            <View className="mb-4 bg-red-500/10 p-3 rounded-lg border border-red-500/30">
-              <Text className="text-red-500">{errorMessage}</Text>
-            </View>
-          ) : null}
-
-          <FormField
-            label="Email"
-            value={email}
-            onChangeText={setEmail}
-            placeholder="seu@email.com"
-            keyboardType="email-address"
-            autoCapitalize="none"
-          />
-
-          <FormField
-            label="Senha"
-            value={password}
-            onChangeText={setPassword}
-            placeholder="Sua senha"
-            secureTextEntry
-          />
-
-          <Button className="mb-4" onPress={handleLogin} disabled={loginLoading}>
-            {loginLoading ? <ActivityIndicator size="small" color="white" /> : "Entrar"}
-          </Button>
-
-          <TouchableOpacity className="mb-6" onPress={() => router.push("/auth/ForgotPassword")}>
-            <Text className="text-primary text-center">Esqueci minha senha</Text>
-          </TouchableOpacity>
-
-          {/* Social Login Divider */}
-          <View className="flex-row items-center mb-6">
-            <View className="flex-1 h-px bg-border" />
-            <Text className="mx-4 text-muted-foreground">ou continue com</Text>
-            <View className="flex-1 h-px bg-border" />
-          </View>
-
-          {/* Google Sign-in Button */}
-          <TouchableOpacity
-            className="flex-row items-center justify-center bg-card border border-border rounded-lg py-3 mb-6"
-            onPress={handleGoogleLogin}
-            disabled={googleLoading}
-          >
-            {googleLoading ? (
-              <ActivityIndicator size="small" color={colors.foreground} style={{ marginRight: 8 }} />
-            ) : (
+            <View className="items-center mb-6">
               <Image
-                source={require("../../assets/images/google-logo.png")}
-                style={{ width: 20, height: 20 }}
+                source={require("../../assets/images/SCARFIT_LOGO_W.png")}
+                style={{ width: 90, height: 90 }}
                 resizeMode="contain"
+                accessible={true}
+                accessibilityLabel="Logo Scar Fit"
+              />
+              <Text className="text-2xl font-bold text-foreground mb-2">Scar Fit</Text>
+              <Text className="text-sm text-muted-foreground text-center px-8">
+                Comece sua jornada fitness de forma inteligente
+              </Text>
+            </View>
+
+            <Text className="text-2xl font-bold text-foreground mb-4">Login</Text>
+
+            {errors.general ? <ErrorMessage message={errors.general} /> : null}
+
+            <FormField
+              label="Email"
+              value={form.email}
+              onChangeText={(text) => handleInputChange("email", text)}
+              placeholder="seu@email.com"
+              keyboardType="email-address"
+              autoCapitalize="none"
+              autoComplete="email"
+              textContentType="emailAddress"
+              returnKeyType="next"
+              onSubmitEditing={() => passwordRef.current?.focus()}
+              error={errors.email}
+              blurOnSubmit={false}
+              accessibilityLabel="Campo de email"
+              accessibilityHint="Digite seu endereço de email"
+            />
+
+            <FormField
+              ref={passwordRef}
+              label="Senha"
+              value={form.password}
+              onChangeText={(text) => handleInputChange("password", text)}
+              placeholder="Sua senha"
+              secureTextEntry
+              autoComplete="password"
+              textContentType="password"
+              returnKeyType="done"
+              onSubmitEditing={handleLogin}
+              error={errors.password}
+              accessibilityLabel="Campo de senha"
+              accessibilityHint="Digite sua senha"
+            />
+
+            <Button
+              className="mb-4"
+              onPress={handleLogin}
+              disabled={loading.anyLoading}
+              loading={loading.login}
+              loadingText="Entrando..."
+              accessibilityLabel="Entrar"
+              accessibilityHint="Clique para entrar na sua conta"
+            >
+              Entrar
+            </Button>
+
+            <TouchableOpacity
+              className="mb-6"
+              onPress={handleForgotPassword}
+              disabled={loading.anyLoading}
+              accessibilityLabel="Esqueci minha senha"
+              accessibilityRole="button"
+            >
+              <Text className="text-primary text-center">Esqueci minha senha</Text>
+            </TouchableOpacity>
+
+            {/* Social Login Divider */}
+            <View className="flex-row items-center mb-4">
+              <View className="flex-1 h-px bg-border" />
+              <Text className="mx-4 text-muted-foreground">ou continue com</Text>
+              <View className="flex-1 h-px bg-border" />
+            </View>
+
+            {/* Google Sign-in Button */}
+            <TouchableOpacity
+              className="flex-row items-center justify-center bg-card border border-border rounded-lg py-3 mb-4"
+              onPress={() => handleSocialLogin("google")}
+              disabled={loading.anyLoading}
+              accessibilityLabel="Entrar com Google"
+              accessibilityRole="button"
+            >
+              {loading.google ? (
+                <ActivityIndicator size="small" color={colors.foreground} style={{ marginRight: 8 }} />
+              ) : (
+                <Image
+                  source={require("../../assets/images/google-logo.png")}
+                  style={{ width: 20, height: 20 }}
+                  resizeMode="contain"
+                />
+              )}
+              <Text className="text-foreground font-medium ml-2">
+                {loading.google ? "Processando..." : "Entrar com Google"}
+              </Text>
+            </TouchableOpacity>
+
+            {/* Apple Sign-in Button */}
+            {appleAuthAvailable && (
+              <AppleSignInButton
+                onPress={() => handleSocialLogin("apple")}
+                loading={loading.apple}
+                disabled={loading.anyLoading}
               />
             )}
-            <Text className="text-foreground font-medium ml-2">
-              {googleLoading ? "Processando..." : "Entrar com Google"}
-            </Text>
-          </TouchableOpacity>
-
-          {/* Apple Sign-in Button */}
-          {appleAuthAvailable && <AppleSignInButton onPress={handleAppleLogin} loading={appleLoading} />}
-
-          <View className="flex-row justify-center items-center">
-            <Text className="text-muted-foreground">Não tem uma conta? </Text>
-            <TouchableOpacity onPress={() => router.push("/auth/RegisterScreen")}>
-              <Text className="text-primary font-medium">Registre-se</Text>
-            </TouchableOpacity>
           </View>
-        </ScrollView>
+        </View>
       </SafeAreaView>
-    </View>
+    </KeyboardAvoidingView>
   );
 }

@@ -19,3 +19,5 @@ export const CalorieTag: React.FC<CalorieTagProps> = ({ calories }) => {
     </View>
   );
 };
+
+export default CalorieTag;

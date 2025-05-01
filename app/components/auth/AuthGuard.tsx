@@ -42,6 +42,9 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
     }
 
     const inAuthGroup = segments[0] === "auth";
+    const isPublicScreen =
+      segments[0] === "screens" && (segments[1] === "PrivacyPolicy" || segments[1] === "AboutScreen");
+
     const inOnboarding = segments[0] === "screens" && segments[1] === "onboarding";
     const hasMacros = !!(userProfile?.macros && Object.keys(userProfile?.macros || {}).length > 0);
 
@@ -49,8 +52,8 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
     let shouldNavigateTo = null;
 
     // Determine if we need to navigate
-    if (!user && !inAuthGroup) {
-      shouldNavigateTo = "/auth/LoginScreen";
+    if (!user && !inAuthGroup && !isPublicScreen) {
+      shouldNavigateTo = "/auth/WelcomeScreen";
     } else if (user && inAuthGroup) {
       shouldNavigateTo = "/(tabs)";
     } else if (user && !hasMacros && !inOnboarding && !onboardingCompleted && !inAuthGroup) {

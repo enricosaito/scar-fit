@@ -1,6 +1,6 @@
 // app/components/ui/Button.tsx
 import React from "react";
-import { Text, Pressable, PressableProps } from "react-native";
+import { Text, Pressable, PressableProps, ActivityIndicator } from "react-native";
 
 interface ButtonProps extends PressableProps {
   variant?: "default" | "outline" | "secondary" | "ghost";
@@ -8,6 +8,8 @@ interface ButtonProps extends PressableProps {
   children: React.ReactNode;
   className?: string;
   textClassName?: string;
+  loading?: boolean;
+  loadingText?: string;
 }
 
 export default function Button({
@@ -17,6 +19,9 @@ export default function Button({
   textClassName,
   children,
   disabled,
+  loading = false,
+  loadingText,
+  accessibilityLabel,
   ...props
 }: ButtonProps) {
   // Get variant styles
@@ -65,16 +70,33 @@ export default function Button({
     }
   };
 
+  // Convert ReactNode to string for accessibility label if needed
+  const getAccessibilityLabel = (): string | undefined => {
+    if (accessibilityLabel) return accessibilityLabel as string;
+    if (typeof children === "string") return children;
+    return undefined;
+  };
+
   return (
     <Pressable
-      disabled={disabled}
+      disabled={disabled || loading}
       className={`flex flex-row items-center justify-center rounded-md 
         ${getButtonStyle()} ${getSizeStyle()} 
-        ${disabled ? "opacity-50" : "opacity-100"} 
+        ${disabled || loading ? "opacity-50" : "opacity-100"} 
         ${className || ""}`}
+      accessibilityRole="button"
+      accessibilityLabel={getAccessibilityLabel()}
+      accessibilityState={{ disabled: disabled || loading, busy: loading }}
       {...props}
     >
-      <Text className={`font-medium ${getTextStyle()} ${textClassName || ""}`}>{children}</Text>
+      {loading ? (
+        <>
+          <ActivityIndicator size="small" color="white" style={{ marginRight: 8 }} />
+          {loadingText && <Text className={`font-medium ${getTextStyle()} ${textClassName || ""}`}>{loadingText}</Text>}
+        </>
+      ) : (
+        <Text className={`font-medium ${getTextStyle()} ${textClassName || ""}`}>{children}</Text>
+      )}
     </Pressable>
   );
 }

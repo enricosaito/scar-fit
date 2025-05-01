@@ -91,7 +91,7 @@ export default function More() {
       subtitle: theme === "dark" ? "Escuro" : "Claro",
     },
     { icon: "help-circle", title: "Ajuda", route: "/help" },
-    { icon: "info", title: "Sobre o app", route: "/about" },
+    { icon: "info", title: "Sobre o app", route: "/screens/AboutScreen" },
     { icon: "share-2", title: "Compartilhar", route: "/share" },
     {
       icon: "log-out",

@@ -12,7 +12,7 @@ module.exports = {
   ios: {
     supportsTablet: true,
     bundleIdentifier: "com.enricosaito.scarfit",
-    buildNumber: "1.0.2",
+    buildNumber: "1.0.6",
     infoPlist: {
       NSMicrophoneUsageDescription: "Este aplicativo usa o microfone para a função de registro de alimentos por voz.",
       NSCameraUsageDescription: "Este aplicativo usa a câmera para escanear códigos de barras de alimentos.",
