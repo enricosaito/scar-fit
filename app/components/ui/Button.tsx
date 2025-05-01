@@ -70,6 +70,13 @@ export default function Button({
     }
   };
 
+  // Convert ReactNode to string for accessibility label if needed
+  const getAccessibilityLabel = (): string | undefined => {
+    if (accessibilityLabel) return accessibilityLabel as string;
+    if (typeof children === "string") return children;
+    return undefined;
+  };
+
   return (
     <Pressable
       disabled={disabled || loading}
@@ -78,7 +85,7 @@ export default function Button({
         ${disabled || loading ? "opacity-50" : "opacity-100"} 
         ${className || ""}`}
       accessibilityRole="button"
-      accessibilityLabel={accessibilityLabel || typeof children === "string" ? children : undefined}
+      accessibilityLabel={getAccessibilityLabel()}
       accessibilityState={{ disabled: disabled || loading, busy: loading }}
       {...props}
     >
