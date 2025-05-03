@@ -6,6 +6,8 @@ export interface ExtractedFoodItem {
   quantity?: number;
   unit?: string;
   mealType?: "breakfast" | "lunch" | "dinner" | "snack";
+  originalQuantity?: number;
+  originalUnit?: string;
 }
 
 export async function extractFoodItems(text: string): Promise<ExtractedFoodItem[]> {
@@ -17,38 +19,44 @@ export async function extractFoodItems(text: string): Promise<ExtractedFoodItem[
     if (!sessionData.session) {
       throw new Error("No session available");
     }
-    
+
     // Call the Supabase Edge Function
     try {
       const { data, error } = await supabase.functions.invoke("extract-food-info", {
         body: { text },
       });
-      
+
       if (error) {
         console.error("Function error:", error);
         throw error;
       }
-      
+
       console.log("Extraction result:", data);
-      
+
       // Map meal types from Portuguese to the app's internal format
       const mapMealType = (type: string): "breakfast" | "lunch" | "dinner" | "snack" => {
         switch (type) {
-          case "café da manhã": return "breakfast";
-          case "almoço": return "lunch";
-          case "jantar": return "dinner";
-          default: return "snack";
+          case "café da manhã":
+            return "breakfast";
+          case "almoço":
+            return "lunch";
+          case "jantar":
+            return "dinner";
+          default:
+            return "snack";
         }
       };
-      
+
       // Process the extracted items to match the app's expected format
       const formattedItems = data.foodItems.map((item: any) => ({
         name: item.name,
         quantity: item.quantity || 100,
         unit: item.unit || "g",
+        originalQuantity: item.originalQuantity,
+        originalUnit: item.originalUnit,
         mealType: mapMealType(item.mealType),
       }));
-      
+
       return formattedItems;
     } catch (invokeError) {
       console.error("Function invoke error:", invokeError);
@@ -168,11 +176,12 @@ function fallbackExtractFoodItems(text: string): ExtractedFoodItem[] {
 }
 
 // Keep the existing matchWithDatabaseFoods function
+// app/lib/nlpService.ts
 export async function matchWithDatabaseFoods(extractedItems: ExtractedFoodItem[]): Promise<any[]> {
   try {
     const matchedItems = [];
     console.log("Starting food matching with database for items:", extractedItems);
-    
+
     // Check if extractedItems is defined and not empty
     if (!extractedItems || extractedItems.length === 0) {
       console.log("No items to match with database");
@@ -182,6 +191,7 @@ export async function matchWithDatabaseFoods(extractedItems: ExtractedFoodItem[]
     for (const item of extractedItems) {
       console.log(`Trying to match food: "${item.name}"`);
       let matchFound = false;
+      let matchedFood = null;
 
       // Strategy 1: Exact match with description
       if (!matchFound) {
@@ -195,12 +205,7 @@ export async function matchWithDatabaseFoods(extractedItems: ExtractedFoodItem[]
           console.error("Error in exact match search:", error);
         } else if (exactMatches && exactMatches.length > 0) {
           console.log("Found exact match:", exactMatches[0].description);
-          matchedItems.push({
-            foodId: exactMatches[0].id,
-            food: exactMatches[0],
-            quantity: item.quantity || 100,
-            mealType: item.mealType || "snack",
-          });
+          matchedFood = exactMatches[0];
           matchFound = true;
         }
       }
@@ -220,12 +225,7 @@ export async function matchWithDatabaseFoods(extractedItems: ExtractedFoodItem[]
           console.error("Error in websearch text search:", error);
         } else if (textSearchMatches && textSearchMatches.length > 0) {
           console.log("Found websearch match:", textSearchMatches[0].description);
-          matchedItems.push({
-            foodId: textSearchMatches[0].id,
-            food: textSearchMatches[0],
-            quantity: item.quantity || 100,
-            mealType: item.mealType || "snack",
-          });
+          matchedFood = textSearchMatches[0];
           matchFound = true;
         }
       }
@@ -242,12 +242,7 @@ export async function matchWithDatabaseFoods(extractedItems: ExtractedFoodItem[]
           console.error("Error in partial match search:", error);
         } else if (partialMatches && partialMatches.length > 0) {
           console.log("Found partial match:", partialMatches[0].description);
-          matchedItems.push({
-            foodId: partialMatches[0].id,
-            food: partialMatches[0],
-            quantity: item.quantity || 100,
-            mealType: item.mealType || "snack",
-          });
+          matchedFood = partialMatches[0];
           matchFound = true;
         }
       }
@@ -266,12 +261,7 @@ export async function matchWithDatabaseFoods(extractedItems: ExtractedFoodItem[]
             console.error(`Error in word match search for "${word}":`, error);
           } else if (wordMatches && wordMatches.length > 0) {
             console.log(`Found word match for "${word}":`, wordMatches[0].description);
-            matchedItems.push({
-              foodId: wordMatches[0].id,
-              food: wordMatches[0],
-              quantity: item.quantity || 100,
-              mealType: item.mealType || "snack",
-            });
+            matchedFood = wordMatches[0];
             matchFound = true;
             break;
           }
@@ -283,7 +273,7 @@ export async function matchWithDatabaseFoods(extractedItems: ExtractedFoodItem[]
         console.log("No match found in database, using mock food");
 
         // Fallback with a generic food item for testing
-        const mockFood = {
+        matchedFood = {
           id: 999999,
           description: `${item.name} (Genérico)`,
           category: "Genérico",
@@ -292,12 +282,19 @@ export async function matchWithDatabaseFoods(extractedItems: ExtractedFoodItem[]
           carbs_g: 10,
           fat_g: 5,
         };
+        matchFound = true;
+      }
 
+      // Add the matched item with original quantity/unit information
+      if (matchFound && matchedFood) {
         matchedItems.push({
-          foodId: mockFood.id,
-          food: mockFood,
+          foodId: matchedFood.id,
+          food: matchedFood,
           quantity: item.quantity || 100,
           mealType: item.mealType || "snack",
+          // Pass through the original quantity and unit
+          originalQuantity: item.originalQuantity,
+          originalUnit: item.originalUnit,
         });
       }
     }
