@@ -15,7 +15,7 @@ import * as Linking from "expo-linking";
 
 import { useFonts } from "expo-font";
 import * as SplashScreen from "expo-splash-screen";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import InitialLoadingScreen from "./components/ui/InitialLoadingScreen";
 import { View, Animated } from "react-native";
 
@@ -32,57 +32,24 @@ import {
 SplashScreen.preventAutoHideAsync();
 
 function AppContent() {
-  const [fontsLoaded, fontError] = useFonts({
-    "Manrope-ExtraLight": Manrope_200ExtraLight,
-    "Manrope-Light": Manrope_300Light,
-    "Manrope-Regular": Manrope_400Regular,
-    "Manrope-Medium": Manrope_500Medium,
-    "Manrope-SemiBold": Manrope_600SemiBold,
-    "Manrope-Bold": Manrope_700Bold,
-    "Manrope-ExtraBold": Manrope_800ExtraBold,
-  });
-
-  const { initialized, user, onboardingCompleted, userProfile } = useAuth();
-  const [isReady, setIsReady] = useState(false);
+  const { initialized } = useAuth();
   const [showLoadingScreen, setShowLoadingScreen] = useState(true);
   const fadeAnim = useState(new Animated.Value(1))[0];
 
-  const onLayoutRootView = useCallback(async () => {
-    if (fontsLoaded || fontError) {
-      await SplashScreen.hideAsync();
-    }
-  }, [fontsLoaded, fontError]);
-
-  // Hide splash screen and set ready state
   useEffect(() => {
-    const prepare = async () => {
-      if (fontsLoaded && initialized) {
-        console.log("App State:", {
-          fontsLoaded,
-          initialized,
-          user: !!user,
-          onboardingCompleted,
-          hasMacros: !!(userProfile?.macros && Object.keys(userProfile?.macros || {}).length > 0),
-          userProfileLoaded: !!userProfile,
+    if (initialized) {
+      // Add a small delay for smooth transition
+      setTimeout(() => {
+        Animated.timing(fadeAnim, {
+          toValue: 0,
+          duration: 300,
+          useNativeDriver: true,
+        }).start(() => {
+          setShowLoadingScreen(false);
         });
-
-        await SplashScreen.hideAsync();
-        // Add a small delay to ensure smooth transition
-        setTimeout(() => {
-          setIsReady(true);
-          // Fade out the loading screen
-          Animated.timing(fadeAnim, {
-            toValue: 0,
-            duration: 300,
-            useNativeDriver: true,
-          }).start(() => {
-            setShowLoadingScreen(false);
-          });
-        }, 500);
-      }
-    };
-    prepare();
-  }, [fontsLoaded, initialized, user, onboardingCompleted, userProfile]);
+      }, 500);
+    }
+  }, [initialized, fadeAnim]);
 
   useEffect(() => {
     const linkingSubscription = Linking.addEventListener("url", ({ url }) => {
@@ -96,12 +63,8 @@ function AppContent() {
     };
   }, []);
 
-  if (!fontsLoaded && !fontError) {
-    return null;
-  }
-
   return (
-    <View style={{ flex: 1 }} onLayout={onLayoutRootView}>
+    <View style={{ flex: 1 }}>
       {showLoadingScreen && (
         <Animated.View
           style={{
@@ -144,6 +107,29 @@ function AppContent() {
 }
 
 export default function RootLayout() {
+  const [fontsLoaded, fontError] = useFonts({
+    "Manrope-ExtraLight": Manrope_200ExtraLight,
+    "Manrope-Light": Manrope_300Light,
+    "Manrope-Regular": Manrope_400Regular,
+    "Manrope-Medium": Manrope_500Medium,
+    "Manrope-SemiBold": Manrope_600SemiBold,
+    "Manrope-Bold": Manrope_700Bold,
+    "Manrope-ExtraBold": Manrope_800ExtraBold,
+  });
+
+  useEffect(() => {
+    const prepare = async () => {
+      if (fontsLoaded || fontError) {
+        await SplashScreen.hideAsync();
+      }
+    };
+    prepare();
+  }, [fontsLoaded, fontError]);
+
+  if (!fontsLoaded && !fontError) {
+    return null;
+  }
+
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <ThemeProvider>
