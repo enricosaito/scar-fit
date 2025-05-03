@@ -1,25 +1,17 @@
 // app/lib/supabase.ts
+import 'react-native-url-polyfill/auto'
 import { createClient } from "@supabase/supabase-js";
-import customStorageAdapter from "./secureStorage";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const supabaseUrl = "https://ssrklevifozwowhpumvu.supabase.co";
-const supabaseAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNzcmtsZXZpZm96d293aHB1bXZ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM4MDc4NzcsImV4cCI6MjA1OTM4Mzg3N30.0rwKDJUkJMDggk27C0Cx08ldg_4FNWgBnQjssb9uhzc";
-
-if (!supabaseUrl || !supabaseAnonKey) {
-  console.warn("Missing Supabase credentials.");
-}
+const supabaseAnonKey = "your-anon-key";
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
+    storage: AsyncStorage,
     autoRefreshToken: true,
     persistSession: true,
     detectSessionInUrl: false,
-    storage: customStorageAdapter,
-  },
-  global: {
-    headers: {
-      "x-app-version": "1.0.0",
-    },
   },
 });
 
