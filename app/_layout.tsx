@@ -1,4 +1,6 @@
 // app/_layout.tsx
+import 'react-native-get-random-values';
+import 'react-native-url-polyfill/auto';
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
