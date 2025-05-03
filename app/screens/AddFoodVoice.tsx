@@ -236,7 +236,12 @@ export default function VoiceFoodLogger() {
                 <View key={index} className="mb-3">
                   <FoodCard food={item.food} quantity={item.quantity} />
                   <View className="flex-row justify-between mt-2 mb-2">
-                    <Text className="text-muted-foreground">Quantidade: {item.quantity}g</Text>
+                    <View>
+                      <Text className="text-muted-foreground">
+                        Quantidade detectada: {item.originalQuantity} {item.originalUnit}
+                      </Text>
+                      <Text className="text-primary">Convertido para: {item.quantity}g</Text>
+                    </View>
                     <Text className="text-muted-foreground">
                       Refeição:{" "}
                       {item.mealType === "breakfast"
