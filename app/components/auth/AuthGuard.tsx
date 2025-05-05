@@ -2,16 +2,14 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useRouter, useSegments } from "expo-router";
 import { useAuth } from "../../context/AuthContext";
-import { View, ActivityIndicator, Text } from "react-native";
-import { useTheme } from "../../context/ThemeContext";
 import { batchPreloadAvatarImages } from "../../utils/imageUpload";
 
 export default function AuthGuard({ children }: { children: React.ReactNode }) {
   const { user, initialized, userProfile, loading, profileLoading, onboardingCompleted } = useAuth();
   const segments = useSegments();
   const router = useRouter();
-  const { colors } = useTheme();
   const [navigated, setNavigated] = useState(false);
+  const [isFirstRender, setIsFirstRender] = useState(true);
 
   // Using a ref to track the last preloaded avatar URL to avoid redundant preloads
   const lastPreloadedUrl = useRef<string | undefined | null>(null);
@@ -34,10 +32,10 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
     }
   }, [userProfile?.avatar_url]);
 
-  // Clean approach that minimizes state changes and navigation attempts
+  // Handle routing logic
   useEffect(() => {
-    // Only proceed if fully initialized and not currently navigating
-    if (!initialized || navigated) {
+    // Only proceed if fully initialized, profile is loaded, and not currently navigating
+    if (!initialized || profileLoading || navigated) {
       return;
     }
 
@@ -48,6 +46,18 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
     const inOnboarding = segments[0] === "screens" && segments[1] === "onboarding";
     const hasMacros = !!(userProfile?.macros && Object.keys(userProfile?.macros || {}).length > 0);
 
+    console.log("AuthGuard State:", {
+      user: !!user,
+      initialized,
+      onboardingCompleted,
+      hasMacros,
+      currentPath: segments.join("/"),
+      inAuthGroup,
+      inOnboarding,
+      profileLoading,
+      userProfileLoaded: !!userProfile,
+    });
+
     // Store navigation decision in a single variable
     let shouldNavigateTo = null;
 
@@ -56,8 +66,8 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
       shouldNavigateTo = "/auth/WelcomeScreen";
     } else if (user && inAuthGroup) {
       shouldNavigateTo = "/(tabs)";
-    } else if (user && !hasMacros && !inOnboarding && !onboardingCompleted && !inAuthGroup) {
-      // Only redirect to onboarding if the user doesn't have macros AND onboarding is not completed
+    } else if (user && !onboardingCompleted && !inOnboarding && !inAuthGroup) {
+      // Only redirect to onboarding if onboarding is not completed
       shouldNavigateTo = "/screens/onboarding";
     }
 
@@ -69,7 +79,6 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
       // Use a timeout to ensure component is fully mounted
       setTimeout(() => {
         try {
-          // Cast the path to any to fix TypeScript error
           router.replace(shouldNavigateTo as any);
         } catch (error) {
           console.error("Navigation error:", error);
@@ -81,9 +90,17 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
         }, 1000);
       }, 100);
     }
-  }, [initialized, user, userProfile, segments, navigated, onboardingCompleted]);
 
-  // Always render the children instead of showing a full-screen loading state
-  // This allows the current screen to be visible during login/logout transitions
+    // Mark first render as complete
+    if (isFirstRender) {
+      setIsFirstRender(false);
+    }
+  }, [initialized, user, userProfile, segments, navigated, onboardingCompleted, isFirstRender, profileLoading]);
+
+  // Don't render anything until we've completed the first routing check
+  if (isFirstRender) {
+    return null;
+  }
+
   return <>{children}</>;
 }
