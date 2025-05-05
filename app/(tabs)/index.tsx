@@ -219,6 +219,7 @@ export default function Home() {
                   }}
                   showDetails={showMacroDetails}
                   onToggleDetails={() => setShowMacroDetails(!showMacroDetails)}
+                  selectedDate={selectedDate}
                 />
               ) : !hasMacros ? (
                 <View className="bg-card rounded-xl border border-border p-6 mb-6">
