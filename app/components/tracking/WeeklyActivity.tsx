@@ -1,7 +1,6 @@
 // app/components/tracking/WeeklyActivity.tsx
 import React from "react";
 import { View, Text, Pressable } from "react-native";
-import { Feather } from "@expo/vector-icons";
 import { useTheme } from "../../context/ThemeContext";
 
 interface DayData {
@@ -16,9 +15,10 @@ interface WeeklyActivityProps {
   selectedDate: Date;
   onDateSelect: (date: Date) => void;
   activityDates?: string[]; // Array of dates with activities (YYYY-MM-DD format)
+  greeting?: string; // New prop for greeting text
 }
 
-const WeeklyActivity = ({ selectedDate, onDateSelect, activityDates = [] }: WeeklyActivityProps) => {
+const WeeklyActivity = ({ selectedDate, onDateSelect, activityDates = [], greeting }: WeeklyActivityProps) => {
   const { colors } = useTheme();
 
   // Get the days of the current week
@@ -57,40 +57,60 @@ const WeeklyActivity = ({ selectedDate, onDateSelect, activityDates = [] }: Week
   const isSelected = (date: Date) => date.toDateString() === selectedDate.toDateString();
 
   return (
-    <View className="bg-card rounded-xl border border-border p-4 mb-6">
-      <View className="flex-row justify-between">
+    <View className="mb-6">
+      {/* Greeting */}
+      {greeting && (
+        <Text className="text-2xl font-bold text-foreground mb-4" style={{ fontFamily: "Caveat", marginLeft: 4 }}>
+          {greeting}
+        </Text>
+      )}
+      {/* Days of week as playful boxes */}
+      <View className="flex-row justify-between mb-2 px-1">
         {days.map((day, index) => (
           <Pressable
             key={index}
             onPress={() => onDateSelect(day.date)}
-            className={`items-center justify-center w-10 ${isSelected(day.date) ? "bg-primary/10 rounded-xl" : ""}`}
+            style={{
+              alignItems: "center",
+              justifyContent: "center",
+              width: 48,
+              height: 60,
+              borderRadius: 14,
+              borderWidth: 2,
+              borderColor: isSelected(day.date) ? colors.primary : colors.border,
+              backgroundColor: isSelected(day.date)
+                ? colors.primary + "22"
+                : day.isToday
+                ? colors.primary + "11"
+                : colors.card,
+              marginHorizontal: 2,
+              shadowColor: isSelected(day.date) ? colors.primary : "#000",
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: 0.08,
+              shadowRadius: 4,
+              elevation: isSelected(day.date) ? 3 : 1,
+            }}
           >
             <Text
-              className={`text-xs font-medium mb-1 ${
-                isSelected(day.date) ? "text-primary" : day.isToday ? "text-primary" : "text-muted-foreground"
-              }`}
+              style={{
+                fontSize: 18,
+                fontWeight: "600",
+                color: isSelected(day.date) ? colors.primary : day.isToday ? colors.primary : colors.mutedForeground,
+                fontFamily: "Caveat",
+              }}
             >
               {day.dayName}
             </Text>
-
-            <View
-              className={`w-8 h-8 rounded-lg items-center justify-center mb-1 ${
-                isSelected(day.date) ? "bg-primary" : day.isToday ? "border border-primary" : "border border-border"
-              }`}
+            <Text
+              style={{
+                fontSize: 18,
+                fontWeight: "500",
+                color: isSelected(day.date) ? colors.primary : day.isToday ? colors.primary : colors.foreground,
+                fontFamily: "Caveat",
+              }}
             >
-              <Text
-                className={`text-sm font-medium ${
-                  isSelected(day.date) ? "text-white" : day.isToday ? "text-primary" : "text-foreground"
-                }`}
-              >
-                {day.dayNumber}
-              </Text>
-            </View>
-
-            {/* Activity Indicator */}
-            <View className="w-2 h-2 rounded-full mt-1">
-              {day.hasActivity && <View className="w-full h-full rounded-full bg-green-500" />}
-            </View>
+              {day.dayNumber}
+            </Text>
           </Pressable>
         ))}
       </View>
