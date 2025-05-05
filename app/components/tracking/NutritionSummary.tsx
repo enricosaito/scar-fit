@@ -17,6 +17,7 @@ interface NutritionSummaryProps {
   compact?: boolean;
   showDetails?: boolean;
   onToggleDetails?: () => void;
+  selectedDate?: Date;
 }
 
 interface CalorieCircleProps {
@@ -33,6 +34,7 @@ export default function NutritionSummary({
   compact = false,
   showDetails = true,
   onToggleDetails = () => {},
+  selectedDate,
 }: NutritionSummaryProps) {
   const { colors } = useTheme();
 
@@ -61,9 +63,8 @@ export default function NutritionSummary({
   // Check if protein goal is achieved or exceeded
   const isProteinGoalMet = currentProtein >= (macros.protein || 0);
 
-  // Format today's date (e.g., "Domingo, 6 de Abril")
-  const formatTodayDate = () => {
-    const today = new Date();
+  // Format date for display
+  const formatDisplayDate = () => {
     const days = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
     const months = [
       "Janeiro",
@@ -79,12 +80,17 @@ export default function NutritionSummary({
       "Novembro",
       "Dezembro",
     ];
-
-    const dayOfWeek = days[today.getDay()];
-    const dayOfMonth = today.getDate();
-    const month = months[today.getMonth()];
-
-    return "Meu Progresso de Hoje";
+    const today = new Date();
+    const date = selectedDate || today;
+    const isToday =
+      date.getDate() === today.getDate() &&
+      date.getMonth() === today.getMonth() &&
+      date.getFullYear() === today.getFullYear();
+    if (isToday) return "Meu Progresso de Hoje";
+    const dayOfWeek = days[date.getDay()];
+    const dayOfMonth = date.getDate();
+    const month = months[date.getMonth()];
+    return `${dayOfWeek}, ${dayOfMonth} de ${month}`;
   };
 
   // Calculate progress percentages
@@ -157,7 +163,7 @@ export default function NutritionSummary({
     <View className="bg-card rounded-xl border border-border p-4">
       {/* Today's date with weekday */}
       <Pressable onPress={onToggleDetails} className="flex-row justify-between items-center mb-4">
-        <Text className="text-lg font-semibold text-foreground">{formatTodayDate()}</Text>
+        <Text className="text-lg font-semibold text-foreground">{formatDisplayDate()}</Text>
         {onToggleDetails !== (() => {}) && (
           <Feather name={showDetails ? "calendar" : "chevron-down"} size={18} color={colors.mutedForeground} />
         )}
