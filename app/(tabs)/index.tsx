@@ -1,17 +1,21 @@
-// app/(tabs)/index.tsx (partial update to implement the new component)
+// app/(tabs)/index.tsx
 import React, { useState, useEffect, useRef } from "react";
 import { Text, View, Pressable, SafeAreaView, ScrollView, ActivityIndicator, RefreshControl } from "react-native";
 import { useRouter, useFocusEffect } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import { useTheme } from "../context/ThemeContext";
 import { useAuth } from "../context/AuthContext";
-import NutritionSummary from "../components/tracking/NutritionSummary"; // Import the new component
+import NutritionSummary from "../components/tracking/NutritionSummary";
 import MealList from "../components/tracking/MealList";
+import WeeklyActivity from "../components/tracking/WeeklyActivity";
 import type { FoodPortion } from "../models/food";
 import Header from "../components/ui/Header";
 import { MacroData } from "../models/user";
 import { DailyLog, getUserDailyLog } from "../models/tracking";
 import { clearImageCache } from "../utils/imageUpload";
+import { PanGestureHandler, State } from "react-native-gesture-handler";
+import PagerView from "react-native-pager-view";
+import ContributionGraph from "../components/tracking/ContributionGraph";
 
 // Create a reference to the Header component
 let headerRef: React.RefObject<typeof Header> = { current: null };
@@ -23,7 +27,9 @@ export default function Home() {
   const [dailyLog, setDailyLog] = useState<DailyLog | null>(null);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  const [showMacroDetails, setShowMacroDetails] = useState(true); // State for toggling macro details
+  const [showMacroDetails, setShowMacroDetails] = useState(true);
+  const [activityDates, setActivityDates] = useState<string[]>([]);
+  const [selectedDate, setSelectedDate] = useState(new Date());
 
   // Generate a unique key for the Header component to force re-rendering
   const [headerKey, setHeaderKey] = useState(Date.now().toString());
@@ -52,13 +58,13 @@ export default function Home() {
     return date.toISOString().split("T")[0];
   };
 
-  // Load daily log for today
-  const loadTodaysLog = async () => {
+  // Load daily log for the selected date
+  const loadDailyLog = async (date: Date) => {
     if (!user) return;
 
     setLoading(true);
     try {
-      const dateStr = formatDateForDb(new Date());
+      const dateStr = formatDateForDb(date);
       const log = await getUserDailyLog(user.id, dateStr);
       setDailyLog(log);
     } catch (error) {
@@ -68,13 +74,41 @@ export default function Home() {
     }
   };
 
+  // Load activity dates for the week
+  const loadActivityDates = async () => {
+    if (!user) return;
+
+    try {
+      // For now, let's just mark today and yesterday as having activity
+      // In a real implementation, you'd fetch this from your database
+      const today = new Date();
+      const yesterday = new Date(today);
+      yesterday.setDate(yesterday.getDate() - 1);
+
+      const dates = [today.toISOString().split("T")[0], yesterday.toISOString().split("T")[0]];
+
+      setActivityDates(dates);
+    } catch (error) {
+      console.error("Error loading activity dates:", error);
+    }
+  };
+
+  // Handle date selection from weekly activity
+  const handleDateSelect = (date: Date) => {
+    setSelectedDate(date);
+    loadDailyLog(date);
+  };
+
   // Pull to refresh function
   const onRefresh = async () => {
     setRefreshing(true);
 
     try {
-      // Load the daily log
-      await loadTodaysLog();
+      // Load the daily log for selected date
+      await loadDailyLog(selectedDate);
+
+      // Load activity dates
+      await loadActivityDates();
 
       // Force refresh the profile to get the latest avatar
       await refreshProfile();
@@ -88,10 +122,11 @@ export default function Home() {
     }
   };
 
-  // Load data when component mounts
+  // Load data when component mounts or selected date changes
   useEffect(() => {
-    loadTodaysLog();
-  }, [user]);
+    loadDailyLog(selectedDate);
+    loadActivityDates();
+  }, [user, selectedDate]);
 
   // Group food items by meal type
   const getMealItems = (mealType: "breakfast" | "lunch" | "dinner" | "snack") => {
@@ -144,6 +179,76 @@ export default function Home() {
     ];
   };
 
+  // Helper: get start and end of current week (Monday-Sunday)
+  const getWeekBounds = (date: Date) => {
+    const day = date.getDay();
+    const monday = new Date(date);
+    monday.setDate(date.getDate() - ((day + 6) % 7));
+    const sunday = new Date(monday);
+    sunday.setDate(monday.getDate() + 6);
+    return { monday, sunday };
+  };
+
+  // Get all dates for the current week (Monday-Sunday)
+  const getWeekDates = (date: Date) => {
+    const { monday } = getWeekBounds(date);
+    return Array.from({ length: 7 }, (_, i) => {
+      const d = new Date(monday);
+      d.setDate(monday.getDate() + i);
+      return d;
+    });
+  };
+
+  // Track the current week's Monday in state
+  const getMonday = (date: Date) => {
+    const d = new Date(date);
+    const day = d.getDay();
+    d.setDate(d.getDate() - ((day + 6) % 7));
+    d.setHours(0, 0, 0, 0);
+    return d;
+  };
+
+  const [currentWeekMonday, setCurrentWeekMonday] = useState(() => getMonday(selectedDate));
+  const weekDates = React.useMemo(() => getWeekDates(currentWeekMonday), [currentWeekMonday]);
+  const selectedIndex = weekDates.findIndex((d) => d.toDateString() === selectedDate.toDateString());
+
+  // Preload daily logs for the week
+  const [weekLogs, setWeekLogs] = useState<(DailyLog | null)[]>(Array(7).fill(null));
+
+  // Only fetch logs when the week changes
+  useEffect(() => {
+    if (!user) return;
+    const fetchLogs = async () => {
+      const logs = await Promise.all(
+        weekDates.map(async (date) => {
+          try {
+            const dateStr = formatDateForDb(date);
+            return await getUserDailyLog(user.id, dateStr);
+          } catch {
+            return null;
+          }
+        })
+      );
+      setWeekLogs(logs);
+    };
+    fetchLogs();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, currentWeekMonday.toISOString()]);
+
+  // When selectedDate changes, if it's outside the current week, update the week
+  useEffect(() => {
+    const monday = getMonday(selectedDate);
+    if (monday.getTime() !== currentWeekMonday.getTime()) {
+      setCurrentWeekMonday(monday);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedDate]);
+
+  const handlePageSelected = (e: any) => {
+    const idx = e.nativeEvent.position;
+    setSelectedDate(weekDates[idx]);
+  };
+
   return (
     <SafeAreaView className="flex-1 bg-background">
       <Header title="Scar Fit ⚡️" key={headerKey} />
@@ -160,9 +265,13 @@ export default function Home() {
         }
       >
         <View className="px-4 py-3 mt-3">
-          <Text className="text-2xl font-bold text-foreground mb-5">
-            Olá, {userProfile?.full_name?.split(" ")[0] || user?.user_metadata?.name || "Usuário"}!
-          </Text>
+          {/* Weekly Activity Component */}
+          <WeeklyActivity
+            selectedDate={selectedDate}
+            onDateSelect={handleDateSelect}
+            activityDates={activityDates}
+            greeting={`Olá, ${userProfile?.full_name?.split(" ")[0] || user?.user_metadata?.name || "Usuário"}`}
+          />
 
           {/* Loading state */}
           {loading && !refreshing ? (
@@ -172,18 +281,35 @@ export default function Home() {
           ) : (
             <>
               {/* Nutrition Summary with new component */}
-              {hasMacros && dailyLog ? (
-                <NutritionSummary
-                  macros={userProfile?.macros as Partial<MacroData>}
-                  current={{
-                    calories: dailyLog.total_calories,
-                    protein: dailyLog.total_protein,
-                    carbs: dailyLog.total_carbs,
-                    fat: dailyLog.total_fat,
-                  }}
-                  showDetails={showMacroDetails}
-                  onToggleDetails={() => setShowMacroDetails(!showMacroDetails)}
-                />
+              {hasMacros && weekLogs[selectedIndex] ? (
+                <>
+                  <PagerView
+                    style={{ height: 260 }}
+                    initialPage={selectedIndex}
+                    scrollEnabled={true}
+                    onPageSelected={handlePageSelected}
+                    key={weekDates.map((d) => d.toDateString()).join("-")}
+                  >
+                    {weekDates.map((date, idx) => (
+                      <View key={date.toISOString()}>
+                        <NutritionSummary
+                          macros={userProfile?.macros as Partial<MacroData>}
+                          current={
+                            weekLogs[idx]
+                              ? {
+                                  calories: weekLogs[idx]?.total_calories,
+                                  protein: weekLogs[idx]?.total_protein,
+                                  carbs: weekLogs[idx]?.total_carbs,
+                                  fat: weekLogs[idx]?.total_fat,
+                                }
+                              : {}
+                          }
+                          selectedDate={date}
+                        />
+                      </View>
+                    ))}
+                  </PagerView>
+                </>
               ) : !hasMacros ? (
                 <View className="bg-card rounded-xl border border-border p-6 mb-6">
                   <Text className="text-lg font-semibold text-foreground mb-4">Defina suas metas</Text>
