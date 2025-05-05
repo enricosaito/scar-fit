@@ -193,11 +193,12 @@ export default function Home() {
       >
         <View className="px-4 py-3 mt-3">
           {/* Weekly Activity Component */}
-          <WeeklyActivity selectedDate={selectedDate} onDateSelect={handleDateSelect} activityDates={activityDates} />
-
-          <Text className="text-2xl font-bold text-foreground mb-5">
-            Olá, {userProfile?.full_name?.split(" ")[0] || user?.user_metadata?.name || "Usuário"}!
-          </Text>
+          <WeeklyActivity
+            selectedDate={selectedDate}
+            onDateSelect={handleDateSelect}
+            activityDates={activityDates}
+            greeting={`Olá, ${userProfile?.full_name?.split(" ")[0] || user?.user_metadata?.name || "Usuário"}`}
+          />
 
           {/* Loading state */}
           {loading && !refreshing ? (
