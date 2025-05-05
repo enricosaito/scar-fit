@@ -1,12 +1,13 @@
-// app/(tabs)/index.tsx (partial update to implement the new component)
+// app/(tabs)/index.tsx
 import React, { useState, useEffect, useRef } from "react";
 import { Text, View, Pressable, SafeAreaView, ScrollView, ActivityIndicator, RefreshControl } from "react-native";
 import { useRouter, useFocusEffect } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import { useTheme } from "../context/ThemeContext";
 import { useAuth } from "../context/AuthContext";
-import NutritionSummary from "../components/tracking/NutritionSummary"; // Import the new component
+import NutritionSummary from "../components/tracking/NutritionSummary";
 import MealList from "../components/tracking/MealList";
+import WeeklyActivity from "../components/tracking/WeeklyActivity";
 import type { FoodPortion } from "../models/food";
 import Header from "../components/ui/Header";
 import { MacroData } from "../models/user";
@@ -23,7 +24,9 @@ export default function Home() {
   const [dailyLog, setDailyLog] = useState<DailyLog | null>(null);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  const [showMacroDetails, setShowMacroDetails] = useState(true); // State for toggling macro details
+  const [showMacroDetails, setShowMacroDetails] = useState(true);
+  const [activityDates, setActivityDates] = useState<string[]>([]);
+  const [selectedDate, setSelectedDate] = useState(new Date());
 
   // Generate a unique key for the Header component to force re-rendering
   const [headerKey, setHeaderKey] = useState(Date.now().toString());
@@ -52,13 +55,13 @@ export default function Home() {
     return date.toISOString().split("T")[0];
   };
 
-  // Load daily log for today
-  const loadTodaysLog = async () => {
+  // Load daily log for the selected date
+  const loadDailyLog = async (date: Date) => {
     if (!user) return;
 
     setLoading(true);
     try {
-      const dateStr = formatDateForDb(new Date());
+      const dateStr = formatDateForDb(date);
       const log = await getUserDailyLog(user.id, dateStr);
       setDailyLog(log);
     } catch (error) {
@@ -68,13 +71,41 @@ export default function Home() {
     }
   };
 
+  // Load activity dates for the week
+  const loadActivityDates = async () => {
+    if (!user) return;
+
+    try {
+      // For now, let's just mark today and yesterday as having activity
+      // In a real implementation, you'd fetch this from your database
+      const today = new Date();
+      const yesterday = new Date(today);
+      yesterday.setDate(yesterday.getDate() - 1);
+
+      const dates = [today.toISOString().split("T")[0], yesterday.toISOString().split("T")[0]];
+
+      setActivityDates(dates);
+    } catch (error) {
+      console.error("Error loading activity dates:", error);
+    }
+  };
+
+  // Handle date selection from weekly activity
+  const handleDateSelect = (date: Date) => {
+    setSelectedDate(date);
+    loadDailyLog(date);
+  };
+
   // Pull to refresh function
   const onRefresh = async () => {
     setRefreshing(true);
 
     try {
-      // Load the daily log
-      await loadTodaysLog();
+      // Load the daily log for selected date
+      await loadDailyLog(selectedDate);
+
+      // Load activity dates
+      await loadActivityDates();
 
       // Force refresh the profile to get the latest avatar
       await refreshProfile();
@@ -88,10 +119,11 @@ export default function Home() {
     }
   };
 
-  // Load data when component mounts
+  // Load data when component mounts or selected date changes
   useEffect(() => {
-    loadTodaysLog();
-  }, [user]);
+    loadDailyLog(selectedDate);
+    loadActivityDates();
+  }, [user, selectedDate]);
 
   // Group food items by meal type
   const getMealItems = (mealType: "breakfast" | "lunch" | "dinner" | "snack") => {
@@ -160,6 +192,9 @@ export default function Home() {
         }
       >
         <View className="px-4 py-3 mt-3">
+          {/* Weekly Activity Component */}
+          <WeeklyActivity selectedDate={selectedDate} onDateSelect={handleDateSelect} activityDates={activityDates} />
+
           <Text className="text-2xl font-bold text-foreground mb-5">
             Olá, {userProfile?.full_name?.split(" ")[0] || user?.user_metadata?.name || "Usuário"}!
           </Text>
