@@ -13,6 +13,9 @@ import Header from "../components/ui/Header";
 import { MacroData } from "../models/user";
 import { DailyLog, getUserDailyLog } from "../models/tracking";
 import { clearImageCache } from "../utils/imageUpload";
+import { PanGestureHandler, State } from "react-native-gesture-handler";
+import PagerView from "react-native-pager-view";
+import ContributionGraph from "../components/tracking/ContributionGraph";
 
 // Create a reference to the Header component
 let headerRef: React.RefObject<typeof Header> = { current: null };
@@ -176,6 +179,76 @@ export default function Home() {
     ];
   };
 
+  // Helper: get start and end of current week (Monday-Sunday)
+  const getWeekBounds = (date: Date) => {
+    const day = date.getDay();
+    const monday = new Date(date);
+    monday.setDate(date.getDate() - ((day + 6) % 7));
+    const sunday = new Date(monday);
+    sunday.setDate(monday.getDate() + 6);
+    return { monday, sunday };
+  };
+
+  // Get all dates for the current week (Monday-Sunday)
+  const getWeekDates = (date: Date) => {
+    const { monday } = getWeekBounds(date);
+    return Array.from({ length: 7 }, (_, i) => {
+      const d = new Date(monday);
+      d.setDate(monday.getDate() + i);
+      return d;
+    });
+  };
+
+  // Track the current week's Monday in state
+  const getMonday = (date: Date) => {
+    const d = new Date(date);
+    const day = d.getDay();
+    d.setDate(d.getDate() - ((day + 6) % 7));
+    d.setHours(0, 0, 0, 0);
+    return d;
+  };
+
+  const [currentWeekMonday, setCurrentWeekMonday] = useState(() => getMonday(selectedDate));
+  const weekDates = React.useMemo(() => getWeekDates(currentWeekMonday), [currentWeekMonday]);
+  const selectedIndex = weekDates.findIndex((d) => d.toDateString() === selectedDate.toDateString());
+
+  // Preload daily logs for the week
+  const [weekLogs, setWeekLogs] = useState<(DailyLog | null)[]>(Array(7).fill(null));
+
+  // Only fetch logs when the week changes
+  useEffect(() => {
+    if (!user) return;
+    const fetchLogs = async () => {
+      const logs = await Promise.all(
+        weekDates.map(async (date) => {
+          try {
+            const dateStr = formatDateForDb(date);
+            return await getUserDailyLog(user.id, dateStr);
+          } catch {
+            return null;
+          }
+        })
+      );
+      setWeekLogs(logs);
+    };
+    fetchLogs();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, currentWeekMonday.toISOString()]);
+
+  // When selectedDate changes, if it's outside the current week, update the week
+  useEffect(() => {
+    const monday = getMonday(selectedDate);
+    if (monday.getTime() !== currentWeekMonday.getTime()) {
+      setCurrentWeekMonday(monday);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedDate]);
+
+  const handlePageSelected = (e: any) => {
+    const idx = e.nativeEvent.position;
+    setSelectedDate(weekDates[idx]);
+  };
+
   return (
     <SafeAreaView className="flex-1 bg-background">
       <Header title="Scar Fit ⚡️" key={headerKey} />
@@ -208,19 +281,35 @@ export default function Home() {
           ) : (
             <>
               {/* Nutrition Summary with new component */}
-              {hasMacros && dailyLog ? (
-                <NutritionSummary
-                  macros={userProfile?.macros as Partial<MacroData>}
-                  current={{
-                    calories: dailyLog.total_calories,
-                    protein: dailyLog.total_protein,
-                    carbs: dailyLog.total_carbs,
-                    fat: dailyLog.total_fat,
-                  }}
-                  showDetails={showMacroDetails}
-                  onToggleDetails={() => setShowMacroDetails(!showMacroDetails)}
-                  selectedDate={selectedDate}
-                />
+              {hasMacros && weekLogs[selectedIndex] ? (
+                <>
+                  <PagerView
+                    style={{ height: 260 }}
+                    initialPage={selectedIndex}
+                    scrollEnabled={true}
+                    onPageSelected={handlePageSelected}
+                    key={weekDates.map((d) => d.toDateString()).join("-")}
+                  >
+                    {weekDates.map((date, idx) => (
+                      <View key={date.toISOString()}>
+                        <NutritionSummary
+                          macros={userProfile?.macros as Partial<MacroData>}
+                          current={
+                            weekLogs[idx]
+                              ? {
+                                  calories: weekLogs[idx]?.total_calories,
+                                  protein: weekLogs[idx]?.total_protein,
+                                  carbs: weekLogs[idx]?.total_carbs,
+                                  fat: weekLogs[idx]?.total_fat,
+                                }
+                              : {}
+                          }
+                          selectedDate={date}
+                        />
+                      </View>
+                    ))}
+                  </PagerView>
+                </>
               ) : !hasMacros ? (
                 <View className="bg-card rounded-xl border border-border p-6 mb-6">
                   <Text className="text-lg font-semibold text-foreground mb-4">Defina suas metas</Text>
