@@ -15,8 +15,6 @@ interface NutritionSummaryProps {
     fat?: number;
   };
   compact?: boolean;
-  showDetails?: boolean;
-  onToggleDetails?: () => void;
   selectedDate?: Date;
 }
 
@@ -32,8 +30,6 @@ export default function NutritionSummary({
   macros,
   current = {},
   compact = false,
-  showDetails = true,
-  onToggleDetails = () => {},
   selectedDate,
 }: NutritionSummaryProps) {
   const { colors } = useTheme();
@@ -162,12 +158,10 @@ export default function NutritionSummary({
   return (
     <View className="bg-card rounded-xl border border-border p-4">
       {/* Today's date with weekday */}
-      <Pressable onPress={onToggleDetails} className="flex-row justify-between items-center mb-4">
+      <View className="flex-row justify-between items-center mb-4">
         <Text className="text-lg font-semibold text-foreground">{formatDisplayDate()}</Text>
-        {onToggleDetails !== (() => {}) && (
-          <Feather name={showDetails ? "calendar" : "chevron-down"} size={18} color={colors.mutedForeground} />
-        )}
-      </Pressable>
+        <Feather name="calendar" size={18} color={colors.mutedForeground} />
+      </View>
 
       {/* Main layout */}
       <View className="flex-row mb-4">
@@ -230,26 +224,24 @@ export default function NutritionSummary({
             </Text>
           </View>
 
-          {showDetails && (
-            /* Carbs and Fats stacked vertically with updated styling */
-            <View className="mt-2 space-y-1">
-              {/* Carbs */}
-              <View className="flex-row items-center">
-                <View className="w-3 h-3 rounded-full bg-yellow-500 mr-2" />
-                <Text className="text-sm text-muted-foreground">
-                  <Text className="text-white">{Math.round(currentCarbs)}</Text>/{macros.carbs || 0}g carboidratos
-                </Text>
-              </View>
-
-              {/* Fats */}
-              <View className="flex-row items-center">
-                <View className="w-3 h-3 rounded-full bg-red-500 mr-2" />
-                <Text className="text-sm text-muted-foreground">
-                  <Text className="text-white">{Math.round(currentFat)}</Text>/{macros.fat || 0}g gorduras
-                </Text>
-              </View>
+          {/* Carbs and Fats stacked vertically with original styling */}
+          <View className="mt-2 space-y-1">
+            {/* Carbs */}
+            <View className="flex-row items-center">
+              <View className="w-3 h-3 rounded-full bg-yellow-500 mr-2" />
+              <Text className="text-sm text-muted-foreground">
+                <Text className="text-white">{Math.round(currentCarbs)}</Text>/{macros.carbs || 0}g carboidratos
+              </Text>
             </View>
-          )}
+
+            {/* Fats */}
+            <View className="flex-row items-center">
+              <View className="w-3 h-3 rounded-full bg-red-500 mr-2" />
+              <Text className="text-sm text-muted-foreground">
+                <Text className="text-white">{Math.round(currentFat)}</Text>/{macros.fat || 0}g gorduras
+              </Text>
+            </View>
+          </View>
         </View>
       </View>
     </View>
