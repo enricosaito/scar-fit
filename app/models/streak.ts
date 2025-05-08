@@ -1,4 +1,4 @@
-// app/models/streak.ts (improved version)
+// Modify app/models/streak.ts to improve eligibility and update logic
 import { supabase } from "../lib/supabase";
 
 export interface StreakData {
@@ -55,10 +55,41 @@ export async function getUserStreakData(userId: string): Promise<StreakData | nu
       throw fetchError;
     }
 
+    // Check if streak needs daily reset
+    await resetDailyStreakIfNeeded(streakData);
+
     return streakData;
   } catch (error) {
     console.error("Error in getUserStreakData:", error);
     return null;
+  }
+}
+
+/**
+ * Reset today_completed flag if it's a new day
+ */
+async function resetDailyStreakIfNeeded(streakData: StreakData): Promise<void> {
+  try {
+    const today = new Date().toISOString().split("T")[0];
+    const lastStreakDate = streakData.last_streak_date.split("T")[0];
+
+    // If it's still the same day, don't reset
+    if (lastStreakDate === today) {
+      return;
+    }
+
+    // If yesterday and completed, we don't want to reset the streak count, just the flag
+    // If not yesterday or not completed, the streak will be reset during update
+
+    // Reset today's completion status for a new day
+    await supabase
+      .from("streaks")
+      .update({
+        today_completed: false,
+      })
+      .eq("id", streakData.id);
+  } catch (error) {
+    console.error("Error resetting daily streak:", error);
   }
 }
 
@@ -73,9 +104,17 @@ export async function updateUserStreak(userId: string, forceComplete: boolean = 
     const streakData = await getUserStreakData(userId);
     if (!streakData) return null;
 
+    // If today is already completed, no update needed
+    if (streakData.today_completed && !forceComplete) {
+      console.log("Streak already completed today, no update needed");
+      return streakData;
+    }
+
     const today = new Date();
     const todayStr = today.toISOString().split("T")[0];
     const lastStreakDate = new Date(streakData.last_streak_date);
+
+    // Reset time components for date comparison
     lastStreakDate.setHours(0, 0, 0, 0);
     today.setHours(0, 0, 0, 0);
 
@@ -89,12 +128,6 @@ export async function updateUserStreak(userId: string, forceComplete: boolean = 
     console.log(
       `Streak update: Last date: ${lastStreakDate.toISOString()}, Today: ${today.toISOString()}, Diff days: ${diffDays}`
     );
-
-    // If today is already completed, no update needed
-    if (streakData.today_completed && !forceComplete) {
-      console.log("Streak already completed today, no update needed");
-      return streakData;
-    }
 
     // Determine if we need to update the streak
     if (diffDays > 1 && !forceComplete) {
