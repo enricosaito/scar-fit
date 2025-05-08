@@ -20,9 +20,6 @@ import ContributionGraph from "../components/tracking/ContributionGraph";
 import StreakTracker from "../components/tracking/StreakTracker";
 import { getUserStreakData, updateUserStreak, checkStreakEligibility } from "../models/streak";
 
-// Create a reference to the Header component
-let headerRef: React.RefObject<typeof Header> = { current: null };
-
 export default function Home() {
   const router = useRouter();
   const { colors } = useTheme();
@@ -188,6 +185,9 @@ export default function Home() {
       // Load activity dates
       await loadActivityDates();
 
+      // Load streak data
+      await loadStreakData();
+
       // Force refresh the profile to get the latest avatar
       await refreshProfile();
 
@@ -204,7 +204,15 @@ export default function Home() {
   useEffect(() => {
     loadDailyLog(selectedDate);
     loadActivityDates();
+    loadStreakData();
   }, [user, selectedDate]);
+
+  // Add another useEffect to reload streak data when daily log changes
+  useEffect(() => {
+    if (dailyLog) {
+      loadStreakData();
+    }
+  }, [dailyLog]);
 
   // Group food items by meal type
   const getMealItems = (mealType: "breakfast" | "lunch" | "dinner" | "snack") => {
@@ -330,7 +338,7 @@ export default function Home() {
   // Add showStreakDetails function
   const showStreakDetails = () => {
     // Navigate to streak details screen or show modal
-    router.push("/screens/streak-details" as any);
+    router.push("/screens/StreakDetails" as any);
   };
 
   return (
