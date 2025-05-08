@@ -1,4 +1,4 @@
-// app/models/streak.ts
+// app/models/streak.ts (improved version)
 import { supabase } from "../lib/supabase";
 
 export interface StreakData {
@@ -13,48 +13,51 @@ export interface StreakData {
 }
 
 /**
- * Get or create a user's streak data
+ * Get or create a user's streak data using upsert to avoid duplicates
  * @param userId User ID
  */
 export async function getUserStreakData(userId: string): Promise<StreakData | null> {
   try {
-    // Try to get existing streak
-    const { data: existingStreak, error: fetchError } = await supabase
+    const todayStr = new Date().toISOString().split("T")[0];
+
+    // Instead of separate select/insert, use upsert to ensure only one record exists
+    const { data, error } = await supabase
+      .from("streaks")
+      .upsert(
+        {
+          user_id: userId,
+          current_streak: 0, // Only used for new records
+          longest_streak: 0, // Only used for new records
+          last_streak_date: todayStr, // Only used for new records
+          today_completed: false, // Only used for new records
+        },
+        {
+          onConflict: "user_id", // Key to determine if record exists
+          ignoreDuplicates: true, // Don't update if record exists
+        }
+      )
+      .select();
+
+    if (error) {
+      console.error("Error upserting streak data:", error);
+      throw error;
+    }
+
+    // After upsert, directly select the record to get the current data
+    const { data: streakData, error: fetchError } = await supabase
       .from("streaks")
       .select("*")
       .eq("user_id", userId)
       .single();
 
-    if (fetchError && fetchError.code !== "PGRST116") {
+    if (fetchError) {
+      console.error("Error fetching streak data after upsert:", fetchError);
       throw fetchError;
     }
 
-    // If streak exists, return it
-    if (existingStreak) {
-      return existingStreak;
-    }
-
-    // If no streak exists, create a new one
-    const todayStr = new Date().toISOString().split("T")[0];
-    const { data: newStreak, error: createError } = await supabase
-      .from("streaks")
-      .insert([
-        {
-          user_id: userId,
-          current_streak: 0,
-          longest_streak: 0,
-          last_streak_date: todayStr,
-          today_completed: false,
-        },
-      ])
-      .select()
-      .single();
-
-    if (createError) throw createError;
-
-    return newStreak;
+    return streakData;
   } catch (error) {
-    console.error("Error getting/creating streak data:", error);
+    console.error("Error in getUserStreakData:", error);
     return null;
   }
 }
@@ -66,7 +69,7 @@ export async function getUserStreakData(userId: string): Promise<StreakData | nu
  */
 export async function updateUserStreak(userId: string, forceComplete: boolean = false): Promise<StreakData | null> {
   try {
-    // Get current streak data
+    // Get current streak data (this will ensure a record exists)
     const streakData = await getUserStreakData(userId);
     if (!streakData) return null;
 
@@ -74,6 +77,7 @@ export async function updateUserStreak(userId: string, forceComplete: boolean = 
     const todayStr = today.toISOString().split("T")[0];
     const lastStreakDate = new Date(streakData.last_streak_date);
     lastStreakDate.setHours(0, 0, 0, 0);
+    today.setHours(0, 0, 0, 0);
 
     // Calculate days between last streak update and today
     const diffTime = Math.abs(today.getTime() - lastStreakDate.getTime());
@@ -82,48 +86,73 @@ export async function updateUserStreak(userId: string, forceComplete: boolean = 
     let updatedStreak = { ...streakData };
     let streakUpdated = false;
 
-    // If we need to process streak (today or streak needs reset)
+    console.log(
+      `Streak update: Last date: ${lastStreakDate.toISOString()}, Today: ${today.toISOString()}, Diff days: ${diffDays}`
+    );
+
+    // If today is already completed, no update needed
+    if (streakData.today_completed && !forceComplete) {
+      console.log("Streak already completed today, no update needed");
+      return streakData;
+    }
+
+    // Determine if we need to update the streak
     if (diffDays > 1 && !forceComplete) {
       // Missed a day, reset streak (unless it's a recovery day)
       const isRecoveryDay = diffDays === 2;
       if (!isRecoveryDay) {
+        console.log("Missed more than one day, resetting streak");
         updatedStreak.current_streak = 0;
-        updatedStreak.today_completed = false;
-        streakUpdated = true;
+      } else {
+        console.log("Recovery day, not resetting streak");
       }
+
+      // Always mark as not completed for a new day
+      updatedStreak.today_completed = false;
+      streakUpdated = true;
     }
 
-    // Update today's status if we're forcing it or if the user has logged something today
+    // Handle today's completion
     if (forceComplete || diffDays <= 1) {
-      // Only mark as completed if it wasn't already completed
-      if (!updatedStreak.today_completed) {
-        updatedStreak.today_completed = true;
+      console.log("Completing today's streak");
+      updatedStreak.today_completed = true;
 
-        // If this is a new day (diffDays === 1), increment streak
-        if (diffDays === 1 || forceComplete) {
-          updatedStreak.current_streak += 1;
+      // If this is a new day (diffDays === 1), increment streak
+      if (diffDays === 1 || forceComplete) {
+        console.log("New day, incrementing streak");
+        updatedStreak.current_streak += 1;
 
-          // Update longest streak if current is higher
-          if (updatedStreak.current_streak > updatedStreak.longest_streak) {
-            updatedStreak.longest_streak = updatedStreak.current_streak;
-          }
+        // Update longest streak if current is higher
+        if (updatedStreak.current_streak > updatedStreak.longest_streak) {
+          updatedStreak.longest_streak = updatedStreak.current_streak;
         }
-
-        updatedStreak.last_streak_date = todayStr;
-        streakUpdated = true;
       }
+
+      updatedStreak.last_streak_date = todayStr;
+      streakUpdated = true;
     }
 
     // Only update the database if something changed
     if (streakUpdated) {
+      console.log("Updating streak in database:", updatedStreak);
       const { data, error } = await supabase
         .from("streaks")
-        .update(updatedStreak)
+        .update({
+          current_streak: updatedStreak.current_streak,
+          longest_streak: updatedStreak.longest_streak,
+          last_streak_date: updatedStreak.last_streak_date,
+          today_completed: updatedStreak.today_completed,
+        })
         .eq("id", streakData.id)
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error updating streak:", error);
+        throw error;
+      }
+
+      console.log("Streak updated successfully:", data);
       return data;
     }
 
@@ -151,11 +180,15 @@ export async function checkStreakEligibility(userId: string): Promise<boolean> {
       .eq("date", todayStr)
       .single();
 
-    if (error) return false;
+    if (error && error.code !== "PGRST116") {
+      console.error("Error checking daily log:", error);
+      return false;
+    }
 
     // Check if items array exists and has at least one item
     const hasLoggedMeal = dailyLog?.items && dailyLog.items.length > 0;
 
+    console.log("Streak eligibility check:", hasLoggedMeal ? "Eligible" : "Not eligible");
     return hasLoggedMeal;
   } catch (error) {
     console.error("Error checking streak eligibility:", error);
