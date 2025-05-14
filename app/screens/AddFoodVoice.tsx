@@ -142,28 +142,50 @@ export default function VoiceFoodLogger() {
 
     try {
       const today = new Date().toISOString().split("T")[0];
+      const savedItems = [];
+      const failedItems = [];
 
-      // Add each item to the log
+      // Process items sequentially to prevent race conditions
       for (const item of extractedItems) {
         if (item.food) {
-          await addFoodToLog(user.id, today, {
-            food: item.food,
-            quantity: item.quantity,
-            meal_type: item.mealType,
-            date: today,
-          });
+          try {
+            const log = await addFoodToLog(user.id, today, {
+              food: item.food,
+              quantity: item.quantity,
+              meal_type: item.mealType,
+              date: today,
+            });
+            savedItems.push(item);
+          } catch (itemError) {
+            console.error("Error adding food item:", itemError);
+            failedItems.push(item);
+          }
         }
       }
 
-      // Show toast notification
-      const itemCount = extractedItems.filter((item) => item.food).length;
-      showToast(
-        `${itemCount} ${itemCount === 1 ? "alimento adicionado" : "alimentos adicionados"} ao diário`,
-        "success"
-      );
+      // Determine appropriate message based on success/failure
+      if (savedItems.length > 0) {
+        showToast(
+          `${savedItems.length} ${savedItems.length === 1 ? "alimento adicionado" : "alimentos adicionados"} ao diário`,
+          "success"
+        );
 
-      // Navigate back to tabs
-      router.replace("/(tabs)");
+        // Only show failure message if some items failed but others succeeded
+        if (failedItems.length > 0) {
+          setTimeout(() => {
+            showToast(
+              `${failedItems.length} ${failedItems.length === 1 ? "item falhou" : "itens falharam"} ao adicionar`,
+              "error"
+            );
+          }, 2000);
+        }
+
+        // Navigate back to tabs
+        router.replace("/(tabs)");
+      } else if (failedItems.length > 0) {
+        // All items failed
+        throw new Error("Falha ao adicionar alimentos");
+      }
     } catch (error) {
       console.error("Error saving items:", error);
       Alert.alert("Erro", "Ocorreu um erro ao salvar os alimentos. Por favor, tente novamente.", [{ text: "OK" }]);
