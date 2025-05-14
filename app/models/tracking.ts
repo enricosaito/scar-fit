@@ -118,28 +118,30 @@ export async function addFoodToLog(userId: string, date: string, foodPortion: Fo
 
     if (updateError) throw updateError;
 
-    // Check if we need to update the streak
-    // Only check if the date is today (avoid streak updates for past days)
-    // Fix: Ensure consistent date format using local time
-    const now = new Date();
-    const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(
-      2,
-      "0"
-    )}`;
+    // Handle streak update when food is logged
+    try {
+      // Get today's date in YYYY-MM-DD format
+      const now = new Date();
+      const today = now.toISOString().split("T")[0];
 
-    if (date === today) {
-      try {
-        // Check if user is eligible for streak update after adding this food
-        const isEligible = await checkStreakEligibility(userId);
+      // First check if this is the first food logged today
+      // (only need to check if items.length was 0 before adding this item)
+      const isFirstItemToday = currentLog.items.length === 0;
 
-        if (isEligible) {
-          // Update the streak
-          await updateUserStreak(userId);
-        }
-      } catch (streakError) {
-        console.error("Error updating streak:", streakError);
-        // Don't throw error here, as we still want to return the updated log
+      // Check if the date is today or in the past (only add to streak for today or past dates)
+      if (date <= today) {
+        console.log(`Food logged for date: ${date}, today is: ${today}, first item: ${isFirstItemToday}`);
+
+        // Always call updateUserStreak when logging food for the first time on a particular day
+        // The logic in updateUserStreak will handle all cases:
+        // - Same day → mark today as completed
+        // - Consecutive day → increment streak
+        // - Gap in days → reset streak
+        await updateUserStreak(userId);
       }
+    } catch (streakError) {
+      console.error("Error updating streak:", streakError);
+      // Don't throw error here, as we still want to return the updated log
     }
 
     return updatedLog;
