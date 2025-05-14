@@ -78,9 +78,6 @@ async function resetDailyStreakIfNeeded(streakData: StreakData): Promise<void> {
       return;
     }
 
-    // If yesterday and completed, we don't want to reset the streak count, just the flag
-    // If not yesterday or not completed, the streak will be reset during update
-
     // Reset today's completion status for a new day
     await supabase
       .from("streaks")
@@ -114,45 +111,38 @@ export async function updateUserStreak(userId: string, forceComplete: boolean = 
     const todayStr = today.toISOString().split("T")[0];
     const lastStreakDate = new Date(streakData.last_streak_date);
 
-    // Reset time components for date comparison
-    lastStreakDate.setHours(0, 0, 0, 0);
-    today.setHours(0, 0, 0, 0);
+    // Extract date parts for comparison (YYYY-MM-DD)
+    const lastDateStr = lastStreakDate.toISOString().split("T")[0];
 
-    // Calculate days between last streak update and today
-    const diffTime = Math.abs(today.getTime() - lastStreakDate.getTime());
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
+    // Initialize the updated streak object
     let updatedStreak = { ...streakData };
     let streakUpdated = false;
 
-    console.log(
-      `Streak update: Last date: ${lastStreakDate.toISOString()}, Today: ${today.toISOString()}, Diff days: ${diffDays}`
-    );
+    console.log(`Streak update: Last date: ${lastDateStr}, Today: ${todayStr}`);
 
-    // Determine if we need to update the streak
-    if (diffDays > 1 && !forceComplete) {
-      // Missed a day, reset streak (unless it's a recovery day)
-      const isRecoveryDay = diffDays === 2;
-      if (!isRecoveryDay) {
-        console.log("Missed more than one day, resetting streak");
-        updatedStreak.current_streak = 0;
-      } else {
-        console.log("Recovery day, not resetting streak");
-      }
-
-      // Always mark as not completed for a new day
-      updatedStreak.today_completed = false;
+    // Case 1: First time logging today
+    if (lastDateStr === todayStr && !streakData.today_completed) {
+      console.log("First time logging food today");
+      updatedStreak.today_completed = true;
       streakUpdated = true;
     }
+    // Case 2: Logging on a consecutive day (yesterday's date + 1)
+    else if (lastDateStr !== todayStr) {
+      // Calculate days between last streak update and today
+      const lastDate = new Date(lastDateStr);
+      const currentDate = new Date(todayStr);
 
-    // Handle today's completion
-    if (forceComplete || diffDays <= 1) {
-      console.log("Completing today's streak");
-      updatedStreak.today_completed = true;
+      lastDate.setHours(0, 0, 0, 0);
+      currentDate.setHours(0, 0, 0, 0);
 
-      // If this is a new day (diffDays === 1), increment streak
-      if (diffDays === 1 || forceComplete) {
-        console.log("New day, incrementing streak");
+      const diffTime = currentDate.getTime() - lastDate.getTime();
+      const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+      console.log(`Days difference: ${diffDays}`);
+
+      // If exactly one day has passed (consecutive day)
+      if (diffDays === 1) {
+        console.log("Consecutive day, incrementing streak");
         updatedStreak.current_streak += 1;
 
         // Update longest streak if current is higher
@@ -160,8 +150,15 @@ export async function updateUserStreak(userId: string, forceComplete: boolean = 
           updatedStreak.longest_streak = updatedStreak.current_streak;
         }
       }
+      // If more than one day has passed (streak broken)
+      else if (diffDays > 1) {
+        console.log("Streak broken, resetting to 1");
+        updatedStreak.current_streak = 1; // Reset to 1 (not 0) because they're logging today
+      }
 
+      // Update streak date and completion status for today
       updatedStreak.last_streak_date = todayStr;
+      updatedStreak.today_completed = true;
       streakUpdated = true;
     }
 
