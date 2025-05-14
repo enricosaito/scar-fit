@@ -34,23 +34,30 @@ const useStreak = (userId: string | undefined) => {
     setError(null);
 
     try {
+      // Get the user's streak data
       const data = await getUserStreakData(userId);
       if (!data) {
         setError("Failed to load streak data");
         return;
       }
 
+      // Check if the user has logged any food today (eligible for streak)
       const isEligibleForStreak = await checkStreakEligibility(userId);
 
+      // If eligible for a streak update and not already marked as completed today
       if (isEligibleForStreak && !data.today_completed) {
+        // Update the streak (this will handle consecutive days, etc.)
         const updatedData = await updateUserStreak(userId);
+
         if (updatedData) {
+          // Update the UI with the new streak data
           setStreakData({
             currentStreak: updatedData.current_streak,
             longestStreak: updatedData.longest_streak,
             todayCompleted: updatedData.today_completed,
           });
 
+          // Provide haptic feedback if streak increased
           if (updatedData.today_completed && updatedData.current_streak > data.current_streak) {
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
           }
@@ -58,6 +65,7 @@ const useStreak = (userId: string | undefined) => {
           setError("Failed to update streak");
         }
       } else {
+        // Just display the current streak data (no update needed)
         setStreakData({
           currentStreak: data.current_streak,
           longestStreak: data.longest_streak,
@@ -65,13 +73,14 @@ const useStreak = (userId: string | undefined) => {
         });
       }
     } catch (error) {
+      console.error("Error in useStreak:", error);
       setError("Error loading streak data");
     } finally {
       setLoading(false);
     }
   };
 
-  return { streakData, loading: loading, error, loadStreakData };
+  return { streakData, loading, error, loadStreakData };
 };
 
 // Custom hook for date management
