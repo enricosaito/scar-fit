@@ -1,5 +1,5 @@
 // app/(tabs)/index.tsx
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { Text, View, Pressable, SafeAreaView, ScrollView, ActivityIndicator, RefreshControl } from "react-native";
 import { useRouter, useFocusEffect } from "expo-router";
 import { Feather } from "@expo/vector-icons";
@@ -13,15 +13,127 @@ import type { FoodPortion } from "../models/food";
 import Header from "../components/ui/Header";
 import { MacroData } from "../models/user";
 import { DailyLog, getUserDailyLog } from "../models/tracking";
-import { clearImageCache } from "../utils/imageUpload";
-import { PanGestureHandler, State } from "react-native-gesture-handler";
 import PagerView from "react-native-pager-view";
-import ContributionGraph from "../components/tracking/ContributionGraph";
 import StreakTracker from "../components/tracking/StreakTracker";
 import { getUserStreakData, updateUserStreak, checkStreakEligibility } from "../models/streak";
 
-// Create a reference to the Header component
-let headerRef: React.RefObject<typeof Header> = { current: null };
+// Custom hook for streak management
+const useStreak = (userId: string | undefined) => {
+  const [streakData, setStreakData] = useState({
+    currentStreak: 0,
+    longestStreak: 0,
+    todayCompleted: false,
+  });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const loadStreakData = async () => {
+    if (!userId) return;
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      // Get the user's streak data
+      const data = await getUserStreakData(userId);
+      if (!data) {
+        setError("Failed to load streak data");
+        return;
+      }
+
+      // Check if the user has logged any food today (eligible for streak)
+      const isEligibleForStreak = await checkStreakEligibility(userId);
+
+      // If eligible for a streak update and not already marked as completed today
+      if (isEligibleForStreak && !data.today_completed) {
+        // Update the streak (this will handle consecutive days, etc.)
+        const updatedData = await updateUserStreak(userId);
+
+        if (updatedData) {
+          // Update the UI with the new streak data
+          setStreakData({
+            currentStreak: updatedData.current_streak,
+            longestStreak: updatedData.longest_streak,
+            todayCompleted: updatedData.today_completed,
+          });
+
+          // Provide haptic feedback if streak increased
+          if (updatedData.today_completed && updatedData.current_streak > data.current_streak) {
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+          }
+        } else {
+          setError("Failed to update streak");
+        }
+      } else {
+        // Just display the current streak data (no update needed)
+        setStreakData({
+          currentStreak: data.current_streak,
+          longestStreak: data.longest_streak,
+          todayCompleted: data.today_completed,
+        });
+      }
+    } catch (error) {
+      console.error("Error in useStreak:", error);
+      setError("Error loading streak data");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return { streakData, loading, error, loadStreakData };
+};
+
+// Custom hook for date management
+const useDateManagement = () => {
+  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [activityDates, setActivityDates] = useState<string[]>([]);
+
+  const getWeekBounds = (date: Date) => {
+    const day = date.getDay();
+    const monday = new Date(date);
+    monday.setDate(date.getDate() - ((day + 6) % 7));
+    const sunday = new Date(monday);
+    sunday.setDate(monday.getDate() + 6);
+    return { monday, sunday };
+  };
+
+  const getWeekDates = (date: Date) => {
+    const { monday } = getWeekBounds(date);
+    return Array.from({ length: 7 }, (_, i) => {
+      const d = new Date(monday);
+      d.setDate(monday.getDate() + i);
+      return d;
+    });
+  };
+
+  const getMonday = (date: Date) => {
+    const d = new Date(date);
+    const day = d.getDay();
+    d.setDate(d.getDate() - ((day + 6) % 7));
+    d.setHours(0, 0, 0, 0);
+    return d;
+  };
+
+  const [currentWeekMonday, setCurrentWeekMonday] = useState(() => getMonday(selectedDate));
+  const weekDates = React.useMemo(() => getWeekDates(currentWeekMonday), [currentWeekMonday]);
+
+  const handleDateSelect = (date: Date) => {
+    setSelectedDate(date);
+    const monday = getMonday(date);
+    if (monday.getTime() !== currentWeekMonday.getTime()) {
+      setCurrentWeekMonday(monday);
+    }
+  };
+
+  return {
+    selectedDate,
+    activityDates,
+    setActivityDates,
+    weekDates,
+    currentWeekMonday,
+    handleDateSelect,
+  };
+};
 
 export default function Home() {
   const router = useRouter();
@@ -30,103 +142,11 @@ export default function Home() {
   const [dailyLog, setDailyLog] = useState<DailyLog | null>(null);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  const [showMacroDetails, setShowMacroDetails] = useState(true);
-  const [activityDates, setActivityDates] = useState<string[]>([]);
-  const [selectedDate, setSelectedDate] = useState(new Date());
-
-  // Streak Data
-  const [streakData, setStreakData] = useState<{
-    currentStreak: number;
-    longestStreak: number;
-    todayCompleted: boolean;
-  }>({
-    currentStreak: 0,
-    longestStreak: 0,
-    todayCompleted: false,
-  });
-  const [streakLoading, setStreakLoading] = useState(false);
-  const [streakError, setStreakError] = useState<string | null>(null);
-
-  // Improved loadStreakData function
-  const loadStreakData = async () => {
-    if (!user) return;
-
-    setStreakLoading(true);
-    setStreakError(null);
-
-    try {
-      console.log("Loading streak data for user:", user.id);
-
-      // Get streak data
-      const data = await getUserStreakData(user.id);
-      if (!data) {
-        setStreakError("Failed to load streak data");
-        return;
-      }
-
-      console.log("Retrieved streak data:", data);
-
-      // Check if user has logged meals today
-      const isEligibleForStreak = await checkStreakEligibility(user.id);
-      console.log("User is eligible for streak update:", isEligibleForStreak);
-
-      // If user has logged meals and streak isn't updated, update it
-      if (isEligibleForStreak && !data.today_completed) {
-        console.log("Updating streak for eligible user");
-        const updatedData = await updateUserStreak(user.id);
-
-        if (updatedData) {
-          console.log("Streak updated:", updatedData);
-          // Update the UI
-          setStreakData({
-            currentStreak: updatedData.current_streak,
-            longestStreak: updatedData.longest_streak,
-            todayCompleted: updatedData.today_completed,
-          });
-
-          // If streak was updated, trigger haptic feedback
-          if (updatedData.today_completed && updatedData.current_streak > data.current_streak) {
-            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-          }
-        } else {
-          console.log("Failed to update streak");
-          setStreakError("Failed to update streak");
-        }
-      } else {
-        console.log("Using existing streak data:", data);
-        // Just update the UI with existing data
-        setStreakData({
-          currentStreak: data.current_streak,
-          longestStreak: data.longest_streak,
-          todayCompleted: data.today_completed,
-        });
-      }
-    } catch (error) {
-      console.error("Error loading streak data:", error);
-      setStreakError("Error loading streak data");
-    } finally {
-      setStreakLoading(false);
-    }
-  };
-
-  // Generate a unique key for the Header component to force re-rendering
+  const [weekLogs, setWeekLogs] = useState<(DailyLog | null)[]>(Array(7).fill(null));
   const [headerKey, setHeaderKey] = useState(Date.now().toString());
 
-  // Force refresh when the component comes into focus
-  useFocusEffect(
-    React.useCallback(() => {
-      // When the screen comes into focus, refresh the header
-      // This ensures the avatar is up-to-date when navigating back to this screen
-      setHeaderKey(Date.now().toString());
-
-      // Also refresh the profile in the background
-      refreshProfile().catch((err) => console.error("Error refreshing profile:", err));
-
-      return () => {
-        // Cleanup function when component loses focus
-      };
-    }, [])
-  );
+  const { streakData, loading: streakLoading, error: streakError, loadStreakData } = useStreak(user?.id);
+  const { selectedDate, activityDates, setActivityDates, weekDates, handleDateSelect } = useDateManagement();
 
   // Check if user has saved macros
   const hasMacros = userProfile?.macros && Object.keys(userProfile?.macros || {}).length > 0;
@@ -157,41 +177,21 @@ export default function Home() {
     if (!user) return;
 
     try {
-      // For now, let's just mark today and yesterday as having activity
-      // In a real implementation, you'd fetch this from your database
       const today = new Date();
       const yesterday = new Date(today);
       yesterday.setDate(yesterday.getDate() - 1);
-
       const dates = [today.toISOString().split("T")[0], yesterday.toISOString().split("T")[0]];
-
       setActivityDates(dates);
     } catch (error) {
       console.error("Error loading activity dates:", error);
     }
   };
 
-  // Handle date selection from weekly activity
-  const handleDateSelect = (date: Date) => {
-    setSelectedDate(date);
-    loadDailyLog(date);
-  };
-
   // Pull to refresh function
   const onRefresh = async () => {
     setRefreshing(true);
-
     try {
-      // Load the daily log for selected date
-      await loadDailyLog(selectedDate);
-
-      // Load activity dates
-      await loadActivityDates();
-
-      // Force refresh the profile to get the latest avatar
-      await refreshProfile();
-
-      // Force re-render the Header component with a new key
+      await Promise.all([loadDailyLog(selectedDate), loadActivityDates(), loadStreakData(), refreshProfile()]);
       setHeaderKey(Date.now().toString());
     } catch (error) {
       console.error("Error refreshing:", error);
@@ -204,96 +204,17 @@ export default function Home() {
   useEffect(() => {
     loadDailyLog(selectedDate);
     loadActivityDates();
+    loadStreakData();
   }, [user, selectedDate]);
 
-  // Group food items by meal type
-  const getMealItems = (mealType: "breakfast" | "lunch" | "dinner" | "snack") => {
-    if (!dailyLog || !dailyLog.items) return [];
-    return dailyLog.items.filter((item) => item.meal_type === mealType);
-  };
-
-  // Prepare meals data for MealList component
-  type MealType = "breakfast" | "lunch" | "dinner" | "snack";
-
-  type Meal = {
-    type: MealType;
-    title: string;
-    items: FoodPortion[];
-    icon: string;
-    time?: string;
-  };
-
-  const prepareMeals = (): Meal[] => {
-    if (!dailyLog) return [];
-
-    return [
-      {
-        type: "breakfast",
-        title: "Café da Manhã",
-        items: getMealItems("breakfast"),
-        icon: "coffee",
-        time: "7:00 - 9:00",
-      },
-      {
-        type: "lunch",
-        title: "Almoço",
-        items: getMealItems("lunch"),
-        icon: "sun",
-        time: "12:00 - 14:00",
-      },
-      {
-        type: "dinner",
-        title: "Jantar",
-        items: getMealItems("dinner"),
-        icon: "moon",
-        time: "18:00 - 20:00",
-      },
-      {
-        type: "snack",
-        title: "Lanches",
-        items: getMealItems("snack"),
-        icon: "package",
-      },
-    ];
-  };
-
-  // Helper: get start and end of current week (Monday-Sunday)
-  const getWeekBounds = (date: Date) => {
-    const day = date.getDay();
-    const monday = new Date(date);
-    monday.setDate(date.getDate() - ((day + 6) % 7));
-    const sunday = new Date(monday);
-    sunday.setDate(monday.getDate() + 6);
-    return { monday, sunday };
-  };
-
-  // Get all dates for the current week (Monday-Sunday)
-  const getWeekDates = (date: Date) => {
-    const { monday } = getWeekBounds(date);
-    return Array.from({ length: 7 }, (_, i) => {
-      const d = new Date(monday);
-      d.setDate(monday.getDate() + i);
-      return d;
-    });
-  };
-
-  // Track the current week's Monday in state
-  const getMonday = (date: Date) => {
-    const d = new Date(date);
-    const day = d.getDay();
-    d.setDate(d.getDate() - ((day + 6) % 7));
-    d.setHours(0, 0, 0, 0);
-    return d;
-  };
-
-  const [currentWeekMonday, setCurrentWeekMonday] = useState(() => getMonday(selectedDate));
-  const weekDates = React.useMemo(() => getWeekDates(currentWeekMonday), [currentWeekMonday]);
-  const selectedIndex = weekDates.findIndex((d) => d.toDateString() === selectedDate.toDateString());
+  // Reload streak data when daily log changes
+  useEffect(() => {
+    if (dailyLog) {
+      loadStreakData();
+    }
+  }, [dailyLog]);
 
   // Preload daily logs for the week
-  const [weekLogs, setWeekLogs] = useState<(DailyLog | null)[]>(Array(7).fill(null));
-
-  // Only fetch logs when the week changes
   useEffect(() => {
     if (!user) return;
     const fetchLogs = async () => {
@@ -310,28 +231,68 @@ export default function Home() {
       setWeekLogs(logs);
     };
     fetchLogs();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, currentWeekMonday.toISOString()]);
+  }, [user, weekDates]);
 
-  // When selectedDate changes, if it's outside the current week, update the week
-  useEffect(() => {
-    const monday = getMonday(selectedDate);
-    if (monday.getTime() !== currentWeekMonday.getTime()) {
-      setCurrentWeekMonday(monday);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedDate]);
+  // Group food items by meal type
+  const getMealItems = (mealType: "breakfast" | "lunch" | "dinner" | "snack") => {
+    if (!dailyLog || !dailyLog.items) return [];
+    return dailyLog.items.filter((item) => item.meal_type === mealType);
+  };
+
+  // Prepare meals data for MealList component
+  type MealType = "breakfast" | "lunch" | "dinner" | "snack";
+  type Meal = {
+    type: MealType;
+    title: string;
+    items: FoodPortion[];
+    icon: string;
+    time?: string;
+  };
+
+  const prepareMeals = (): Meal[] => {
+    if (!dailyLog) return [];
+
+    return [
+      {
+        type: "breakfast" as MealType,
+        title: "Café da Manhã",
+        items: getMealItems("breakfast"),
+        icon: "coffee",
+        time: "7:00 - 9:00",
+      },
+      {
+        type: "lunch" as MealType,
+        title: "Almoço",
+        items: getMealItems("lunch"),
+        icon: "sun",
+        time: "12:00 - 14:00",
+      },
+      {
+        type: "dinner" as MealType,
+        title: "Jantar",
+        items: getMealItems("dinner"),
+        icon: "moon",
+        time: "18:00 - 20:00",
+      },
+      {
+        type: "snack" as MealType,
+        title: "Lanches",
+        items: getMealItems("snack"),
+        icon: "package",
+      },
+    ];
+  };
 
   const handlePageSelected = (e: any) => {
     const idx = e.nativeEvent.position;
-    setSelectedDate(weekDates[idx]);
+    handleDateSelect(weekDates[idx]);
   };
 
-  // Add showStreakDetails function
   const showStreakDetails = () => {
-    // Navigate to streak details screen or show modal
-    router.push("/screens/streak-details" as any);
+    router.push("/screens/StreakDetails" as any);
   };
+
+  const selectedIndex = weekDates.findIndex((d) => d.toDateString() === selectedDate.toDateString());
 
   return (
     <SafeAreaView className="flex-1 bg-background">
@@ -349,7 +310,6 @@ export default function Home() {
         }
       >
         <View className="px-4 py-3 mt-3">
-          {/* Weekly Activity Component */}
           <WeeklyActivity
             selectedDate={selectedDate}
             onDateSelect={handleDateSelect}
@@ -357,43 +317,39 @@ export default function Home() {
             greeting={`Olá, ${userProfile?.full_name?.split(" ")[0] || user?.user_metadata?.name || "Usuário"}`}
           />
 
-          {/* Loading state */}
           {loading && !refreshing ? (
             <View className="items-center py-8">
               <ActivityIndicator size="large" color={colors.primary} />
             </View>
           ) : (
             <>
-              {/* Nutrition Summary with new component */}
               {hasMacros && weekLogs[selectedIndex] ? (
-                <>
-                  <PagerView
-                    style={{ height: 260 }}
-                    initialPage={selectedIndex}
-                    scrollEnabled={true}
-                    onPageSelected={handlePageSelected}
-                    key={weekDates.map((d) => d.toDateString()).join("-")}
-                  >
-                    {weekDates.map((date, idx) => (
-                      <View key={date.toISOString()}>
-                        <NutritionSummary
-                          macros={userProfile?.macros as Partial<MacroData>}
-                          current={
-                            weekLogs[idx]
-                              ? {
-                                  calories: weekLogs[idx]?.total_calories,
-                                  protein: weekLogs[idx]?.total_protein,
-                                  carbs: weekLogs[idx]?.total_carbs,
-                                  fat: weekLogs[idx]?.total_fat,
-                                }
-                              : {}
-                          }
-                          selectedDate={date}
-                        />
-                      </View>
-                    ))}
-                  </PagerView>
-                </>
+                <PagerView
+                  style={{ height: 260 }}
+                  initialPage={selectedIndex}
+                  scrollEnabled={true}
+                  onPageSelected={handlePageSelected}
+                  key={weekDates.map((d) => d.toDateString()).join("-")}
+                >
+                  {weekDates.map((date, idx) => (
+                    <View key={date.toISOString()}>
+                      <NutritionSummary
+                        macros={userProfile?.macros as Partial<MacroData>}
+                        current={
+                          weekLogs[idx]
+                            ? {
+                                calories: weekLogs[idx]?.total_calories,
+                                protein: weekLogs[idx]?.total_protein,
+                                carbs: weekLogs[idx]?.total_carbs,
+                                fat: weekLogs[idx]?.total_fat,
+                              }
+                            : {}
+                        }
+                        selectedDate={date}
+                      />
+                    </View>
+                  ))}
+                </PagerView>
               ) : !hasMacros ? (
                 <View className="bg-card rounded-xl border border-border p-6 mb-6">
                   <Text className="text-lg font-semibold text-foreground mb-4">Defina suas metas</Text>
@@ -409,7 +365,6 @@ export default function Home() {
                 </View>
               ) : null}
 
-              {/* Streak Tracker */}
               {user && !streakLoading ? (
                 <StreakTracker
                   currentStreak={streakData.currentStreak}
@@ -436,13 +391,11 @@ export default function Home() {
                 </Pressable>
               ) : null}
 
-              {/* Meal List Section */}
               {dailyLog && (
                 <>
                   <View className="flex-row justify-between items-center mt-12 mb-3">
                     <Text className="text-xl font-bold text-foreground">Refeições</Text>
                   </View>
-
                   <MealList meals={prepareMeals()} />
                 </>
               )}

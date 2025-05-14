@@ -1,5 +1,6 @@
 // Add to app/models/tracking.ts
 import { supabase } from "../lib/supabase";
+import { updateUserStreak, checkStreakEligibility } from "./streak";
 import { Food, FoodPortion } from "./food";
 
 export type MealType = "breakfast" | "lunch" | "dinner" | "snack";
@@ -42,10 +43,10 @@ export async function getUserDailyLog(userId: string, date: string): Promise<Dai
       };
     }
 
-    // If no log exists, create a new one
+    // If no log exists, create a new one using upsert to avoid duplicate constraint errors
     const { data: newLog, error: createError } = await supabase
       .from("daily_logs")
-      .insert([
+      .upsert(
         {
           user_id: userId,
           date,
@@ -55,7 +56,11 @@ export async function getUserDailyLog(userId: string, date: string): Promise<Dai
           total_carbs: 0,
           total_fat: 0,
         },
-      ])
+        {
+          onConflict: "user_id,date",
+          ignoreDuplicates: false,
+        }
+      )
       .select()
       .single();
 
@@ -76,11 +81,7 @@ export async function getUserDailyLog(userId: string, date: string): Promise<Dai
 }
 
 // Add food to daily log
-export async function addFoodToLog(
-  userId: string,
-  date: string,
-  foodPortion: FoodPortion
-): Promise<DailyLog> {
+export async function addFoodToLog(userId: string, date: string, foodPortion: FoodPortion): Promise<DailyLog> {
   try {
     // Get current log
     const currentLog = await getUserDailyLog(userId, date);
@@ -106,27 +107,42 @@ export async function addFoodToLog(
     const updatedLog = {
       ...currentLog,
       items: updatedItems,
-      total_calories: Math.round(
-        updatedItems.reduce((sum, item) => sum + item.food.kcal, 0)
-      ),
-      total_protein: Math.round(
-        updatedItems.reduce((sum, item) => sum + item.food.protein_g, 0) * 10
-      ) / 10,
-      total_carbs: Math.round(
-        updatedItems.reduce((sum, item) => sum + item.food.carbs_g, 0) * 10
-      ) / 10,
-      total_fat: Math.round(
-        updatedItems.reduce((sum, item) => sum + item.food.fat_g, 0) * 10
-      ) / 10,
+      total_calories: Math.round(updatedItems.reduce((sum, item) => sum + item.food.kcal, 0)),
+      total_protein: Math.round(updatedItems.reduce((sum, item) => sum + item.food.protein_g, 0) * 10) / 10,
+      total_carbs: Math.round(updatedItems.reduce((sum, item) => sum + item.food.carbs_g, 0) * 10) / 10,
+      total_fat: Math.round(updatedItems.reduce((sum, item) => sum + item.food.fat_g, 0) * 10) / 10,
     };
 
     // Save to database
-    const { error: updateError } = await supabase
-      .from("daily_logs")
-      .update(updatedLog)
-      .eq("id", currentLog.id);
+    const { error: updateError } = await supabase.from("daily_logs").update(updatedLog).eq("id", currentLog.id);
 
     if (updateError) throw updateError;
+
+    // Handle streak update when food is logged
+    try {
+      // Get today's date in YYYY-MM-DD format
+      const now = new Date();
+      const today = now.toISOString().split("T")[0];
+
+      // First check if this is the first food logged today
+      // (only need to check if items.length was 0 before adding this item)
+      const isFirstItemToday = currentLog.items.length === 0;
+
+      // Check if the date is today or in the past (only add to streak for today or past dates)
+      if (date <= today) {
+        console.log(`Food logged for date: ${date}, today is: ${today}, first item: ${isFirstItemToday}`);
+
+        // Always call updateUserStreak when logging food for the first time on a particular day
+        // The logic in updateUserStreak will handle all cases:
+        // - Same day → mark today as completed
+        // - Consecutive day → increment streak
+        // - Gap in days → reset streak
+        await updateUserStreak(userId);
+      }
+    } catch (streakError) {
+      console.error("Error updating streak:", streakError);
+      // Don't throw error here, as we still want to return the updated log
+    }
 
     return updatedLog;
   } catch (error) {
@@ -136,11 +152,7 @@ export async function addFoodToLog(
 }
 
 // Remove food from daily log
-export async function removeFoodFromLog(
-  userId: string,
-  date: string,
-  itemIndex: number
-): Promise<DailyLog> {
+export async function removeFoodFromLog(userId: string, date: string, itemIndex: number): Promise<DailyLog> {
   try {
     // Get current log
     const currentLog = await getUserDailyLog(userId, date);
@@ -150,25 +162,14 @@ export async function removeFoodFromLog(
     const updatedLog = {
       ...currentLog,
       items: updatedItems,
-      total_calories: Math.round(
-        updatedItems.reduce((sum, item) => sum + item.food.kcal, 0)
-      ),
-      total_protein: Math.round(
-        updatedItems.reduce((sum, item) => sum + item.food.protein_g, 0) * 10
-      ) / 10,
-      total_carbs: Math.round(
-        updatedItems.reduce((sum, item) => sum + item.food.carbs_g, 0) * 10
-      ) / 10,
-      total_fat: Math.round(
-        updatedItems.reduce((sum, item) => sum + item.food.fat_g, 0) * 10
-      ) / 10,
+      total_calories: Math.round(updatedItems.reduce((sum, item) => sum + item.food.kcal, 0)),
+      total_protein: Math.round(updatedItems.reduce((sum, item) => sum + item.food.protein_g, 0) * 10) / 10,
+      total_carbs: Math.round(updatedItems.reduce((sum, item) => sum + item.food.carbs_g, 0) * 10) / 10,
+      total_fat: Math.round(updatedItems.reduce((sum, item) => sum + item.food.fat_g, 0) * 10) / 10,
     };
 
     // Save to database
-    const { error: updateError } = await supabase
-      .from("daily_logs")
-      .update(updatedLog)
-      .eq("id", currentLog.id);
+    const { error: updateError } = await supabase.from("daily_logs").update(updatedLog).eq("id", currentLog.id);
 
     if (updateError) throw updateError;
 
@@ -180,11 +181,7 @@ export async function removeFoodFromLog(
 }
 
 // Get user's daily logs for a date range
-export async function getUserDailyLogs(
-  userId: string,
-  startDate: string,
-  endDate: string
-): Promise<DailyLog[]> {
+export async function getUserDailyLogs(userId: string, startDate: string, endDate: string): Promise<DailyLog[]> {
   try {
     const { data: logs, error } = await supabase
       .from("daily_logs")

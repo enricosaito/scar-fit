@@ -1,4 +1,4 @@
-// app/components/tracking/StreakTracker.tsx
+// Update app/components/tracking/StreakTracker.tsx
 import React, { useEffect, useRef } from "react";
 import { View, Text, Pressable, Animated } from "react-native";
 import { Feather } from "@expo/vector-icons";
