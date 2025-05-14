@@ -43,10 +43,10 @@ export async function getUserDailyLog(userId: string, date: string): Promise<Dai
       };
     }
 
-    // If no log exists, create a new one
+    // If no log exists, create a new one using upsert to avoid duplicate constraint errors
     const { data: newLog, error: createError } = await supabase
       .from("daily_logs")
-      .insert([
+      .upsert(
         {
           user_id: userId,
           date,
@@ -56,7 +56,11 @@ export async function getUserDailyLog(userId: string, date: string): Promise<Dai
           total_carbs: 0,
           total_fat: 0,
         },
-      ])
+        {
+          onConflict: "user_id,date",
+          ignoreDuplicates: false,
+        }
+      )
       .select()
       .single();
 
