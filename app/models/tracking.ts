@@ -120,7 +120,13 @@ export async function addFoodToLog(userId: string, date: string, foodPortion: Fo
 
     // Check if we need to update the streak
     // Only check if the date is today (avoid streak updates for past days)
-    const today = new Date().toISOString().split("T")[0];
+    // Fix: Ensure consistent date format using local time
+    const now = new Date();
+    const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(
+      2,
+      "0"
+    )}`;
+
     if (date === today) {
       try {
         // Check if user is eligible for streak update after adding this food

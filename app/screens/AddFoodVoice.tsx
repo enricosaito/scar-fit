@@ -141,7 +141,12 @@ export default function VoiceFoodLogger() {
     setIsProcessing(true);
 
     try {
-      const today = new Date().toISOString().split("T")[0];
+      // Fix: Ensure we're using the correct local date by manually formatting it
+      const now = new Date();
+      const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(
+        now.getDate()
+      ).padStart(2, "0")}`;
+
       const savedItems = [];
       const failedItems = [];
 
