@@ -53,9 +53,9 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="workouts"
+        name="analytics"
         options={{
-          title: "Treinos",
+          title: "Progresso",
           tabBarIcon: ({ color }) => (
             <View className="items-center justify-center">
               <Feather name="zap" size={24} color={color} />
@@ -76,11 +76,7 @@ export default function TabLayout() {
         options={{
           title: "",
           tabBarButton: (props) => (
-            <Pressable
-              {...props}
-              onPress={handleAddPress} // Use the same handler function
-              className="h-full justify-center items-center"
-            >
+            <Pressable onPress={handleAddPress} className="h-full justify-center items-center">
               <View
                 className="bg-primary rounded-full items-center justify-center -mt-5 shadow-lg"
                 style={{
