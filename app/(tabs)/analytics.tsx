@@ -1,4 +1,4 @@
-// app/(tabs)/workouts.tsx
+// app/(tabs)/analytics.tsx
 import React from "react";
 import { Text, View, SafeAreaView, ScrollView, Pressable } from "react-native";
 import { Feather } from "@expo/vector-icons";
